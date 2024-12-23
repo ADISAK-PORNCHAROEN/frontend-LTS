@@ -3,7 +3,7 @@ import { Controller, SubmitHandler, UseFormReturn } from "react-hook-form";
 import { FormControl, TextField, Button } from "@mui/material";
 import CheckIcon from "@mui/icons-material/Check";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
-import { IUser } from "#/types/projectManagement/IResponse";
+import { IUser } from "#/types/IResponse/IResponse";
 import AlertForm from "./AlertForm";
 
 type Props = {

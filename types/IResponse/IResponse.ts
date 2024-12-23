@@ -22,7 +22,11 @@ export interface ApiLine {
 }
 
 export interface IUser {
-    id?: number;
-    username?: string | null;
+    id?: number | null;
+    name?: string | null;
     email?: string | null;
+    password?: string | null;
+    image?: string | null;
+    createdDate: Date | null;
+    updatedDate: Date | null;
 }

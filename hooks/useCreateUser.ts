@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { IResponse, IUser } from "#/types/projectManagement/IResponse";
+import { IResponse, IUser } from "#/types/IResponse/IResponse";
 import { getAllUsers, createUser } from "./queries/QuriesKey";
 import { createUserApi } from "#/app/api/userApi";
 

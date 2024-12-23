@@ -1,14 +1,14 @@
 import { useQuery, UseQueryOptions } from "@tanstack/react-query";
 import { IResponse, IUser } from "#/types/IResponse/IResponse";
-import { getAllUsers } from "./queries/QuriesKey";
-import { getAllUsersApi } from "#/app/api/userApi";
+import { getFindEmail } from "./queries/QuriesKey";
+import { getFindEmailApi } from "#/app/api/userApi";
 
-export default function useGetAllUsers(
+export default function useGetFindEmail(
   options?: UseQueryOptions<IResponse<IUser[]>, Error>
 ) {
   return useQuery<IResponse<IUser[]>, Error>(
-    [getAllUsers],
-    () => getAllUsersApi(),
+    [getFindEmail],
+    () => getFindEmailApi(),
     {
       ...options,
       retry: 1,
