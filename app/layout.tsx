@@ -4,20 +4,22 @@ import { getServerSession } from "next-auth";
 import ThemesProvider from "#/theme/ThemesProvider";
 import Navbar from "#/components/navbar/Sidebar";
 import { NextAuthProvider } from "./providers";
-/* import { Metadata } from "next";
+import { Metadata } from "next";
+import ApplicantTracking from "#/components/navbar/ApplicantTracking";
+import { notFound } from 'next/navigation';
 
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH
 
 export const metadata: Metadata = {
-  title: "CALYPZO",
+  title: "LTS PROJECT",
   description: "Recruitment Management System",
   icons: {
     // icon: `${basePath}/Metadata/favicon.ico`, // /public path
-    icon: `${basePath}/Metadata/logo6.png`, // /public path
+    // icon: `${basePath}/Metadata/logo6.png`, // /public path
 
   },
 };
- */
+
 export default async function RootLayout({
   children,
   params,
@@ -26,7 +28,8 @@ export default async function RootLayout({
   params: Promise<{ lang: string }>
 }) {
   const session = await getServerSession();
-  console.log("layout session", session);
+  // console.log("layout session", session);
+
   // return (
   //   <html lang={(await params).lang}>
   //     {/* <Head /> */}
@@ -38,7 +41,7 @@ export default async function RootLayout({
   //         <SessionGuard> */}
   //       <QueryProvider>
   //         <ThemesProvider>
-  //           {/* {session != null && session.error != 'RefreshAccessTokenError' ? ( */}
+  // {/* {session != null && session.error != 'RefreshAccessTokenError' ? ( */}
   //           <>
   //             <Navbar>
   //               {/* <ApplicantTracking /> */}
@@ -68,18 +71,31 @@ export default async function RootLayout({
         <NextAuthProvider>
           <QueryProvider>
             <ThemesProvider>
-              <div className="flex h-full">
-                <Navbar />
-                <main className="overflow-y-auto px-8 pt-20">
+              {session ? (
+                // Layout สำหรับหน้าที่ login แล้ว
+                <div className="flex h-screen">
+                  <Navbar />
+                  <main
+                    className="relative flex-1 overflow-x-hidden overflow-y-auto px-8 pt-20"
+                    key={session.user?.email}
+                  >
+                    <ApplicantTracking />
+                    <div className="w-full">
+                      {children}
+                    </div>
+                  </main>
+                </div>
+              ) : (
+                // Layout สำหรับหน้า login
+                <main className="flex min-h-screen items-center justify-center">
                   {children}
                 </main>
-              </div>
+              )}
             </ThemesProvider>
             <div style={{ margin: '3rem 0' }}></div>
           </QueryProvider>
         </NextAuthProvider>
       </body>
-
     </html>
   );
 }

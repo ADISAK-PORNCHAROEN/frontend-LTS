@@ -15,7 +15,8 @@ export default function PageContentLayout({
   ("PageContentLayout")
   return (
     <>
-      <div className="mx-auto max-w-screen-2xl">
+    {/* <div className="mx-auto max-w-screen-2xl"></div> */}
+      <div className="mx-auto">
         {(title || actions) && <Box className="flex justify-between px-3.5 pb-3.5 lg:px-6 lg:pb-6 pt-0">
           <Box className="flex gap-4 items-center">
             {icon && <>{icon}</>}
@@ -27,7 +28,7 @@ export default function PageContentLayout({
             {actions && <>{actions}</>}
           </Box>
         </Box>}
-        <div className="rounded-lg bg-slate-400 p-3.5 lg:p-6">
+        <div className="rounded-lg p-3.5 lg:p-6">
           {children}
         </div>
       </div>

@@ -18,13 +18,13 @@ export default function ActionBtn({ icon, title, className, onClick, color, type
     const StyledButton = styled.button`
         padding: 0 8px; 
         height: 40px;
-        border: 2px solid ${({ color, disabled }) => disabled ? '#CFCFCF' : color ?? '#8286FF'};
+        border: 2px solid ${({ color, disabled }) => disabled ? '#CFCFCF' : color ?? '#153448'};
         border-radius: 0 8px 8px 0; 
-        color: ${({ color, disabled }) => disabled ? '#CFCFCF' : color ?? '#8286FF'};
+        color: ${({ color, disabled }) => disabled ? '#CFCFCF' : color ?? '#153448'};
         transition: background-color 0.3s, color 0.3s;
         background-color: white;
         &:hover {
-            background-color: ${({ color, disabled }) => disabled ? 'white' : color ?? '#8286FF'};
+            background-color: ${({ color, disabled }) => disabled ? 'white' : color ?? '#153448'};
             color: ${({ disabled }) => disabled ? '#CFCFCF' : 'white'};
         }
     `;
@@ -34,8 +34,8 @@ export default function ActionBtn({ icon, title, className, onClick, color, type
             <div className="flex justify-center items-center">
                 <div
                     style={{
-                        backgroundColor: disabled ? '#CFCFCF' : color ?? '#8286FF',
-                        borderColor: disabled ? '#CFCFCF' : color ?? '#8286FF'
+                        backgroundColor: disabled ? '#CFCFCF' : color ?? '#153448',
+                        borderColor: disabled ? '#CFCFCF' : color ?? '#153448'
                     }}
                     className={`${disabled ? '' : 'cursor-pointer'} text-white border-l-2 border-y-2 rounded-l-lg w-8 h-10 flex justify-center items-center`}>
                     {icon}

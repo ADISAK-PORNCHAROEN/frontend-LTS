@@ -27,6 +27,22 @@ export interface IUser {
     email?: string | null;
     password?: string | null;
     image?: string | null;
-    createdDate: Date | null;
-    updatedDate: Date | null;
+    role?: string | null;   
+    createdDate?: Date | null;
+    updatedDate?: Date | null;
+}
+
+export interface IAccount {
+    id?: number | null;
+    userId?: number | null;
+    type?: string | null;
+    provider?: string | null;   
+    providerAccountId?: string | null;
+    refreshToken?: string | null;
+    accessToken?: string | null;
+    expiresAt?: number | null;
+    tokenType?: string | null;
+    scope?: string | null;
+    idToken?: string | null;
+    sessionState?: string | null;
 }
