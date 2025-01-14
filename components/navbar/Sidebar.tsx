@@ -20,6 +20,13 @@ import ListItemText from '@mui/material/ListItemText';
 import InboxIcon from '@mui/icons-material/MoveToInbox';
 import MailIcon from '@mui/icons-material/Mail';
 import AccountBoxIcon from '@mui/icons-material/AccountBox';
+import DashboardIcon from '@mui/icons-material/Dashboard';
+import MenuBookIcon from '@mui/icons-material/MenuBook';
+import { useSession } from 'next-auth/react';
+import { useEffect, useState } from 'react';
+import { Menu, MenuItem } from '@mui/material';
+import { signOut } from 'next-auth/react';
+import { usePathname, useRouter } from 'next/navigation';
 
 interface Props {
     children?: React.ReactNode
@@ -111,7 +118,18 @@ const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 'open' 
 
 export default function MiniDrawer({ children }: Props) {
     const theme = useTheme();
-    const [open, setOpen] = React.useState(false);
+    const [open, setOpen] = useState(false);
+    const { data: session, status } = useSession();
+    const user = session?.user;
+    const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+    const [mounted, setMounted] = useState(false);
+    const router = useRouter();
+    const pathname = usePathname();
+    const basePath = process.env.NEXT_PUBLIC_BASE_PATH
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     const handleDrawerOpen = () => {
         setOpen(true);
@@ -121,8 +139,36 @@ export default function MiniDrawer({ children }: Props) {
         setOpen(false);
     };
 
+    // Don't render anything until component is mounted
+    if (!mounted) {
+        return null;
+    }
+
+    // Hide drawer on login-related pages or when not authenticated
+    if (!session ||
+        status !== 'authenticated' ||
+        pathname === `${basePath}/api/auth/signIn` ||
+        // pathname === '/login' ||
+        pathname.startsWith('/api/auth') ||
+        pathname.startsWith('/redirect')) {
+        return <>{children}</>;
+    }
+
+    const handleNavigate = (path: string) => {
+        const pathToLowerCase = path.toLowerCase();
+        const currentPath = pathname.startsWith(`/admin`) ? `/admin` : `/member`;
+        if (currentPath === '/admin') {
+            if (pathToLowerCase) {
+                console.log(`call path ${currentPath}/${pathToLowerCase}`)
+                router.push(`${currentPath}/${pathToLowerCase}`);
+            }
+        } else if (currentPath) {
+            console.log("หน้า member")
+        }
+    }
+
     return (
-        <Box sx={{ display: 'flex' }}>
+        <Box sx={{ display: 'flex' }} key={session?.user?.email || 'default'}>
             <CssBaseline />
             <AppBar position="fixed" open={open}>
                 <Toolbar>
@@ -142,7 +188,29 @@ export default function MiniDrawer({ children }: Props) {
                         <MenuIcon />
                     </IconButton>
                     <Typography variant="h6" noWrap component="div">
-                        CRUD APP
+                        {/* CRUD APP */}
+                    </Typography>
+
+                    <Box sx={{ flexGrow: 1 }} />
+
+                    <Typography variant="body1" noWrap component="div" className='mr-8'>
+                        <Box className="flex justify-center text-center cursor-pointer"
+                            onClick={(e) => setAnchorEl(e.currentTarget)}
+                        >
+                            <AccountBoxIcon className='mr-2' />
+                            {session?.user?.name}
+                        </Box>
+                        <Menu
+                            anchorEl={anchorEl}
+                            open={Boolean(anchorEl)}
+                            onClose={() => setAnchorEl(null)}
+                            className='this-menu'
+                            sx={{
+                                "& .MuiMenu-list": { paddingY: '0px', backgroundColor: "#FFF" },
+                            }}
+                        >
+                            <MenuItem sx={{ width: '100px', backgroundColor: "#FFF" }} onClick={() => signOut({ callbackUrl: `${basePath}/api/auth/signIn` })}>Sign Out</MenuItem>
+                        </Menu>
                     </Typography>
                 </Toolbar>
             </AppBar>
@@ -154,62 +222,65 @@ export default function MiniDrawer({ children }: Props) {
                 </DrawerHeader>
                 <Divider />
                 <List>
-                    {['Inbox', 'Starred', 'Send email', 'Drafts'].map((text, index) => (
-                        <ListItem key={text} disablePadding sx={{ display: 'block' }}>
-                            <ListItemButton
-                                sx={[
-                                    {
-                                        minHeight: 48,
-                                        px: 2.5,
-                                    },
-                                    open
-                                        ? {
-                                            justifyContent: 'initial',
-                                        }
-                                        : {
-                                            justifyContent: 'center',
-                                        },
-                                ]}
-                            >
-                                <ListItemIcon
+                    <Box>
+                        {['Dashboard', 'Accounts', 'Subjects', 'Drafts'].map((text, index) => (
+                            <ListItem key={text} disablePadding sx={{ display: 'block' }}>
+                                <ListItemButton
                                     sx={[
                                         {
-                                            minWidth: 0,
-                                            justifyContent: 'center',
+                                            minHeight: 48,
+                                            px: 2.5,
                                         },
                                         open
                                             ? {
-                                                mr: 3,
+                                                justifyContent: 'initial',
                                             }
                                             : {
-                                                mr: 'auto',
+                                                justifyContent: 'center',
                                             },
                                     ]}
+                                    onClick={() => handleNavigate(text)}
                                 >
-                                    {text === 'Inbox' && <InboxIcon />}
-                                    {text === 'Starred' && <MailIcon />}
-                                    {text === 'Send email' && <AccountBoxIcon />}
-                                    {text === 'Drafts' && <MailIcon />}
-                                </ListItemIcon>
-                                <ListItemText
-                                    primary={text}
-                                    sx={[
-                                        open
-                                            ? {
-                                                opacity: 1,
-                                            }
-                                            : {
-                                                opacity: 0,
+                                    <ListItemIcon
+                                        sx={[
+                                            {
+                                                minWidth: 0,
+                                                justifyContent: 'center',
                                             },
-                                    ]}
-                                />
-                            </ListItemButton>
-                        </ListItem>
-                    ))}
+                                            open
+                                                ? {
+                                                    mr: 3,
+                                                }
+                                                : {
+                                                    mr: 'auto',
+                                                },
+                                        ]}
+                                    >
+                                        {text === 'Dashboard' && <DashboardIcon />}
+                                        {text === 'Accounts' && <AccountBoxIcon />}
+                                        {text === 'Subjects' && <MenuBookIcon />}
+                                        {text === 'Drafts' && <MailIcon />}
+                                    </ListItemIcon>
+                                    <ListItemText
+                                        primary={text}
+                                        sx={[
+                                            open
+                                                ? {
+                                                    opacity: 1,
+                                                }
+                                                : {
+                                                    opacity: 0,
+                                                },
+                                        ]}
+                                    />
+                                </ListItemButton>
+                            </ListItem>
+                        ))}
+                    </Box>
                 </List>
                 <Divider />
                 <List>
-                    {['All mail', 'Trash', 'Spam'].map((text, index) => (
+                    {user?.role === 'admin' && ['All mail', 'Trash', 'Spam'].map((text, index) => (
                         <ListItem key={text} disablePadding sx={{ display: 'block' }}>
                             <ListItemButton
                                 sx={[

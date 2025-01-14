@@ -8,5 +8,5 @@ type Props = {
 };
 
 export const NextAuthProvider = ({ children }: Props) => {
-  return <SessionProvider >{children}</SessionProvider>;
+  return <SessionProvider basePath="/lts/api/auth" >{children}</SessionProvider>;
 };

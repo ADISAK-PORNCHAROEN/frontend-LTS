@@ -2,9 +2,10 @@ import { DataGrid, GridColDef, GridRowId, GridRowsProp, GridValidRowModel } from
 import NoRowsOverlay from "./NoRowOverlayClient";
 import { Box, Checkbox, } from "@mui/material";
 import Image from "next/image";
-import EditTableIcon from '#/public/assets/edit_column.png';
-import EyeIcon from '#/public/assets/eye-purple.png';
-import { Dispatch, SetStateAction, useEffect, useMemo, useRef, useState } from "react";
+// import EditTableIcon from '#/public/assets/edit_column.png';
+import BackupTableIcon from '@mui/icons-material/BackupTable';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import { Dispatch, SetStateAction, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CustomColumnDialog } from "./CustomColumnDialog";
 import { AdvancedSearchType } from "#/types/other/IPayload";
 import { IOrganizeHaeder, IOrganizeRequest } from "#/types/organizeTable/IOrganize";
@@ -49,7 +50,7 @@ export type TableProps<R extends GridValidRowModel> = {
    * @template R as type of data in table
    */
   columns: GridColDef<R>[];
-  
+
 
   customRenderColumns?: IOrganizeHaeder[];
   // customRenderColumns?: string[];
@@ -185,7 +186,7 @@ export default function Table<R extends GridValidRowModel>({
   isOrganize = true,
   getRowId
 }: TableProps<R>) {
- 
+
   const [selectedRows, setSelectedRows] = useState<R[]>([]) // NOTE: old logic for multi-selection
   const [selectedRow, setSelectedRow] = useState<R | undefined>()
   const [customColumns, setCustomColumns] = useState<Array<CustomTableColumnType<R>>>([])
@@ -215,9 +216,8 @@ export default function Table<R extends GridValidRowModel>({
       headerAlign: 'center',
       renderHeader: () => (
         <>
-          {isOrganize && <Image
-            src={EditTableIcon}
-            alt="edit table column"
+          {isOrganize && <BackupTableIcon
+            titleAccess="edit table column"
             onClick={handleCustomColumn}
             className="cursor-pointer" />}
         </>),
@@ -241,8 +241,8 @@ export default function Table<R extends GridValidRowModel>({
             indeterminate={selectedRowInCurrentPage.length !== 0 && selectedRowInCurrentPage.length < rows.length}
             onChange={(e) => handleSelectAllRow(e.target.checked)} />)
         : undefined
-   }
-  ),
+    }
+    ),
     // createColumn<R>('view', '', 52, {
     //   renderCell: (params) => (
     //     showViewButton && (
@@ -256,7 +256,7 @@ export default function Table<R extends GridValidRowModel>({
       headerAlign: 'center',
       align: 'center',
       renderCell: (params) => (
-        <Image className=" w-6 h-6 hover:cursor-pointer" src={EyeIcon} alt="edit table column" onClick={() => handleViewRow(params.row)} />
+        <VisibilityIcon className=" w-6 h-6 hover:cursor-pointer" onClick={() => handleViewRow(params.row)} />
       )
     }));
   }
@@ -287,7 +287,7 @@ export default function Table<R extends GridValidRowModel>({
   }, [columns])
 
   // useEffect(() => {
-  
+
   //   let newRender = columns.filter((item: any, index) => {
   //     return customRenderColumns.find((col) => col.organizeName === item.headerName)
   //   });
@@ -308,7 +308,7 @@ export default function Table<R extends GridValidRowModel>({
   //   }))
   // }
 
-    //use onHideColumn to get the show prop outside the Table component
+  //use onHideColumn to get the show prop outside the Table component
   //   const hiddenColumnsNew = newRender.reduce((sum, next) => {
   //     if (customRenderColumns.find((item) => item.organizeName === next.headerName)?.hideFlag === 'N') {
   //       return { ...sum, [next.field]: true }
@@ -335,38 +335,32 @@ export default function Table<R extends GridValidRowModel>({
     setOpenDialog(true)
   }
 
-  const handleSelectRow = (isCheck: boolean, rowData: R) => {
-    // console.log("[Table] @handleSelectRow isCheck, rowData >>>", isCheck, rowData)
-    if (isMultiSelectRow) {
-      // NOTE: old logic for multi-selection
-      setSelectedRows(prev => {
-        const newSelectedRows = isCheck ? [...prev, rowData] : prev.filter((item: R) => item.id !== rowData.id)
-        if (onSelectRows) onSelectRows([...newSelectedRows])
-        return newSelectedRows
-      })
-    } else {
-      // NOTE: new logic for single-selection
-      setSelectedRow(prev => {
-        // TODO: recheck why this setState is being call twice
-        // console.log("[Table] @handleSelectRow:setSelectedRow prev >>>", prev)
-        const newSelectedRow = isCheck ? rowData : undefined
-        if (onSelectRow) onSelectRow(newSelectedRow)
-        return newSelectedRow
-      })
+  useEffect(() => {
+    if (isMultiSelectRow && onSelectRows) {
+      onSelectRows(selectedRows);
     }
+  }, [selectedRows, isMultiSelectRow, onSelectRows]);
 
-  }
-
+  const handleSelectRow = useCallback((isCheck: boolean, rowData: R) => {
+    if (isMultiSelectRow) {
+      setSelectedRows(prev => 
+        isCheck 
+          ? [...prev, rowData]
+          : prev.filter((item: R) => item.id !== rowData.id)
+      );
+    } else {
+      const newSelectedRow = isCheck ? rowData : undefined;
+      setSelectedRow(newSelectedRow);
+      if (onSelectRow) {
+        onSelectRow(newSelectedRow);
+      }
+    }
+  }, [isMultiSelectRow, onSelectRow]);
 
   // NOTE: logic for multi-selection
-  const handleSelectAllRow = (isCheck: boolean) => {
-    // console.log("[Table] @handleSelectAllRow isCheck >>>", isCheck)
-    setSelectedRows(prev => {
-      const newSelectedRows = isCheck ? [...rows] : []
-      if (onSelectRows) onSelectRows([...newSelectedRows])
-      return newSelectedRows
-    })
-  }
+  const handleSelectAllRow = useCallback((isCheck: boolean) => {
+    setSelectedRows(isCheck ? [...rows] : []);
+  }, [rows]);
 
   const handleViewRow = (rowData: R) => {
     // console.log("[Table] @handleViewRow rowData >>>", rowData)

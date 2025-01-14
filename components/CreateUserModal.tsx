@@ -107,7 +107,7 @@ export default function CreateUserModal({
       <div className="flex justify-center mt-8 mb-8">
         <FormControl sx={{ width: 350, gap: 2 }}>
           <Controller
-            name="username"
+            name="name"
             control={controlContactForm}
             defaultValue=""
             rules={{ required: "username is required" }}
