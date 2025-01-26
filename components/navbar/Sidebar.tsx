@@ -230,6 +230,9 @@ export default function MiniDrawer({ children }: Props) {
                                         {
                                             minHeight: 48,
                                             px: 2.5,
+                                            ...(pathname.includes(`/${text.toLowerCase()}`) && {
+                                                backgroundColor: 'rgba(0, 0, 0, 0.08)',
+                                            })
                                         },
                                         open
                                             ? {
