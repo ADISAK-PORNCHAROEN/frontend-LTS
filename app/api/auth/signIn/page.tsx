@@ -37,11 +37,11 @@ export default function SignIn() {
       }
     }
   }, [session, status, router]);
-  
+
   useEffect(() => {
     if (!session || status !== 'authenticated') return;
     handleRedirect();
-  }, [session, status, handleRedirect]);  
+  }, [session, status, handleRedirect]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -75,18 +75,23 @@ export default function SignIn() {
     }
   }
 
-  const handleGoogleSignIn = async () => {
+  /* const handleGoogleSignIn = async () => {
     setLoading(true)
     try {
       const result = await signIn('google', {
         callbackUrl: '/api/auth/redirect', // กำหนด URL ที่จะ redirect ไปหลังจาก sign in สำเร็จ
+        // redirect: true
       })
+      console.log(result)
     } catch (error) {
       console.error('Google sign in error:', error)
+      setIsOpenAlertBox(true);
+      setTypeAlertBox("error");
+      setTextAlertBox("Failed to sign in with Google");
     } finally {
       setLoading(false)
     }
-  }
+  } */
 
   return (
     <>
@@ -167,7 +172,7 @@ export default function SignIn() {
             </Typography>
           </div>
 
-          <Box sx={{ my: 2 }}>
+          {/* <Box sx={{ my: 2 }}>
             <hr />
           </Box>
 
@@ -188,7 +193,7 @@ export default function SignIn() {
             }}
           >
             {loading ? 'Signing in...' : 'Sign in with Google'}
-          </Button>
+          </Button> */}
         </form>
       </div>
 

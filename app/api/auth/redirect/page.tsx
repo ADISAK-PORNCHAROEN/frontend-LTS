@@ -28,7 +28,7 @@ export default function SignIn() {
                 if (user?.role === Role.member) {
                     await router.push('/member')
                 } else if (user?.role === Role.admin) {
-                    await router.push('/admin')
+                    await router.push('/admin/dashboard')
                 }
 
                 // รอให้การ navigate เสร็จสมบูรณ์
