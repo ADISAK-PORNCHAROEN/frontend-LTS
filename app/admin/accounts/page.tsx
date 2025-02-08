@@ -29,6 +29,7 @@ import useGetAllClo from '#/hooks/useGetAllClo';
 import { signOut } from 'next-auth/react';
 import Alert from '#/components/modal/Alert';
 import AccountBoxIcon from '@mui/icons-material/AccountBox';
+import { useRouter } from 'next/navigation';
 
 export default function Home() {
     const [rows, setRows] = useState<IUser[]>([]);
@@ -44,6 +45,7 @@ export default function Home() {
     const [addValueOpen, setAddValueOpen] = useState(false);
     const [editValueOpen, setEditValueOpen] = useState(false);
     const [detailPloOpen, setDetailPloOpen] = useState(false);
+    const router = useRouter();
 
     // modal
     const [textAlertBox, setTextAlertBox] = useState("");
