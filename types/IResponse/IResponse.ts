@@ -24,6 +24,8 @@ export interface ApiLine {
 export interface IUser {
     id?: number | null;
     name?: string | null;
+    fname?: string | null;
+    lname?: string | null;
     email?: string | null;
     password?: string | null;
     image?: string | null;

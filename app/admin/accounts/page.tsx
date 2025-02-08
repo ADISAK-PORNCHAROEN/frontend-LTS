@@ -29,6 +29,7 @@ import useGetAllClo from '#/hooks/useGetAllClo';
 import { signOut } from 'next-auth/react';
 import Alert from '#/components/modal/Alert';
 import AccountBoxIcon from '@mui/icons-material/AccountBox';
+import { useRouter } from 'next/navigation';
 
 export default function Home() {
     const [rows, setRows] = useState<IUser[]>([]);
@@ -44,6 +45,7 @@ export default function Home() {
     const [addValueOpen, setAddValueOpen] = useState(false);
     const [editValueOpen, setEditValueOpen] = useState(false);
     const [detailPloOpen, setDetailPloOpen] = useState(false);
+    const router = useRouter();
 
     // modal
     const [textAlertBox, setTextAlertBox] = useState("");
@@ -112,15 +114,12 @@ export default function Home() {
         }
     }
 
-    //   useEffect(() => {
-    //     if (ploRowsData && Array.isArray(ploRowsData)) {
-    //       const transformedData = ploRowsData.map((plo) => ({
-    //         id: plo.id,
-    //         ...plo.ploData
-    //       }))
-    //       setPloRows(transformedData);
-    //     }
-    //   }, [ploRowsData]);
+    const handleNavigationEdit = (data: IUser) => {
+        sessionStorage.setItem('accountsData', JSON.stringify(data));
+        const pathname = encodeURIComponent(data?.name!);
+        router.push(`./accounts/${pathname}`);
+    }
+
 
     const column: GridColDef[] = [
         createColumn("name", "STRING", "Name", 400, {
@@ -185,7 +184,7 @@ export default function Home() {
                     idKey='id'
                     columns={column}
                     rows={filteredRows}
-                    onViewRow={(rowSelected) => console.log(rowSelected)}
+                    onViewRow={(rowSelected) => handleNavigationEdit(rowSelected)}
                     searchType={searchType as string}
                     onSearchTypeChange={(newSearchType) => setSearchType(newSearchType)}
                     searchText={searchText}
