@@ -2,18 +2,19 @@
 import axiosApi, { isAxiosError } from "#/utils/axiosApi";
 import { IAccount, IResponse, IUser } from "#/types/IResponse/IResponse";
 import { IClo, IPlo, IPloClo, IPloRows } from "#/types/LTS/IPlo";
+import { ISubjects } from "#/types/LTS/ILts";
 
 //nextauth api
 export const findUserByEmailApi = async (email: string): Promise<IUser | null> => {
   try {
-      const response = await axiosApi.get<IResponse<IUser>>(`/lts-user/findByEmail?email=${email}`)
-      if (response?.data?.data === undefined) {
-        throw new Error("Undefined response data");
-      }
-      return response.data.data;
+    const response = await axiosApi.get<IResponse<IUser>>(`/lts-user/findByEmail?email=${email}`)
+    if (response?.data?.data === undefined) {
+      throw new Error("Undefined response data");
+    }
+    return response.data.data;
   } catch (error) {
-      console.error('Error finding user:', error)
-      return null
+    console.error('Error finding user:', error)
+    return null
   }
 }
 
@@ -60,40 +61,40 @@ export const createUserApi = async (payload: IUser) => {
 
 export const findProviderAndProviderAccountIdApi = async (provider: string, providerAccountId: string): Promise<IAccount | null> => {
   try {
-      const response = await axiosApi.get<IResponse<IAccount>>(`/lts-user-accounts/findProviderAndProviderAccountId?provider=${provider}&providerAccountId=${providerAccountId}`)
-      if (response?.data?.data === undefined) {
-        throw new Error("Undefined response data");
-      }
-      return response.data.data
+    const response = await axiosApi.get<IResponse<IAccount>>(`/lts-user-accounts/findProviderAndProviderAccountId?provider=${provider}&providerAccountId=${providerAccountId}`)
+    if (response?.data?.data === undefined) {
+      throw new Error("Undefined response data");
+    }
+    return response.data.data
   } catch (error) {
-      console.error('Error finding user:', error)
-      return null
+    console.error('Error finding user:', error)
+    return null
   }
 }
 
 export const createUserAccountApi = async (payload: IAccount): Promise<IAccount | null> => {
   try {
-      const response = await axiosApi.post<IResponse<IAccount>>(`/lts-user-accounts/createUserAccount`, payload)
-      if (response?.data?.data === undefined) {
-        throw new Error("Undefined response data");
-      }
-      return response.data.data
+    const response = await axiosApi.post<IResponse<IAccount>>(`/lts-user-accounts/createUserAccount`, payload)
+    if (response?.data?.data === undefined) {
+      throw new Error("Undefined response data");
+    }
+    return response.data.data
   } catch (error) {
-      console.error('Create user account fail:', error)
-      return null
+    console.error('Create user account fail:', error)
+    return null
   }
 }
 
 export const updateUserAccountTokensApi = async (payload: IAccount): Promise<IAccount | null> => {
   try {
-      const response = await axiosApi.post<IResponse<IAccount>>(`/lts-user-accounts/updateUserAccountTokens`, payload)
-      if (response?.data?.data === undefined) {
-        throw new Error("Undefined response data");
-      }
-      return response.data.data
+    const response = await axiosApi.post<IResponse<IAccount>>(`/lts-user-accounts/updateUserAccountTokens`, payload)
+    if (response?.data?.data === undefined) {
+      throw new Error("Undefined response data");
+    }
+    return response.data.data
   } catch (error) {
-      console.error('Update user account tokens fail:', error)
-      return null
+    console.error('Update user account tokens fail:', error)
+    return null
   }
 }
 
@@ -216,6 +217,87 @@ export const getAllCloApi = async (): Promise<IResponse<IClo[]>> => {
     if (response?.data === undefined) {
       throw new Error("Undefined response data");
     }
+    return response.data;
+  } catch (error) {
+    if (isAxiosError(error)) {
+      console.error('Error details:', error.response?.data);
+    } else {
+      console.error('Unexpected error:', error);
+    }
+    throw error;
+  }
+};
+
+// API SUBJECTS
+export const getAllSubjectsApi = async (): Promise<IResponse<ISubjects[]>> => {
+  try {
+    const response = await axiosApi.get<IResponse<ISubjects[]>>(
+      '/lts-subjects/getAllLtsSubjects'
+    );
+    // // console.log('Response:', response.data);
+    if (response?.data === undefined) {
+      throw new Error("Undefined response data");
+    }
+    return response.data;
+  } catch (error) {
+    if (isAxiosError(error)) {
+      console.error('Error details:', error.response?.data);
+    } else {
+      console.error('Unexpected error:', error);
+    }
+    throw error;
+  }
+};
+
+export const createSubjectsApi = async (payload: ISubjects) => {
+  try {
+
+    const response = await axiosApi.post<IResponse<ISubjects>>('/lts-subjects/createLtsSubjects', payload);
+
+    if (response?.data === undefined) {
+      throw new Error("Undefined response data");
+    }
+
+    return response.data;
+  } catch (error) {
+    if (isAxiosError(error)) {
+      console.error('Error details:', error.response?.data);
+    } else {
+      console.error('Unexpected error:', error);
+    }
+    throw error;
+  }
+};
+
+export const deleteSubjectsApi = async (payload: ISubjects) => {
+  try {
+    const response = await axiosApi.delete<IResponse<ISubjects>>(
+      `/lts-subjects/deleteLtsSubjects/${payload.ids}`
+    )
+    return response?.data;
+  } catch (err) {
+    if (isAxiosError(err)) {
+      console.error(err);
+      return { success: false, message: err.message };
+    } else {
+      console.error(err);
+      return { success: false, message: 'An unknown error occurred' };
+    }
+  }
+};
+
+
+
+export const updateSubjectsApi = async (payload: ISubjects) => {
+  // // console.log("payload", payload);
+  try {
+    const response = await axiosApi.put<IResponse<ISubjects>>(`/lts-subjects/updateLtsSubjects`, payload);
+    // // console.log('Response:', response.data);
+
+    if (response?.data === undefined) {
+      throw new Error("Undefined response data");
+    }
+
     return response.data;
   } catch (error) {
     if (isAxiosError(error)) {
