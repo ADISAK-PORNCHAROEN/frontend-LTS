@@ -112,15 +112,12 @@ export default function Home() {
         }
     }
 
-    //   useEffect(() => {
-    //     if (ploRowsData && Array.isArray(ploRowsData)) {
-    //       const transformedData = ploRowsData.map((plo) => ({
-    //         id: plo.id,
-    //         ...plo.ploData
-    //       }))
-    //       setPloRows(transformedData);
-    //     }
-    //   }, [ploRowsData]);
+    const handleNavigationEdit = (data: IUser) => {
+        sessionStorage.setItem('accountsData', JSON.stringify(data));
+        const pathname = encodeURIComponent(data?.fname! + data?.lname!);
+        router.push(`./accounts/${pathname}`);
+    }
+
 
     const column: GridColDef[] = [
         createColumn("name", "STRING", "Name", 400, {
