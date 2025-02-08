@@ -116,11 +116,7 @@ export default function Home() {
 
     const handleNavigationEdit = (data: IUser) => {
         sessionStorage.setItem('accountsData', JSON.stringify(data));
-<<<<<<< HEAD
         const pathname = encodeURIComponent(data?.fname! + data?.lname!);
-=======
-        const pathname = encodeURIComponent(data?.name!);
->>>>>>> 5d4df2d (add feature edit page n navigation page to edit page)
         router.push(`./accounts/${pathname}`);
     }
 
