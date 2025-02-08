@@ -56,7 +56,7 @@ export default function Page() {
 
         const createUserData = {
             ...data,
-            name: data.firstname + " " + data.lastname,
+            // name: data.firstname + " " + data.lastname,
             password: bcrypt.hashSync(data.password, 10),
             role: 'member',
         };
@@ -79,7 +79,7 @@ export default function Page() {
                             <hr />
                         </Box>
                         <Controller
-                            name="firstname"
+                            name="fname"
                             control={control}
                             defaultValue=""
                             rules={{ required: "Firstname is required" }}
@@ -98,7 +98,7 @@ export default function Page() {
                             )}
                         />
                         <Controller
-                            name="lastname"
+                            name="lname"
                             control={control}
                             defaultValue=""
                             rules={{ required: "Lastname is required" }}

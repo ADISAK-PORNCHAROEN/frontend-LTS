@@ -3,6 +3,7 @@ import type { NextAuthOptions, SessionStrategy } from "next-auth"
 import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials"
 import bcrypt from "bcryptjs"
+import { Session } from "inspector";
 
 const ROLE = {
     isAdmin: 'admin',
@@ -27,7 +28,8 @@ export const authOptions: NextAuthOptions = {
                 ) {
                     return {
                         id: user.id as number, // Cast id to string
-                        name: user.name,
+                        fname: user.fname,
+                        lname: user.lname,
                         email: user.email,
                         role: user.role,
                         image: user.image
