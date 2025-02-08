@@ -23,26 +23,26 @@ export default function ApplicantTracking() {
   let pathnameWithoutDynamicParams = pathname
   const dynamicParamsKeys = Object.keys(dynamicParams)
   const nameParams = searchParams.get('name')
-  let checkDetailLeave = false;
-  let checkDetailTimesheet = false;
-  let checkAddTimesheet = false;
+  let checkCreateSubject = false;
+  // let checkDetailTimesheet = false;
+  // let checkAddTimesheet = false;
   if (dynamicParamsKeys.length > 0) {
     dynamicParamsKeys.forEach(param => {
       // let idx = pathnameWithoutDynamicParams.lastIndexOf("/")
       pathnameWithoutDynamicParams = pathnameWithoutDynamicParams.replace(`/${dynamicParams[param]}`, '')
       // pathnameWithoutDynamicParams = pathnameWithoutDynamicParams.slice(0, idx)
-      if (param == 'leaveId') {
-        checkDetailLeave = true
-      } else if (param == 'timesheetDocId') {
+      if (param == 'subNameTh') {
+        checkCreateSubject = true
+      } /* else if (param == 'timesheetDocId') {
         checkDetailTimesheet = true
         checkAddTimesheet = true
-      }
+      } */
     })
   }
 
   pathnameWithoutDynamicParams = pathnameWithoutDynamicParams.replaceAll(`/lts`, '')
 
-  let pathUrls: MatchUrlType[] = useMemo(() => [
+  let pathUrls: MatchUrlType[] = [
     // lts
     {
       url: Paths.lts.root, tracks: [
@@ -59,20 +59,31 @@ export default function ApplicantTracking() {
       url: Paths.lts.subjects, tracks: [
         { level: 1, name: "Subjects", linkTo: Paths.lts.subjects },
       ]
-    }
+    },
+    {
+      url: Paths.lts.createSubjects, tracks: [
+        { level: 1, name: "Subjects", linkTo: Paths.lts.subjects },
+        { level: 2, name: "Create Subject", linkTo: Paths.lts.createSubjects },
+      ]
+    },
+    {
+      url: Paths.lts.editSubjects, tracks: [
+        { level: 1, name: "Subjects", linkTo: Paths.lts.subjects },
+        { level: 2, name: "Edit Subject", linkTo: Paths.lts.editSubjects },
+      ]
+    },
+  ];
 
-  ], []);
+  if (checkCreateSubject) {
 
-  /* if (checkDetailLeave || checkDetailTimesheet) {
-
-    if (pathnameWithoutDynamicParams == `${Paths.leave.root}`) {
+    if (pathnameWithoutDynamicParams == `${Paths.lts.subjects}`) {
       const idx = pathUrls.findIndex(path => path.url == pathnameWithoutDynamicParams)
       if (idx != -1) {
         pathUrls[idx].tracks.push(
-          { level: 1, name: "Detail", linkTo: Paths.leave.detail },
+          { level: 3, name: `${decodeURIComponent(dynamicParams?.subNameTh as string)}`, linkTo: Paths.lts.subjects },
         )
       }
-    } else if (pathnameWithoutDynamicParams == `${Paths.timesheet.detail}`) {
+    } /* else if (pathnameWithoutDynamicParams == `${Paths.timesheet.detail}`) {
       const idx = pathUrls.findIndex(path => path.url == pathnameWithoutDynamicParams)
       if (idx != -1) {
         pathUrls[idx].tracks.push(
@@ -87,14 +98,19 @@ export default function ApplicantTracking() {
           { level: 1, name: "Detail", linkTo: Paths.timesheet.admin },
         )
       }
-    }
-  } */
+    } */
+  }
 
-  const findMatchPath = React.useMemo(() => {
+  const findMatchPath =
+    pathUrls
+      .find((item) => item.url === pathnameWithoutDynamicParams)
+      ?.tracks.sort((a, b) => a.level - b.level) || [];
+
+  /* const findMatchPath = React.useMemo(() => {
     return pathUrls.find(item => item.url === pathnameWithoutDynamicParams)?.tracks.sort((a, b) => a.level - b.level) || [];
-  }, [pathUrls, pathnameWithoutDynamicParams]);
+  }, [pathUrls, pathnameWithoutDynamicParams]); */
 
-  const clientCode = dynamicParams.clientCode ? decodeURIComponent(dynamicParams.clientCode as string) : undefined;
+  /* const clientCode = dynamicParams.clientCode ? decodeURIComponent(dynamicParams.clientCode as string) : undefined;
   const projectName = dynamicParams.projectName ? decodeURIComponent(dynamicParams.projectName as string) : undefined;
   const phaseId = dynamicParams.phaseId ? decodeURIComponent(dynamicParams.phaseId as string) : undefined;
   const phaseName = dynamicParams.phaseName ? decodeURIComponent(dynamicParams.phaseName as string) : undefined;
@@ -130,15 +146,15 @@ export default function ApplicantTracking() {
       return newTracks;
     }
     return findMatchPath;
-  }, [findMatchPath, pathnameWithoutDynamicParams, clientCode, projectName, phaseId, phaseName, pathname, decodedProjectName]);
+  }, [findMatchPath, pathnameWithoutDynamicParams, clientCode, projectName, phaseId, phaseName, pathname, decodedProjectName]); */
 
   return (
     <>
-      {processedMatchPath.length !== 0 && <Box className=" w-auto flex mx-auto max-w-screen-2xl space-y-8 mb-4">
+      {findMatchPath.length !== 0 && <Box className=" w-auto flex max-w-screen-2xl space-y-8 mb-4">
         <Box className=" px-3.5 lg:px-6 text-l">
           {"LTS"}
-          {processedMatchPath.map((track, index) => {
-            if (index === (processedMatchPath.length - 1)) {
+          {findMatchPath.map((track, index) => {
+            if (index === (findMatchPath.length - 1)) {
               return (
                 <span key={track.name + index} className=' text-[#3190FF]'>{' > '} {track.name}</span>
               );
