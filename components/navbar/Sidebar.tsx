@@ -121,6 +121,7 @@ export default function MiniDrawer({ children }: Props) {
     const [open, setOpen] = useState(false);
     const { data: session, status } = useSession();
     const user = session?.user;
+    console.log("user", user);
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const [mounted, setMounted] = useState(false);
     const router = useRouter();

@@ -30,6 +30,7 @@ export const authOptions: NextAuthOptions = {
                         id: user.id as number, // Cast id to string
                         fname: user.fname,
                         lname: user.lname,
+                        name: user.fname + ' ' + user.lname,
                         email: user.email,
                         role: user.role,
                         image: user.image
@@ -129,6 +130,8 @@ export const authOptions: NextAuthOptions = {
         jwt: async ({ token, user }: any) => {
             if (user) {
                 token.id = user.id
+                token.fname = user.fname
+                token.lname = user.lname
                 token.role = user.role
                 token.image = user.image
             }
@@ -137,6 +140,8 @@ export const authOptions: NextAuthOptions = {
         session: async ({ session, token }: any) => {
             if (session.user) {
                 session.user.id = token.id
+                session.user.fname = token.fname
+                session.user.lname = token.lname
                 session.user.role = token.role
                 session.user.image = token.image
             }
