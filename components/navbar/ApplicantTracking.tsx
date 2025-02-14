@@ -38,11 +38,7 @@ export default function ApplicantTracking() {
       }
     })
   }
-
-  console.log("pathnameWithoutDynamicParams", pathnameWithoutDynamicParams);
-  console.log("pathname", pathname);
-  console.log("dynamicParams", dynamicParams);
-
+  
   pathnameWithoutDynamicParams = pathnameWithoutDynamicParams.replaceAll(`/lts`, '')
 
   let pathUrls: MatchUrlType[] = [
