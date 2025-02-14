@@ -2,7 +2,7 @@
 import axiosApi, { isAxiosError } from "#/utils/axiosApi";
 import { IAccount, IResponse, IUser } from "#/types/IResponse/IResponse";
 import { IClo, IPlo, IPloClo, IPloRows } from "#/types/LTS/IPlo";
-import { ISubjects } from "#/types/LTS/ILts";
+import { ISubjects, IUserSubject } from "#/types/LTS/ILts";
 
 //nextauth api
 export const findUserByEmailApi = async (email: string): Promise<IUser | null> => {
@@ -118,14 +118,10 @@ export const getAllUsersApi = async (): Promise<IResponse<IUser[]>> => {
   }
 };
 
-export const deleteUserApi = async (data: IUser) => {
-  if (!data.id || isNaN(Number(data.id))) {
-    return { success: false, message: 'Invalid ID' };
-  }
-
+export const deleteUserApi = async (payload: IUser) => {
   try {
     const response = await axiosApi.delete<IResponse<IUser>>(
-      `tUser/deleteUser/${data.id}`
+      `lts-user/deleteLtsUser/${payload.ids}`
     );
     return response?.data;
   } catch (err) {
@@ -140,16 +136,10 @@ export const deleteUserApi = async (data: IUser) => {
 };
 
 export const updateUserApi = async (payload: IUser) => {
-  // // console.log("payload", payload);
+  console.log("payload", payload);
   try {
-    const response = await axiosApi.put<IResponse<IUser>>(`tUser/updateUser`, payload,
-      {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      }
-    );
-    // // console.log('Response:', response.data);
+    const response = await axiosApi.post<IResponse<IUser>>(`lts-user/updateLtsUser`, payload);
+    // console.log('Response:', response.data);
 
     if (response?.data === undefined) {
       throw new Error("Undefined response data");
@@ -293,6 +283,28 @@ export const updateSubjectsApi = async (payload: ISubjects) => {
   try {
     const response = await axiosApi.put<IResponse<ISubjects>>(`/lts-subjects/updateLtsSubjects`, payload);
     // // console.log('Response:', response.data);
+
+    if (response?.data === undefined) {
+      throw new Error("Undefined response data");
+    }
+
+    return response.data;
+  } catch (error) {
+    if (isAxiosError(error)) {
+      console.error('Error details:', error.response?.data);
+    } else {
+      console.error('Unexpected error:', error);
+    }
+    throw error;
+  }
+};
+
+export const updateUserSubjectApi = async (payload: IUserSubject) => {
+  console.log("payload", payload.userId);
+  console.log("payload", payload.subjects);
+  try {
+    const response = await axiosApi.put<IResponse<IUserSubject>>(`lts-user-subjects/${payload.userId}/updateLtsUserSub`, payload.subjects);
+    console.log('Response:', response.data);
 
     if (response?.data === undefined) {
       throw new Error("Undefined response data");

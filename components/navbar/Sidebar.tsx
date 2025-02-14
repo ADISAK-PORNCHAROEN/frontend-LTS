@@ -121,7 +121,7 @@ export default function MiniDrawer({ children }: Props) {
     const [open, setOpen] = useState(false);
     const { data: session, status } = useSession();
     const user = session?.user;
-    console.log("user", user);
+    // console.log("user", user);
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const [mounted, setMounted] = useState(false);
     const router = useRouter();
@@ -160,7 +160,7 @@ export default function MiniDrawer({ children }: Props) {
         const currentPath = pathname.startsWith(`/admin`) ? `/admin` : `/member`;
         if (currentPath === '/admin') {
             if (pathToLowerCase) {
-                console.log(`call path ${currentPath}/${pathToLowerCase}`)
+                // console.log(`call path ${currentPath}/${pathToLowerCase}`)
                 router.push(`${currentPath}/${pathToLowerCase}`);
             }
         } else if (currentPath) {

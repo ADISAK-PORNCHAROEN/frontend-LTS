@@ -24,7 +24,7 @@ export default function ApplicantTracking() {
   const dynamicParamsKeys = Object.keys(dynamicParams)
   const nameParams = searchParams.get('name')
   let checkCreateSubject = false;
-  // let checkDetailTimesheet = false;
+  let checkEditAccount = false;
   // let checkAddTimesheet = false;
   if (dynamicParamsKeys.length > 0) {
     dynamicParamsKeys.forEach(param => {
@@ -33,12 +33,15 @@ export default function ApplicantTracking() {
       // pathnameWithoutDynamicParams = pathnameWithoutDynamicParams.slice(0, idx)
       if (param == 'subNameTh') {
         checkCreateSubject = true
-      } /* else if (param == 'timesheetDocId') {
-        checkDetailTimesheet = true
-        checkAddTimesheet = true
-      } */
+      } else if (param == 'name') {
+        checkEditAccount = true
+      }
     })
   }
+
+  console.log("pathnameWithoutDynamicParams", pathnameWithoutDynamicParams);
+  console.log("pathname", pathname);
+  console.log("dynamicParams", dynamicParams);
 
   pathnameWithoutDynamicParams = pathnameWithoutDynamicParams.replaceAll(`/lts`, '')
 
@@ -72,9 +75,15 @@ export default function ApplicantTracking() {
         { level: 2, name: "Edit Subject", linkTo: Paths.lts.editSubjects },
       ]
     },
+    {
+      url: Paths.lts.editAccount, tracks: [
+        { level: 1, name: "Accounts", linkTo: Paths.lts.accounts },
+        { level: 2, name: "Edit Accounts", linkTo: Paths.lts.editAccount },
+      ]
+    },
   ];
 
-  if (checkCreateSubject) {
+  if (checkCreateSubject || checkEditAccount) {
 
     if (pathnameWithoutDynamicParams == `${Paths.lts.subjects}`) {
       const idx = pathUrls.findIndex(path => path.url == pathnameWithoutDynamicParams)
@@ -83,22 +92,14 @@ export default function ApplicantTracking() {
           { level: 3, name: `${decodeURIComponent(dynamicParams?.subNameTh as string)}`, linkTo: Paths.lts.subjects },
         )
       }
-    } /* else if (pathnameWithoutDynamicParams == `${Paths.timesheet.detail}`) {
+    } else if (pathnameWithoutDynamicParams == `${Paths.lts.accounts}`) {
       const idx = pathUrls.findIndex(path => path.url == pathnameWithoutDynamicParams)
       if (idx != -1) {
         pathUrls[idx].tracks.push(
-          { level: 1, name: "Detail", linkTo: Paths.timesheet.detail },
+          { level: 3, name: `${decodeURIComponent(dynamicParams?.name as string)}`, linkTo: Paths.lts.accounts },
         )
       }
     }
-    else if (pathnameWithoutDynamicParams == `${Paths.timesheet.admin}`) {
-      const idx = pathUrls.findIndex(path => path.url == pathnameWithoutDynamicParams)
-      if (idx != -1) {
-        pathUrls[idx].tracks.push(
-          { level: 1, name: "Detail", linkTo: Paths.timesheet.admin },
-        )
-      }
-    } */
   }
 
   const findMatchPath =

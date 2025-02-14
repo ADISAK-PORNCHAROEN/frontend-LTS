@@ -8,7 +8,6 @@ import { Backdrop, CircularProgress } from '@mui/material'
 export default function SignIn() {
     const router = useRouter()
     const { data: session, status, update } = useSession()
-    console.log("status", status)
     const [isLoading, setIsLoading] = useState(true)
     const user = session?.user;
 

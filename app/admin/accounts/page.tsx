@@ -3,33 +3,20 @@ import Image from 'next/image'
 import { SetStateAction, use, useEffect, useState } from 'react'
 import { DataGrid, GridColDef, GridValidRowModel } from '@mui/x-data-grid';
 import useGetAllUsers from '#/hooks/useGetAllUsers';
-import { IUser } from '#/types/IResponse/IResponse';
+import { IAccount, IUser } from '#/types/IResponse/IResponse';
 import useDeleteUser from '#/hooks/useDeleteUser';
 import { Button, Grid, Menu, MenuItem, Stack, Typography } from '@mui/material';
-import useUpdateUser from '#/hooks/useUpdateUser';
-import useCreateUser from '#/hooks/useCreateUser';
-import CreateUserModal from '#/components/CreateUserModal';
-import { set, SubmitHandler, useForm } from 'react-hook-form';
-import EditUserModal from '#/components/EditUserModal';
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import AddIcon from '@mui/icons-material/Add';
-import VisibilityIcon from '@mui/icons-material/Visibility';
 import Table, { createColumn } from '#/components/table/Table';
-import TableProject from '#/components/table/TableProject';
 import TableWithSearch from '#/components/table/TableWithSearch';
 import ActionBtn from '#/components/button/ActionBtn';
-import DetailPLO from '#/components/DetailPLOModal';
-import DetailPLOModal from '#/components/DetailPLOModal';
-import { IClo, IPlo, IPloClo, IPloRows } from '#/types/LTS/IPlo';
 import PageContentLayout from '#/components/layout/PageContentLayout';
-import useGetAllPloRows from '#/hooks/useGetAllPloRows';
-import useGetAllPlo from '#/hooks/useGetAllPlo';
-import useGetAllClo from '#/hooks/useGetAllClo';
-import { signOut } from 'next-auth/react';
 import Alert from '#/components/modal/Alert';
 import AccountBoxIcon from '@mui/icons-material/AccountBox';
 import { useRouter } from 'next/navigation';
+import AlertConfirm from '#/components/modal/AlertConfirm';
+import { ISubjects } from '#/types/LTS/ILts';
 
 export default function Home() {
     const [rows, setRows] = useState<IUser[]>([]);
@@ -39,12 +26,11 @@ export default function Home() {
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const { data: userData, isLoading: isLoadinguserData } = useGetAllUsers();
     const { mutateAsync: deleteUser, isLoading: isLoadingDeleteUser } = useDeleteUser();
-    const { mutateAsync: updateUser, isLoading: isLoadingUpdateUser } = useUpdateUser();
-    //   const { mutateAsync: createUser, isLoading: isLoadingCreateUser } = useCreateUser();
     const [alertOpen, setAlertOpen] = useState(false);
     const [addValueOpen, setAddValueOpen] = useState(false);
     const [editValueOpen, setEditValueOpen] = useState(false);
     const [detailPloOpen, setDetailPloOpen] = useState(false);
+    const [key, setKey] = useState(0);
     const router = useRouter();
 
     // modal
@@ -52,71 +38,51 @@ export default function Home() {
     const [typeAlertBox, setTypeAlertBox] = useState<"success" | "warning" | "error">("success");
     const [isOpenAlertBox, setIsOpenAlertBox] = useState(false);
 
-    // const handleDelete = async (id: number) => {
-    //   try {
-    //     await deleteUser({ id });
-    //   } catch (error) {
-    //     console.error("Error deleting user:", error);
-    //   }
-    // }
+    const [isOpenConfirmModalAlert, setIsOpenConfirmModalAlert] = useState(false);
 
-    // const handleUpdate = async (data: IPlo) => {
-    //   console.log("Update button clicked! 1", data);
-    //   setEditRows(data);
-    //   setEditValueOpen(true);
-    // }
-
-    const handleDetailPLO = async (data: any) => {
-        // setDetailPlo(data);
-        setDetailPloOpen(true);
+    const handleConfirmDelete = () => {
+        setAnchorEl(null);
+        setIsOpenConfirmModalAlert(true);
     }
 
-    // const hookform = useForm<IUser>({
-    //   defaultValues: {
-    //     id: Number(0),
-    //     username: '',
-    //     email: ''
-    //   },
-    // });
-
-    // const hookformEdit = useForm<IUser>({
-    //   defaultValues: {
-    //     id: Number(0),
-    //     username: '',
-    //     email: ''
-    //   },
-    // });
-
-    // const handleSubmit: SubmitHandler<IUser> = async (data: IUser) => {
-    //   // console.log("Create button clicked! 1", data);
-    //   try {
-    //     const createUserData = {
-    //       username: data.username,
-    //       email: data.email
-    //     }
-    //     // console.log("Create user data 2:", createUserData);
-    //     await createUser(createUserData);
-    //   } catch (error) {
-    //     console.error("Error creating user:", error);
-    //   }
-    // }
-
-    const handleSubmitEdit: SubmitHandler<IUser> = async (data: IUser) => {
-        // console.log("Update button clicked! 1", data);
+    const handleDelete = async (rowsSelected: IUser[]) => {
+        setIsOpenConfirmModalAlert(false);
         try {
-            const updateUserData = {
-                ...data
+            const ids = rowsSelected.map((row: IUser) => row.id).join(',');
+            const res = await deleteUser({ ids });
+
+            if (res.success === true) {
+                setAnchorEl(null);
+                setRowsSelected([]);
+                setKey(key + 1);
+
+                setTextAlertBox("Delete success");
+                setTypeAlertBox("success");
+                setIsOpenAlertBox(true);
+                setTimeout(() => {
+                    setIsOpenAlertBox(false);
+                }, 1500);
+            } else {
+                setTextAlertBox("Delete fail");
+                setTypeAlertBox("warning");
+                setIsOpenAlertBox(true);
+                setTimeout(() => {
+                    setIsOpenAlertBox(false);
+                }, 1500)
             }
-            // console.log("Update user data 2:", updateUserData);
-            await updateUser(updateUserData);
         } catch (error) {
-            console.error("Error creating user:", error);
+            setTextAlertBox("Api error");
+            setTypeAlertBox("error");
+            setIsOpenAlertBox(true);
+            setTimeout(() => {
+                setIsOpenAlertBox(false);
+            }, 1500)
         }
     }
 
     const handleNavigationEdit = (data: IUser) => {
         sessionStorage.setItem('accountsData', JSON.stringify(data));
-        const pathname = encodeURIComponent(data?.fname! + data?.lname!);
+        const pathname = encodeURIComponent(data?.name!);
         router.push(`./accounts/${pathname}`);
     }
 
@@ -129,6 +95,13 @@ export default function Home() {
         createColumn("role", "STRING", "Role", 400, {
             headerAlign: "center",
             align: "center",
+        }),
+        createColumn("subjects", "STRING", "Subjects", 400, {
+            headerAlign: "center",
+            align: "center",
+            renderCell(params) {
+                return params.value?.length > 0 ? params.value.length.toString() : 'No subjects'
+            }
         })
     ]
 
@@ -136,16 +109,30 @@ export default function Home() {
         if (userData && Array.isArray(userData?.data)) {
             const transformedData = userData?.data.map((item) => ({
                 id: item.id,
-                ...item
+                ...item,
             }))
             setRows(transformedData)
         }
     }, [userData])
+    // console.log("rows", rows);
 
     const filteredRows = rows.filter((row) => {
         if (!searchText) return true;
 
         const value = row[searchType as keyof typeof row];
+
+        if (searchType === "subjects") {
+            const subjectCount = Array.isArray(value) ? value.length : 0;
+            const noSubjectsText = "No subjects".toLowerCase(); // แปลงเป็น lowercase
+            const searchLower = searchText.toLowerCase(); // แปลง input เป็น lowercase
+
+            // ถ้าค้นหาด้วยคำที่คล้าย "No subjects" (เช่น "no", "sub", "suj")
+            if (noSubjectsText.includes(searchLower)) return subjectCount === 0;
+
+            // ถ้าค้นหาด้วยตัวเลข
+            return subjectCount.toString().includes(searchLower);
+        }
+
         return value?.toString().toLowerCase().includes(searchText.toLowerCase());
     });
 
@@ -162,7 +149,7 @@ export default function Home() {
                     <>
                         <ActionBtn
                             title="Action"
-                            icon={<AddIcon />}
+                            icon={<ExpandMoreIcon />}
                             onClick={(e) => setAnchorEl(e.currentTarget)}
                             disabled={rowsSelected.length === 0}
                         />
@@ -175,13 +162,14 @@ export default function Home() {
                                 "& .MuiMenu-list": { paddingY: '0px', backgroundColor: "#FFF" },
                             }}
                         >
-                            <MenuItem sx={{ width: '100px', backgroundColor: "#FFF" }} onClick={() => console.log("delete")}>Delete</MenuItem>
+                            <MenuItem sx={{ width: '100px', backgroundColor: "#FFF" }} onClick={handleConfirmDelete}>Delete</MenuItem>
                         </Menu>
                     </>
                 }
             >
                 <TableWithSearch
                     idKey='id'
+                    key={key}
                     columns={column}
                     rows={filteredRows}
                     onViewRow={(rowSelected) => handleNavigationEdit(rowSelected)}
@@ -193,39 +181,21 @@ export default function Home() {
                     isMultiSelectRow
                 />
 
-
-                {/* <CreateUserModal
-                    isOpen={addValueOpen}
-                    setIsOpen={setAddValueOpen}
-                    hook={hookform}
-                    handleSubmit={handleSubmit}
-                    title="Create User"
-                />
-
-                <EditUserModal
-                    isOpen={editValueOpen}
-                    setIsOpen={setEditValueOpen}
-                    hook={hookformEdit}
-                    title="Edit User"
-                    handleSubmitEdit={handleSubmitEdit}
-                    plo={editRows}
-                    ploColumn={ploColumns}
-                />
-
-                <DetailPLOModal
-                    isOpen={detailPloOpen}
-                    setIsOpen={setDetailPloOpen}
-                    hook={hookformEdit}
-                    title={detailPlo?.ploName || ""}
-                    plo={detailPlo}
-                /> */}
-
                 <Alert
                     text={textAlertBox}
                     type={typeAlertBox}
                     isOpen={isOpenAlertBox}
                     setIsOpen={setIsOpenAlertBox}
                 />
+
+                <AlertConfirm
+                    isOpen={isOpenConfirmModalAlert}
+                    setIsOpen={setIsOpenConfirmModalAlert}
+                    onConfirm={() => handleDelete(rowsSelected)}
+                    description="Delete this account."
+                    title="Are you sure?"
+                />
+
             </PageContentLayout>
         </>
     )
