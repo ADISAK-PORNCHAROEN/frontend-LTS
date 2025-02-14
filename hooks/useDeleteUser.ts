@@ -6,7 +6,7 @@ import { deleteUserApi } from "#/app/api/userApi";
 export default function useDeleteUsers() {
     const queryClient = useQueryClient();
     return useMutation<IResponse<IUser>, { message: string }, IUser>(
-        [deleteUser], async (data: IUser) => await deleteUserApi(data), {
+        [deleteUser], async (payload: IUser) => await deleteUserApi(payload), {
 
             onSuccess: () => {
                 queryClient.invalidateQueries([getAllUsers]);

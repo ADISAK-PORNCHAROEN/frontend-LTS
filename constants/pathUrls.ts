@@ -16,5 +16,6 @@ export const PathUrls = {
     subjects: "/admin/subjects",
     createSubjects: "/admin/subjects/createSubject",
     editSubjects: "/admin/subjects/[subNameTh]",
+    editAccount: "admin/accounts/[name]",
   },
 };

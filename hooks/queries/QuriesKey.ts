@@ -14,6 +14,8 @@ const getAllSubjects = "GET_ALL_SUBJECTS"
 const deleteSubjects = "DELETE_SUBJECTS"
 const updateSubjects = "UPDATE_SUBJECTS"
 const createSubjects = "CREATE_SUBJECTS"
+
+const updateUserSubjects = "UPDATE_USER_SUBJECTS"
 export {
     getAllUsers,
     deleteUser,
@@ -27,4 +29,5 @@ export {
     deleteSubjects,
     updateSubjects,
     createSubjects,
+    updateUserSubjects,
 }

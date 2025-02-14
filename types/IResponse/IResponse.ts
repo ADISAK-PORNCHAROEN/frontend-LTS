@@ -23,12 +23,15 @@ export interface ApiLine {
 
 export interface IUser {
     id?: number | null;
+    ids?: string | null;
+    name?: string | null;
     fname?: string | null;
     lname?: string | null;
     email?: string | null;
     password?: string | null;
     image?: string | null;
     role?: string | null;   
+    subjects?: any | null;
     createdDate?: Date | null;
     updatedDate?: Date | null;
 }

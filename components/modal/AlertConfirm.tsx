@@ -67,10 +67,10 @@ export default function AlertConfirm({ isOpen, title, description, setIsOpen, on
                                         </button>
                                     </div>
                                     <div className="flex justify-center items-center bg-white rounded-lg">
-                                        <div className=" cursor-pointer bg-[#8286FF] border-l-2 border-y-2 border-[#8286FF] rounded-l-lg w-8 h-10 flex justify-center items-center">
+                                        <div className=" cursor-pointer bg-[#153448] border-l-2 border-y-2 border-[#153448] rounded-l-lg w-8 h-10 flex justify-center items-center">
                                             <CheckRoundedIcon className="text-white" />
                                         </div>
-                                        <button className=" w-24 h-10 hover:bg-[#8286FF] hover:text-white duration-300 border-2 border-[#8286FF] rounded-r-lg text-[#8286FF]"
+                                        <button className=" w-24 h-10 hover:bg-[#153448] hover:text-white duration-300 border-2 border-[#153448] rounded-r-lg text-[#153448]"
                                             type="button"
                                             tabIndex={0}
                                             onClick={() => onConfirm()}                                    >
