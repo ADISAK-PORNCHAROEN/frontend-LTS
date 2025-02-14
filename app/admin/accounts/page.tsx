@@ -173,6 +173,7 @@ export default function Home() {
                     columns={column}
                     rows={filteredRows}
                     onViewRow={(rowSelected) => handleNavigationEdit(rowSelected)}
+                    onViewRow={(rowSelected) => handleNavigationEdit(rowSelected)}
                     searchType={searchType as string}
                     onSearchTypeChange={(newSearchType) => setSearchType(newSearchType)}
                     searchText={searchText}
