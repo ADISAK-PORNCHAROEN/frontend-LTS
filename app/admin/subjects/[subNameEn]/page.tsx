@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from 'react'
-import { Button, FormControl, Grid, Menu, MenuItem, Stack, TextField, Typography } from '@mui/material';
+import { Button, FormControl, FormHelperText, Grid, InputLabel, Menu, MenuItem, Select, Stack, TextField, Typography } from '@mui/material';
 import { Controller, set, SubmitHandler, useForm } from 'react-hook-form';
 import CloseIcon from '@mui/icons-material/Close';
 import AddIcon from '@mui/icons-material/Add';
@@ -12,6 +12,8 @@ import CardBox from '#/components/CardBox';
 import { ISubjects } from '#/types/LTS/ILts';
 import { useParams, usePathname, useRouter } from 'next/navigation';
 import useUpdateSubjects from '#/hooks/useUpdateSubjects';
+import useGetAllSubjects from '#/hooks/useGetAllSubjects';
+import { useSession } from 'next-auth/react';
 
 // type Props = {
 //     params: Promise<{ subNameTh: string }>;
@@ -23,10 +25,14 @@ export default function Page() {
     // const path = decodeURIComponent(subNameTh);
     // console.log("pathname:", path)
     const [subjectName, setSubjectName] = useState<string | null>(null);
-    const { subNameTh } = useParams();
-    const pathname = decodeURIComponent(subNameTh as string);
+    const [subjectNameTh, setSubjectNameTh] = useState<string>("");
+    const { subNameEn } = useParams();
+    const pathname = decodeURIComponent(subNameEn as string);
+    const session = useSession();
+    const user = session.data?.user;
     const { control, handleSubmit, formState: { errors }, setValue } = useForm<ISubjects>();
     const { mutateAsync: updateSubjects, isLoading: isLoadingUpdateSubjects } = useUpdateSubjects();
+    const { data: subjectsData, isLoading: isLoadingSubjectsData } = useGetAllSubjects();
 
     // modal
     const [textAlertBox, setTextAlertBox] = useState("");
@@ -37,10 +43,11 @@ export default function Page() {
         const storedData = sessionStorage.getItem('subjectData');
         if (storedData) {
             const parsedData = JSON.parse(storedData);
-            setSubjectName(parsedData.subNameTh);
-            if (parsedData.subNameTh === pathname) {
+            setSubjectName(parsedData.subNameEn);
+            setSubjectNameTh(parsedData.subNameTh);
+            if (parsedData.subNameEn === pathname) {
                 // Set form values from stored data
-                Object.keys(parsedData).forEach((key) => {
+                Object.keys(parsedData).map((key) => {
                     setValue(key as keyof ISubjects, parsedData[key]);
                 });
             }
@@ -52,27 +59,84 @@ export default function Page() {
         isInactive: "Inactive"
     }
 
+    const checkExistingField = (data: ISubjects, originalData?: ISubjects) => {
+        const errors: string[] = [];
+
+        const hasDataChanged = !originalData ||
+            originalData.subId !== data.subId ||
+            originalData.subNameTh !== data.subNameTh ||
+            originalData.subNameEn !== data.subNameEn;
+
+        console.log("hasDataChanged", hasDataChanged);
+
+        if (!hasDataChanged) {
+            return errors;
+        }
+
+        if (subjectsData?.data) {
+            subjectsData.data.forEach((subject: ISubjects) => {
+                if (subject.id === data.id) {
+                    return;
+                }
+
+                if (subject.subId === data.subId) {
+                    errors.push("รหัสวิชานี้มีอยู่ในระบบแล้ว กรุณาตรวจสอบอีกครั้ง");
+                }
+
+                if (subject.subNameTh === data.subNameTh) {
+                    errors.push("ชื่อวิชา(ภาษาไทย) นี้มีอยู่ในระบบแล้ว กรุณาตรวจสอบอีกครั้ง");
+                }
+
+                if (subject.subNameEn === data.subNameEn) {
+                    errors.push("ชื่อวิชา(ภาษาอังกฤษ) นี้มีอยู่ในระบบแล้ว กรุณาตรวจสอบอีกครั้ง");
+                }
+            });
+        }
+        return errors;
+    };
+
     const handleSubmitSubject: SubmitHandler<ISubjects> = async (data: ISubjects) => {
         try {
+            const originalData = sessionStorage.getItem('subjectData');
+            const parsedOriginalData = originalData ? JSON.parse(originalData) : null;
+
             const result = {
                 ...data,
-                subStatus: status.isActive,
+                subId: data.subId?.trim(),
+                subNameTh: data.subNameTh?.trim(),
+                subNameEn: data.subNameEn?.trim(),
+                // subStatus: status.isActive,
                 updatedDate: new Date(),
-            }
-            console.log(result)
-            sessionStorage.setItem('subjectData', JSON.stringify(result));
+                updatedBy: user?.name
+            };
 
-            await updateSubjects(result)
+            const validationErrors = checkExistingField(result, parsedOriginalData);
+
+            if (validationErrors.length > 0) {
+                setTypeAlertBox("warning");
+                setTextAlertBox(validationErrors[0]);
+                setIsOpenAlertBox(true);
+                setTimeout(() => {
+                    setIsOpenAlertBox(false);
+                }, 1500);
+                return;
+            }
+
+            await updateSubjects(result);
 
             setTypeAlertBox("success");
-            setTextAlertBox("Edit Success");
+            setTextAlertBox("แก้ไขข้อมูลสำเร็จ");
             setIsOpenAlertBox(true);
-            setTimeout(() => {
-                sessionStorage.removeItem('subjectData');
-                setIsOpenAlertBox(false);
-            }, 1500)
 
-            await router.push("../subjects")
+            await new Promise<void>((resolve) => {
+                setTimeout(() => {
+                    sessionStorage.removeItem('subjectData');
+                    setIsOpenAlertBox(false);
+                    resolve();
+                }, 1500);
+            });
+
+            await router.push("../subjects");
 
         } catch (error) {
             setTypeAlertBox("warning");
@@ -80,26 +144,26 @@ export default function Page() {
             setIsOpenAlertBox(true);
             setTimeout(() => {
                 setIsOpenAlertBox(false);
-            }, 1500)
+            }, 1500);
         }
-    }
+    };
 
     return (
         <>
             <PageContentLayout
-                title={`${subjectName === pathname ? `${subjectName}` : "404 not found"}`}
+                title={`${subjectName === pathname ? `${subjectNameTh}` : "404 not found"}`}
                 icon={<AccountBoxIcon />}
                 actions={
                     <>
                         <ActionBtn
-                            title="Cancel"
+                            title="ยกเลิก"
                             icon={<CloseIcon />}
                             color='#db3131'
                             onClick={() => router.push("../subjects")}
                         />
 
                         <ActionBtn
-                            title="Save"
+                            title="บันทึก"
                             icon={<AddIcon />}
                             onClick={handleSubmit((data) => handleSubmitSubject(data))}
                         />
@@ -169,6 +233,45 @@ export default function Page() {
                                             error={!!errors.subNameEn}
                                             helperText={errors.subNameEn?.message}
                                         />
+                                    )}
+                                />
+                            </Grid>
+
+                            <Grid item xs={12}>
+                                <Controller
+                                    control={control}
+                                    name="subStatus"
+                                    defaultValue=""
+                                    rules={{ required: "สถานะรายวิชาต้องเลือก" }}
+                                    render={({ field }) => (
+                                        <FormControl fullWidth size="small" error={!!errors.subStatus}>
+                                            <InputLabel>{<span>สถานะรายวิชา{" "} <span style={{ color: "red" }}>*</span> </span>}</InputLabel>
+                                            <Select
+                                                {...field}
+                                                required
+                                                label={
+                                                    <span>
+                                                        สถานะรายวิชา{" "}
+                                                        <span style={{ color: "red" }}>*</span>
+                                                    </span>
+                                                }
+                                                value={field.value}
+                                                onChange={(e) => field.onChange(e.target.value)}
+                                                renderValue={(selectedValue) => {
+                                                    if (selectedValue === status.isActive) {
+                                                        return <span style={{ color: 'green' }}>🟢 {selectedValue}</span>;
+                                                    } else {
+                                                        return <span style={{ color: 'red' }}>🔴 {selectedValue}</span>;
+                                                    }
+                                                }}
+                                            >
+                                                <MenuItem value={status.isActive} sx={{ color: 'green' }}>🟢 Active</MenuItem>
+                                                <MenuItem value={status.isInactive} sx={{ color: 'red' }}>🔴 Inactive</MenuItem>
+                                            </Select>
+                                            {errors.subStatus && (
+                                                <FormHelperText>{errors.subStatus.message}</FormHelperText>
+                                            )}
+                                        </FormControl>
                                     )}
                                 />
                             </Grid>

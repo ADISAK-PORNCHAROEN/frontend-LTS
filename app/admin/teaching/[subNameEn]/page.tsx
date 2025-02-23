@@ -1,37 +1,37 @@
 "use client";
-import Image from 'next/image'
-import { SetStateAction, use, useEffect, useState } from 'react'
-import { DataGrid, GridColDef, GridValidRowModel } from '@mui/x-data-grid';
-import useGetAllUsers from '#/hooks/useGetAllUsers';
-import { IUser } from '#/types/IResponse/IResponse';
-import useDeleteUser from '#/hooks/useDeleteUser';
+import { useEffect, useState } from 'react'
 import { Button, FormControl, FormHelperText, Grid, InputLabel, Menu, MenuItem, Select, Stack, TextField, Typography } from '@mui/material';
-import useUpdateUser from '#/hooks/useUpdateUser';
 import { Controller, set, SubmitHandler, useForm } from 'react-hook-form';
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
+import CloseIcon from '@mui/icons-material/Close';
 import AddIcon from '@mui/icons-material/Add';
-import Table, { createColumn } from '#/components/table/Table';
-import TableWithSearch from '#/components/table/TableWithSearch';
 import ActionBtn from '#/components/button/ActionBtn';
 import PageContentLayout from '#/components/layout/PageContentLayout';
 import Alert from '#/components/modal/Alert';
 import AccountBoxIcon from '@mui/icons-material/AccountBox';
-import useGetAllSubjects from '#/hooks/useGetAllSubjects';
 import CardBox from '#/components/CardBox';
 import { ISubjects } from '#/types/LTS/ILts';
-import { useRouter } from 'next/navigation';
-import useCreateSubjects from '#/hooks/useCreateSubjects';
-import { Resolver } from 'dns';
+import { useParams, usePathname, useRouter, useSearchParams } from 'next/navigation';
+import useUpdateSubjects from '#/hooks/useUpdateSubjects';
+import useGetAllSubjects from '#/hooks/useGetAllSubjects';
 import { useSession } from 'next-auth/react';
 
-export default function Home() {
-    const [subData, setSubData] = useState<ISubjects[]>([])
+// type Props = {
+//     params: Promise<{ subNameTh: string }>;
+// }
+
+export default function Page() {
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const [subjectName, setSubjectName] = useState<string | null>(null);
+    const [subjectNameTh, setSubjectNameTh] = useState<string>("");
+    const { subNameEn } = useParams();
+    const subjectId = Number(searchParams.get('id'));
+    console.log("subjectId", subjectId);
+    const pathname = decodeURIComponent(subNameEn as string);
     const session = useSession();
     const user = session.data?.user;
-    const { control, handleSubmit, formState: { errors } } = useForm<ISubjects>();
-    const { mutateAsync: createSubjects, isLoading: isLoadingCreateSubjects } = useCreateSubjects();
+    const { control, handleSubmit, formState: { errors }, setValue } = useForm<ISubjects>();
+    const { mutateAsync: updateSubjects, isLoading: isLoadingUpdateSubjects } = useUpdateSubjects();
     const { data: subjectsData, isLoading: isLoadingSubjectsData } = useGetAllSubjects();
 
     // modal
@@ -39,28 +39,83 @@ export default function Home() {
     const [typeAlertBox, setTypeAlertBox] = useState<"success" | "warning" | "error">("success");
     const [isOpenAlertBox, setIsOpenAlertBox] = useState(false);
 
+    // useEffect(() => {
+    //     const storedData = sessionStorage.getItem('teachingData');
+    //     if (storedData) {
+    //         const parsedData = JSON.parse(storedData);
+    //         setSubjectName(parsedData.subNameEn);
+    //         setSubjectNameTh(parsedData.subNameTh);
+    //         if (parsedData.subNameEn === pathname) {
+    //             // Set form values from stored data
+    //             Object.keys(parsedData).map((key) => {
+    //                 setValue(key as keyof ISubjects, parsedData[key]);
+    //             });
+    //         }
+    //     }
+    // }, [setValue, pathname]);
+
+    useEffect(() => {
+        const fetchSubjectData = async () => {
+            if (!subjectId || !subjectsData?.data) return;
+
+            // Find the subject in the fetched data using the ID from URL
+            const subject = subjectsData.data?.find((sub: ISubjects) => sub.id === subjectId);
+            console.log("subject", subject);
+
+            if (subject) {
+                // Verify the subject name matches the URL parameter
+                if (subject.subNameEn === pathname) {
+                    setSubjectName(subject.subNameEn);
+                    setSubjectNameTh(subject.subNameTh ?? "");
+
+                    // Set all form values from the found subject
+                    Object.keys(subject).forEach((key) => {
+                        setValue(key as keyof ISubjects, subject[key as keyof ISubjects]);
+                    });
+                } else {
+                    // Handle mismatch between URL name and subject data
+                    // router.push('/404');
+                }
+            } else {
+                // Handle subject not found
+                // router.push('/404');
+            }
+        };
+
+        fetchSubjectData();
+    }, [subjectId, subjectsData, pathname, setValue, router]);
+
     const status = {
         isActive: "Active",
         isInactive: "Inactive"
     }
 
-    useEffect(() => {
-        if (subjectsData?.data) {
-            setSubData(subjectsData?.data)
-        }
-    }, [subjectsData])
-
-    const checkExistingField = (data: ISubjects) => {
+    const checkExistingField = (data: ISubjects, originalData?: ISubjects) => {
         const errors: string[] = [];
+
+        const hasDataChanged = !originalData ||
+            originalData.subId !== data.subId ||
+            originalData.subNameTh !== data.subNameTh ||
+            originalData.subNameEn !== data.subNameEn;
+
+        if (!hasDataChanged) {
+            return errors;
+        }
 
         if (subjectsData?.data) {
             subjectsData.data.forEach((subject: ISubjects) => {
+                if (subject.id === subjectId) {
+                    return;
+                }
+
                 if (subject.subId === data.subId) {
                     errors.push("รหัสวิชานี้มีอยู่ในระบบแล้ว กรุณาตรวจสอบอีกครั้ง");
                 }
+
                 if (subject.subNameTh === data.subNameTh) {
                     errors.push("ชื่อวิชา(ภาษาไทย) นี้มีอยู่ในระบบแล้ว กรุณาตรวจสอบอีกครั้ง");
                 }
+
                 if (subject.subNameEn === data.subNameEn) {
                     errors.push("ชื่อวิชา(ภาษาอังกฤษ) นี้มีอยู่ในระบบแล้ว กรุณาตรวจสอบอีกครั้ง");
                 }
@@ -71,16 +126,19 @@ export default function Home() {
 
     const handleSubmitSubject: SubmitHandler<ISubjects> = async (data: ISubjects) => {
         try {
+            // const originalData = sessionStorage.getItem('subjectData');
+            // const parsedOriginalData = originalData ? JSON.parse(originalData) : null;
+
             const result = {
                 ...data,
+                // id: subjectId,
                 subId: data.subId?.trim(),
                 subNameTh: data.subNameTh?.trim(),
                 subNameEn: data.subNameEn?.trim(),
-                // substatus: status.isActive,
-                createdDate: new Date(),
-                createdBy: user?.name,
-            }
-            console.log("result", result)
+                // subStatus: status.isActive,
+                updatedDate: new Date(),
+                updatedBy: user?.name
+            };
 
             const validationErrors = checkExistingField(result);
 
@@ -94,19 +152,21 @@ export default function Home() {
                 return;
             }
 
-            await createSubjects(result)
+            await updateSubjects(result);
 
             setTypeAlertBox("success");
-            setTextAlertBox("บันทึกข้อมูลสําเร็จ");
+            setTextAlertBox("แก้ไขข้อมูลสำเร็จ");
             setIsOpenAlertBox(true);
+
             await new Promise<void>((resolve) => {
                 setTimeout(() => {
+                    sessionStorage.removeItem('subjectData');
                     setIsOpenAlertBox(false);
                     resolve();
-                }, 1500)
+                }, 1500);
             });
 
-            await router.push("../subjects")
+            await router.push("../subjects");
 
         } catch (error) {
             setTypeAlertBox("warning");
@@ -114,14 +174,14 @@ export default function Home() {
             setIsOpenAlertBox(true);
             setTimeout(() => {
                 setIsOpenAlertBox(false);
-            }, 1500)
+            }, 1500);
         }
-    }
+    };
 
     return (
         <>
             <PageContentLayout
-                title="Create Subject"
+                title={`${subjectName == pathname ? `${subjectNameTh}` : "404 not found"}`}
                 icon={<AccountBoxIcon />}
                 actions={
                     <>

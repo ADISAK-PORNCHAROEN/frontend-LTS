@@ -2,7 +2,7 @@
 import axiosApi, { isAxiosError } from "#/utils/axiosApi";
 import { IAccount, IResponse, IUser } from "#/types/IResponse/IResponse";
 import { IClo, IPlo, IPloClo, IPloRows } from "#/types/LTS/IPlo";
-import { ISubjects, IUserSubject } from "#/types/LTS/ILts";
+import { ICurriculum, ISubjects, IUserSubject } from "#/types/LTS/ILts";
 
 //nextauth api
 export const findUserByEmailApi = async (email: string): Promise<IUser | null> => {
@@ -136,14 +136,14 @@ export const deleteUserApi = async (payload: IUser) => {
 };
 
 export const updateUserApi = async (payload: IUser) => {
-  console.log("payload", payload);
+  // console.log("payload", payload);
   try {
     const response = await axiosApi.post<IResponse<IUser>>(`lts-user/updateLtsUser`, payload);
     // console.log('Response:', response.data);
 
-    if (response?.data === undefined) {
-      throw new Error("Undefined response data");
-    }
+    // if (response?.data === undefined) {
+    //   return { success: false, message: "Undefined response data" };
+    // }
 
     return response.data;
   } catch (error) {
@@ -310,6 +310,46 @@ export const updateUserSubjectApi = async (payload: IUserSubject) => {
       throw new Error("Undefined response data");
     }
 
+    return response.data;
+  } catch (error) {
+    if (isAxiosError(error)) {
+      console.error('Error details:', error.response?.data);
+    } else {
+      console.error('Unexpected error:', error);
+    }
+    throw error;
+  }
+};
+
+export const createCurriculumApi = async (payload: ICurriculum) => {
+  try {
+
+    const response = await axiosApi.post<IResponse<ICurriculum>>('/lts-curruculum/createLtsCurruculum', payload);
+
+    if (response?.data === undefined) {
+      throw new Error("Undefined response data");
+    }
+
+    return response.data;
+  } catch (error) {
+    if (isAxiosError(error)) {
+      console.error('Error details:', error.response?.data);
+    } else {
+      console.error('Unexpected error:', error);
+    }
+    throw error;
+  }
+};
+
+export const getAllCurriculumApi = async (): Promise<IResponse<ICurriculum[]>> => {
+  try {
+    const response = await axiosApi.get<IResponse<ICurriculum[]>>(
+      '/lts-curruculum/getAllLtsCurruculum'
+    );
+    // // console.log('Response:', response.data);
+    if (response?.data === undefined) {
+      throw new Error("Undefined response data");
+    }
     return response.data;
   } catch (error) {
     if (isAxiosError(error)) {

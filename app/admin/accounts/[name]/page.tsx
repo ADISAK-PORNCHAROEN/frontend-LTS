@@ -69,7 +69,7 @@ export default function Page() {
 
     const handleSubmitSubject: SubmitHandler<IUser> = async (data: IUser) => {
         try {
-            const resultUserSubs = selectedSubjects.map((item: ISubjects) => item.subjects?.[0].id);
+            const resultUserSubs = selectedSubjects.map((item: ISubjects) => item.subjects?.[0].id ?? 0);
 
             const result = {
                 ...data,

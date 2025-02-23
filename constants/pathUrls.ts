@@ -14,8 +14,12 @@ export const PathUrls = {
     // dashboard: "/admin/dashboard",
     accounts: "/admin/accounts",
     subjects: "/admin/subjects",
+    teaching: "/admin/teaching",
+    curriculum: "/admin/curriculum",
     createSubjects: "/admin/subjects/createSubject",
-    editSubjects: "/admin/subjects/[subNameTh]",
+    createCurriculum: "/admin/curriculum/createCurriculum",
+    editSubjects: "/admin/subjects/[subNameEn]",
     editAccount: "admin/accounts/[name]",
+    editTeaching: "/admin/teaching/[subNameEn]",
   },
 };

@@ -23,15 +23,16 @@ import { useRouter } from 'next/navigation';
 import { ISubjects } from '#/types/LTS/ILts';
 import useDeleteSubjects from '#/hooks/useDeleteSubjects';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import useGetAllCurriculum from '#/hooks/useGetAllCurriculum';
 
 export default function Home() {
     const [rows, setRows] = useState<ISubjects[]>([]);
     const [rowsSelected, setRowsSelected] = useState<ISubjects[]>([]);
     const [searchText, setSearchText] = useState<string>('');
-    const [searchType, setSearchType] = useState<string>("subId");
+    const [searchType, setSearchType] = useState<string>("curriculumCode");
     const [pagination, setPagination] = useState({ pageSize: 10, page: 0 });
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-    const { data: subjectsData, isLoading: isLoadingSubjectsData } = useGetAllSubjects();
+    const { data: curriculumData, isLoading: isLoadingCurriculumData } = useGetAllCurriculum();
     const { mutateAsync: deleteSubjects, isLoading: isLoadingDeleteSubjects } = useDeleteSubjects();
     const [alertOpen, setAlertOpen] = useState(false);
     const [addValueOpen, setAddValueOpen] = useState(false);
@@ -74,40 +75,8 @@ export default function Home() {
         }
     }
 
-    const handleDetailPLO = async (data: any) => {
-        // setDetailPlo(data);
-        setDetailPloOpen(true);
-    }
-
-    // const handleSubmit: SubmitHandler<IUser> = async (data: IUser) => {
-    //   // console.log("Create button clicked! 1", data);
-    //   try {
-    //     const createUserData = {
-    //       username: data.username,
-    //       email: data.email
-    //     }
-    //     // console.log("Create user data 2:", createUserData);
-    //     await createUser(createUserData);
-    //   } catch (error) {
-    //     console.error("Error creating user:", error);
-    //   }
-    // }
-
-    // const handleSubmitEdit: SubmitHandler<IUser> = async (data: IUser) => {
-    //     // console.log("Update button clicked! 1", data);
-    //     try {
-    //         const updateUserData = {
-    //             ...data
-    //         }
-    //         // console.log("Update user data 2:", updateUserData);
-    //         await updateUser(updateUserData);
-    //     } catch (error) {
-    //         console.error("Error creating user:", error);
-    //     }
-    // }
-
     const handleNavigationCreate = () => {
-        router.push(`/admin/subjects/createSubject`);
+        router.push(`/admin/curriculum/createCurriculum`);
     };
 
     const handleNavigationEdit = (data: ISubjects) => {
@@ -117,54 +86,98 @@ export default function Home() {
     }
 
     const column: GridColDef[] = [
-        createColumn("subId", "STRING", "รหัสวิชา", 150, {
+        createColumn("curriculumCode", "STRING", "รหัสหลักสูตร", 150, {
             headerAlign: "center",
             align: "center",
             sortable: true
         }),
-        createColumn("subNameTh", "STRING", "ชื่อวิชา (ภาษาไทย)", 250, {
+        createColumn("nameTh", "STRING", "ชื่อหลักสูตร (ภาษาไทย)", 250, {
             headerAlign: "center",
             align: "center",
         }),
-        createColumn("subNameEn", "STRING", "ชื่อวิชา (ภาษาอังกฤษ)", 250, {
+        createColumn("nameEn", "STRING", "ชื่อหลักสูตร (ภาษาอังกฤษ)", 250, {
             headerAlign: "center",
             align: "center",
         }),
-        createColumn("subClo", "STRING", "สมรรถนะรายวิชา", 250, {
+        createColumn("degreeFullTh", "STRING", "ชื่อปริญญาเต็ม (ภาษาไทย)", 250, {
             headerAlign: "center",
             align: "center",
         }),
-        createColumn("subDescTh", "STRING", "คำอธิบายรายวิชา (ภาษาไทย)", 250, {
+        createColumn("degreeShortTh", "STRING", "ชื่อปริญญาย่อ (ภาษาไทย)", 250, {
             headerAlign: "center",
             align: "center",
         }),
-        createColumn("subDescEn", "STRING", "คำอธิบายรายวิชา (ภาษาอังกฤษ)", 250, {
+        createColumn("degreeFullEn", "STRING", "ชื่อปริญญาเต็ม (ภาษาอังกฤษ)", 250, {
             headerAlign: "center",
             align: "center",
         }),
-        createColumn("subStatus", "STRING", "สถานะ", 150, {
+        createColumn("degreeShortEn", "STRING", "ชื่อปริญญาย่อ (ภาษาอังกฤษ)", 250, {
             headerAlign: "center",
             align: "center",
-            sortable: true,
-            renderCell(params) {
-                return (
-                    <Typography variant="body2" color={params.row?.subStatus === 'Active' ? 'success.main' : 'error.main'}>
-                        {params.row?.subStatus === "Active" ? "🟢 Active" : "🔴 Inactive"}
-                    </Typography>
-                );
-            },
+        }),
+        createColumn("major", "STRING", "วิชาเอก", 250, {
+            headerAlign: "center",
+            align: "center",
+        }),
+        createColumn("totalCredits", "STRING", "จำนวนหน่วยกิตตลอดหลักสูตร", 250, {
+            headerAlign: "center",
+            align: "center",
+        }),
+        createColumn("programType", "STRING", "5.1 รูปแบบของหลักสูตร", 250, {
+            headerAlign: "center",
+            align: "center",
+        }),
+        createColumn("degreeCategory", "STRING", "5.2 ประเภทของหลักสูตร", 250, {
+            headerAlign: "center",
+            align: "center",
+        }),
+        createColumn("language", "STRING", "5.3 ภาษาที่ใช้ในหลักสูตร", 250, {
+            headerAlign: "center",
+            align: "center",
+        }),
+        createColumn("acceptance", "STRING", "5.4 การรับเข้าศึกษา", 250, {
+            headerAlign: "center",
+            align: "center",
+        }),
+        createColumn("integration", "STRING", "5.5 การบูรณาการหลักสูตร", 250, {
+            headerAlign: "center",
+            align: "center",
+        }),
+        createColumn("collaboration", "STRING", "5.6 ความร่วมมือกับสถาบันอื่น", 250, {
+            headerAlign: "center",
+            align: "center",
+        }),
+        createColumn("degreeGranted", "STRING", "5.7 การให้ปริญญาแก่ผู้สำเร็จการศึกษา", 250, {
+            headerAlign: "center",
+            align: "center",
+        }),
+        createColumn("approvalCurriculum", "STRING", "หลักสูตรใหม่", 250, {
+            headerAlign: "center",
+            align: "center",
+        }),
+        createColumn("previousCurriculum", "STRING", "หลักสูตรปรับปรุง", 250, {
+            headerAlign: "center",
+            align: "center",
+        }),
+        createColumn("qualityAssurance", "STRING", "ความพร้อมในการเผยแพร่หลักสูตรคุณภาพและมาตรฐาน", 250, {
+            headerAlign: "center",
+            align: "center",
+        }),
+        createColumn("career", "STRING", "อาชีพที่สามารถประกอบได้หลังสำเร็จการศึกษา", 250, {
+            headerAlign: "center",
+            align: "center",
         }),
     ]
 
     useEffect(() => {
-        if (subjectsData?.data) {
-            const transformedData = subjectsData?.data.map((item) => ({
+        if (curriculumData?.data) {
+            const transformedData = curriculumData?.data.map((item) => ({
                 id: item.id,
                 ...item
             }))
             setRows(transformedData)
         }
-    }, [subjectsData])
+    }, [curriculumData])
 
     const filteredRows = rows.filter((row) => {
         if (!searchText) return true;
@@ -180,7 +193,7 @@ export default function Home() {
     return (
         <>
             <PageContentLayout
-                title="Subjects"
+                title="Curriculum"
                 icon={<AccountBoxIcon />}
                 actions={
                     <>
@@ -203,7 +216,7 @@ export default function Home() {
                             <MenuItem sx={{ width: '100px', backgroundColor: "#FFF" }} onClick={() => handleDelete(rowsSelected)}>ลบข้อมูล</MenuItem>
                         </Menu>
                         <ActionBtn
-                            title="สร้างรายวิชา"
+                            title="สร้างหลักสูตร"
                             icon={<AddIcon />}
                             onClick={handleNavigationCreate}
                         />

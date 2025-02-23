@@ -25,29 +25,36 @@ export default function ApplicantTracking() {
   const nameParams = searchParams.get('name')
   let checkCreateSubject = false;
   let checkEditAccount = false;
+  let checkTeachingPage = false;
   // let checkAddTimesheet = false;
   if (dynamicParamsKeys.length > 0) {
     dynamicParamsKeys.forEach(param => {
       // let idx = pathnameWithoutDynamicParams.lastIndexOf("/")
       pathnameWithoutDynamicParams = pathnameWithoutDynamicParams.replace(`/${dynamicParams[param]}`, '')
       // pathnameWithoutDynamicParams = pathnameWithoutDynamicParams.slice(0, idx)
-      if (param == 'subNameTh') {
+      if (param == 'subNameEn') {
         checkCreateSubject = true
       } else if (param == 'name') {
         checkEditAccount = true
+      } else if (param == 'subNameEn') {
+        checkTeachingPage = true
       }
     })
   }
-  
+
+  // console.log("pathname", pathname)
+  // console.log("searchParams", searchParams)
+  // console.log("dynamicParams", dynamicParams)
+
   pathnameWithoutDynamicParams = pathnameWithoutDynamicParams.replaceAll(`/lts`, '')
 
   let pathUrls: MatchUrlType[] = [
     // lts
-    {
-      url: Paths.lts.root, tracks: [
-        { level: 1, name: "Dashboard", linkTo: Paths.lts.root },
-      ]
-    },
+    // {
+    //   url: Paths.lts.root, tracks: [
+    //     { level: 1, name: "Dashboard", linkTo: Paths.lts.root },
+    //   ]
+    // },
     {
       url: Paths.lts.accounts, tracks: [
         // { level: 1, name: "LTS", linkTo: Paths.lts.root },
@@ -60,9 +67,26 @@ export default function ApplicantTracking() {
       ]
     },
     {
+      url: Paths.lts.teaching, tracks: [
+        { level: 1, name: dynamicParams?.subNameEn ? decodeURIComponent(dynamicParams.subNameEn as string) : "Teaching", 
+        linkTo: Paths.lts.teaching },
+      ]
+    },
+    {
+      url: Paths.lts.curriculum, tracks: [
+        { level: 1, name: "Curriculum", linkTo: Paths.lts.curriculum },
+      ]
+    },
+    {
       url: Paths.lts.createSubjects, tracks: [
         { level: 1, name: "Subjects", linkTo: Paths.lts.subjects },
         { level: 2, name: "Create Subject", linkTo: Paths.lts.createSubjects },
+      ]
+    },
+    {
+      url: Paths.lts.createCurriculum, tracks: [
+        { level: 1, name: "Curriculum", linkTo: Paths.lts.curriculum },
+        { level: 2, name: "Create Curriculum", linkTo: Paths.lts.createCurriculum },
       ]
     },
     {
@@ -77,15 +101,21 @@ export default function ApplicantTracking() {
         { level: 2, name: "Edit Accounts", linkTo: Paths.lts.editAccount },
       ]
     },
+    {
+      url: Paths.lts.editTeaching, tracks: [
+        { level: 1, name: "Teaching", linkTo: Paths.lts.teaching },
+        { level: 2, name: "Edit Teaching", linkTo: Paths.lts.editTeaching },
+      ]
+    },
   ];
 
-  if (checkCreateSubject || checkEditAccount) {
+  if (checkCreateSubject || checkEditAccount || checkTeachingPage) {
 
     if (pathnameWithoutDynamicParams == `${Paths.lts.subjects}`) {
       const idx = pathUrls.findIndex(path => path.url == pathnameWithoutDynamicParams)
       if (idx != -1) {
         pathUrls[idx].tracks.push(
-          { level: 3, name: `${decodeURIComponent(dynamicParams?.subNameTh as string)}`, linkTo: Paths.lts.subjects },
+          { level: 3, name: `${decodeURIComponent(dynamicParams?.subNameEn as string)}`, linkTo: Paths.lts.subjects },
         )
       }
     } else if (pathnameWithoutDynamicParams == `${Paths.lts.accounts}`) {

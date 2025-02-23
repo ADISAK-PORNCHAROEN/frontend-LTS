@@ -25,6 +25,9 @@ export type CustomTableColumnType<R extends GridValidRowModel> = GridColDef<R> &
  * @template R as type of data in table
  */
 export type TableProps<R extends GridValidRowModel> = {
+  components?: any;
+  sx?: any
+  getRowClassName?: (params: any) => string
 
   getRowId?: (row: R) => GridRowId;
   /**
@@ -284,7 +287,7 @@ export default function Table<R extends GridValidRowModel>({
         required: requiredColumn && requiredColumn.includes(col.field) ? true : undefined
       }
     }))
-  }, [columns])
+  }, [columns, requiredColumn])
 
   // useEffect(() => {
 
