@@ -16,7 +16,7 @@ import Alert from '#/components/modal/Alert';
 import AccountBoxIcon from '@mui/icons-material/AccountBox';
 import { useRouter } from 'next/navigation';
 import AlertConfirm from '#/components/modal/AlertConfirm';
-import { ISubjects } from '#/types/LTS/ILts';
+import PersonIcon from '@mui/icons-material/Person';
 
 export default function Home() {
     const [rows, setRows] = useState<IUser[]>([]);
@@ -88,19 +88,19 @@ export default function Home() {
 
 
     const column: GridColDef[] = [
-        createColumn("name", "STRING", "Name", 400, {
+        createColumn("name", "STRING", "ชื่อ", 400, {
             headerAlign: "center",
             align: "center",
         }),
-        createColumn("role", "STRING", "Role", 400, {
+        createColumn("role", "STRING", "ตำแหน่ง", 400, {
             headerAlign: "center",
             align: "center",
         }),
-        createColumn("subjects", "STRING", "Subjects", 400, {
+        createColumn("subjects", "STRING", "วิชาที่รับผิดชอบ", 400, {
             headerAlign: "center",
             align: "center",
             renderCell(params) {
-                return params.value?.length > 0 ? params.value.length.toString() : 'No subjects'
+                return params.value?.length > 0 ? params.value.length.toString() : '-'
             }
         })
     ]
@@ -143,8 +143,8 @@ export default function Home() {
     return (
         <>
             <PageContentLayout
-                title="Accounts"
-                icon={<AccountBoxIcon />}
+                title="บัญชีผู้ใช้"
+                icon={<PersonIcon />}
                 actions={
                     <>
                         <ActionBtn
@@ -172,7 +172,6 @@ export default function Home() {
                     key={key}
                     columns={column}
                     rows={filteredRows}
-                    onViewRow={(rowSelected) => handleNavigationEdit(rowSelected)}
                     onViewRow={(rowSelected) => handleNavigationEdit(rowSelected)}
                     searchType={searchType as string}
                     onSearchTypeChange={(newSearchType) => setSearchType(newSearchType)}

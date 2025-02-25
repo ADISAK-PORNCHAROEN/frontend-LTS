@@ -1,3 +1,5 @@
+import { IUserSubject, IUserSubject1 } from "../LTS/ILts";
+
 export interface IResponse<T> {
     success: boolean;
     message: string;
@@ -31,7 +33,7 @@ export interface IUser {
     password?: string | null;
     image?: string | null;
     role?: string | null;   
-    subjects?: any | null;
+    subjects?: IUserSubject1[] | null;
     createdDate?: Date | null;
     updatedDate?: Date | null;
 }

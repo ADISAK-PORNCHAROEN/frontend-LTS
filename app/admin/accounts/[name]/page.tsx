@@ -69,7 +69,7 @@ export default function Page() {
 
     const handleSubmitSubject: SubmitHandler<IUser> = async (data: IUser) => {
         try {
-            const resultUserSubs = selectedSubjects.map((item: ISubjects) => item.subjects?.[0].id);
+            const resultUserSubs = selectedSubjects.map((item: ISubjects) => item.subjects?.[0].id ?? 0);
 
             const result = {
                 ...data,
@@ -265,8 +265,9 @@ export default function Page() {
                                             multiple
                                             disablePortal
                                             fullWidth
+                                            autoHighlight
                                             size='small'
-                                            options={subjectsData?.data || []}
+                                            options={subjectsData?.data?.filter(subject => subject.subStatus === status.isActive) || []}
                                             value={selectedSubjects || []}
                                             onChange={(_, newValue) => {
                                                 const mappedValue = newValue.map(item => {

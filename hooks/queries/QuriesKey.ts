@@ -16,6 +16,11 @@ const updateSubjects = "UPDATE_SUBJECTS"
 const createSubjects = "CREATE_SUBJECTS"
 
 const updateUserSubjects = "UPDATE_USER_SUBJECTS"
+
+const getAllCurriculum = "GET_ALL_CURRICULUM"
+const deleteCurriculum = "DELETE_CURRICULUM"
+const updateCurriculum = "UPDATE_CURRICULUM"
+const createCurriculum = "CREATE_CURRICULUM"
 export {
     getAllUsers,
     deleteUser,
@@ -30,4 +35,8 @@ export {
     updateSubjects,
     createSubjects,
     updateUserSubjects,
+    getAllCurriculum,
+    deleteCurriculum,
+    updateCurriculum,
+    createCurriculum
 }
