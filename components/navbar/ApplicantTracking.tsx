@@ -26,6 +26,7 @@ export default function ApplicantTracking() {
   let checkCreateSubject = false;
   let checkEditAccount = false;
   let checkTeachingPage = false;
+  let checkCurriculumPage = false;
   // let checkAddTimesheet = false;
   if (dynamicParamsKeys.length > 0) {
     dynamicParamsKeys.forEach(param => {
@@ -38,6 +39,8 @@ export default function ApplicantTracking() {
         checkEditAccount = true
       } else if (param == 'subNameEn') {
         checkTeachingPage = true
+      } else if (param == 'degreeFullEn') {
+        checkCurriculumPage = true
       }
     })
   }
@@ -68,8 +71,10 @@ export default function ApplicantTracking() {
     },
     {
       url: Paths.lts.teaching, tracks: [
-        { level: 1, name: dynamicParams?.subNameEn ? decodeURIComponent(dynamicParams.subNameEn as string) : "Teaching", 
-        linkTo: Paths.lts.teaching },
+        {
+          level: 1, name: dynamicParams?.subNameEn ? decodeURIComponent(dynamicParams.subNameEn as string) : "Teaching",
+          linkTo: Paths.lts.teaching
+        },
       ]
     },
     {
@@ -107,9 +112,15 @@ export default function ApplicantTracking() {
         { level: 2, name: "Edit Teaching", linkTo: Paths.lts.editTeaching },
       ]
     },
+    {
+      url: Paths.lts.editCurriculum, tracks: [
+        { level: 1, name: "Curriculum", linkTo: Paths.lts.curriculum },
+        { level: 2, name: "Edit Curriculum", linkTo: Paths.lts.editCurriculum },
+      ]
+    },
   ];
 
-  if (checkCreateSubject || checkEditAccount || checkTeachingPage) {
+  if (checkCreateSubject || checkEditAccount || checkTeachingPage || checkCurriculumPage) {
 
     if (pathnameWithoutDynamicParams == `${Paths.lts.subjects}`) {
       const idx = pathUrls.findIndex(path => path.url == pathnameWithoutDynamicParams)
@@ -123,6 +134,13 @@ export default function ApplicantTracking() {
       if (idx != -1) {
         pathUrls[idx].tracks.push(
           { level: 3, name: `${decodeURIComponent(dynamicParams?.name as string)}`, linkTo: Paths.lts.accounts },
+        )
+      }
+    } else if (pathnameWithoutDynamicParams == `${Paths.lts.curriculum}`) {
+      const idx = pathUrls.findIndex(path => path.url == pathnameWithoutDynamicParams)
+      if (idx != -1) {
+        pathUrls[idx].tracks.push(
+          { level: 3, name: `${decodeURIComponent(dynamicParams?.degreeFullEn as string)}`, linkTo: Paths.lts.curriculum },
         )
       }
     }

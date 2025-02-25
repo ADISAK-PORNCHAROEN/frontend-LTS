@@ -265,8 +265,9 @@ export default function Page() {
                                             multiple
                                             disablePortal
                                             fullWidth
+                                            autoHighlight
                                             size='small'
-                                            options={subjectsData?.data || []}
+                                            options={subjectsData?.data?.filter(subject => subject.subStatus === status.isActive) || []}
                                             value={selectedSubjects || []}
                                             onChange={(_, newValue) => {
                                                 const mappedValue = newValue.map(item => {

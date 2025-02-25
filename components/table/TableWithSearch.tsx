@@ -15,6 +15,11 @@ export type TableWithSearchProps<R extends GridValidRowModel> = {
   searchText: string
   onSearchTextChange: (newSearchText: string) => void;
   onSearchTextClear?: () => void; // TODO after all page implement > change to not optional
+  // New curriculum search props
+  curriculumValue?: string;
+  onCurriculumChange?: (newValue: string) => void;
+  curriculumOptions?: { value: string, name: string }[];
+  // End of new props
   extraSearchConfig?: { field: keyof R, option: { value: string, name: string }[], dateFormat?: { input: string; output: string; views?: DateView[] | undefined } }[]
   slotOppositeSearch?: ReactNode;
   slotAboveTable?: ReactNode;
@@ -28,6 +33,11 @@ export default function TableWithSearch<R extends GridValidRowModel>({
   searchText,
   onSearchTextChange,
   onSearchTextClear,
+  // New curriculum search props
+  curriculumValue = '',
+  onCurriculumChange,
+  curriculumOptions = [],
+  // End of new props
   extraSearchConfig,
   slotOppositeSearch,
   slotAboveTable,
@@ -37,7 +47,7 @@ export default function TableWithSearch<R extends GridValidRowModel>({
 }: TableWithSearchProps<R> & TableProps<R>) {
   ("*****************")
 
-  const excludedFields = ['detail', 'trackingStatus'];
+  const excludedFields = ['detail', 'trackingStatus', 'curriculum'];
   const searchTypesOptions = tableProps.columns.filter(item =>
     item.field !== 'concatenatedstages' && !excludedFields.includes(item.field as string)
   ) as (GridColDef<R> & { dataType: AdvancedSearchType })[];
@@ -65,6 +75,12 @@ export default function TableWithSearch<R extends GridValidRowModel>({
     }
   }
 
+  const handleCurriculumChange = (value: string) => {
+    if (onCurriculumChange) {
+      onCurriculumChange(value);
+    }
+  }
+
   return (
     <>
       <Box className="flex items-center justify-between mb-4">
@@ -72,6 +88,20 @@ export default function TableWithSearch<R extends GridValidRowModel>({
           {slotOppositeSearch && <>{slotOppositeSearch}</>}
         </Box>
         <Box className="flex items-center justify-end gap-4">
+          {/* New Curriculum search dropdown */}
+          {curriculumOptions.length > 0 && (
+            <Autocomplete
+              className="w-56"
+              size='small'
+              options={curriculumOptions}
+              getOptionLabel={(option) => option.name}
+              renderInput={(params) => (<TextField {...params} />)}
+              onChange={(_, newValue) => handleCurriculumChange(newValue ? newValue.value : '')}
+              value={curriculumOptions.find(option => option.value === curriculumValue) || null}
+              disabled={isOpenAdvanceSearch}
+            />
+          )}
+
           <Autocomplete
             className="w-48"
             size='small'

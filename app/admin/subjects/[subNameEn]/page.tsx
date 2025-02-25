@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from 'react'
-import { Button, FormControl, FormHelperText, Grid, InputLabel, Menu, MenuItem, Select, Stack, TextField, Typography } from '@mui/material';
+import { Autocomplete, Button, FormControl, FormHelperText, Grid, InputLabel, Menu, MenuItem, Select, Stack, TextField, Typography } from '@mui/material';
 import { Controller, set, SubmitHandler, useForm } from 'react-hook-form';
 import CloseIcon from '@mui/icons-material/Close';
 import AddIcon from '@mui/icons-material/Add';
@@ -9,11 +9,12 @@ import PageContentLayout from '#/components/layout/PageContentLayout';
 import Alert from '#/components/modal/Alert';
 import AccountBoxIcon from '@mui/icons-material/AccountBox';
 import CardBox from '#/components/CardBox';
-import { ISubjects } from '#/types/LTS/ILts';
+import { ICurriculum, ISubjects } from '#/types/LTS/ILts';
 import { useParams, usePathname, useRouter } from 'next/navigation';
 import useUpdateSubjects from '#/hooks/useUpdateSubjects';
 import useGetAllSubjects from '#/hooks/useGetAllSubjects';
 import { useSession } from 'next-auth/react';
+import useGetAllCurriculum from '#/hooks/useGetAllCurriculum';
 
 // type Props = {
 //     params: Promise<{ subNameTh: string }>;
@@ -33,6 +34,7 @@ export default function Page() {
     const { control, handleSubmit, formState: { errors }, setValue } = useForm<ISubjects>();
     const { mutateAsync: updateSubjects, isLoading: isLoadingUpdateSubjects } = useUpdateSubjects();
     const { data: subjectsData, isLoading: isLoadingSubjectsData } = useGetAllSubjects();
+    const { data: curriculumData, isLoading: isLoadingCurriculumData } = useGetAllCurriculum();
 
     // modal
     const [textAlertBox, setTextAlertBox] = useState("");
@@ -109,6 +111,7 @@ export default function Page() {
                 updatedDate: new Date(),
                 updatedBy: user?.name
             };
+            console.log("result", result);
 
             const validationErrors = checkExistingField(result, parsedOriginalData);
 
@@ -237,7 +240,31 @@ export default function Page() {
                                 />
                             </Grid>
 
-                            <Grid item xs={12}>
+                            <Grid item xs={12} md={6}>
+                                <Controller
+                                    control={control}
+                                    name="curriculum"
+                                    defaultValue={null}
+                                    render={({ field }) => (
+                                        <Autocomplete
+                                            {...field}
+                                            autoFocus
+                                            autoHighlight
+                                            size='small'
+                                            options={curriculumData?.data || []}
+                                            getOptionLabel={(option: ICurriculum) => option.degreeFullTh || ""}
+                                            onChange={(event, value) => field.onChange(value)}
+                                            value={field.value || null}
+                                            isOptionEqualToValue={(option, value) => option.id === value.id}
+                                            renderInput={(params) => (
+                                                <TextField {...params} label="หลักสูตรรายวิชา" />
+                                            )}
+                                        />
+                                    )}
+                                />
+                            </Grid>
+
+                            <Grid item xs={12} md={6}>
                                 <Controller
                                     control={control}
                                     name="subStatus"

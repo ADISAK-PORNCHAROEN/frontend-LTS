@@ -20,24 +20,22 @@ import AccountBoxIcon from '@mui/icons-material/AccountBox';
 import useGetAllSubjects from '#/hooks/useGetAllSubjects';
 import { hash, hashSync } from 'bcryptjs';
 import { useRouter } from 'next/navigation';
-import { ISubjects } from '#/types/LTS/ILts';
+import { ICurriculum, ISubjects } from '#/types/LTS/ILts';
 import useDeleteSubjects from '#/hooks/useDeleteSubjects';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import useGetAllCurriculum from '#/hooks/useGetAllCurriculum';
+import useDeleteCurruculum from '#/hooks/useDeleteCurruculum';
+import LibraryBooksIcon from '@mui/icons-material/LibraryBooks';
 
 export default function Home() {
     const [rows, setRows] = useState<ISubjects[]>([]);
     const [rowsSelected, setRowsSelected] = useState<ISubjects[]>([]);
     const [searchText, setSearchText] = useState<string>('');
     const [searchType, setSearchType] = useState<string>("curriculumCode");
-    const [pagination, setPagination] = useState({ pageSize: 10, page: 0 });
+    const [pagination, setPagination] = useState({ pageSize: 5, page: 0 });
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const { data: curriculumData, isLoading: isLoadingCurriculumData } = useGetAllCurriculum();
-    const { mutateAsync: deleteSubjects, isLoading: isLoadingDeleteSubjects } = useDeleteSubjects();
-    const [alertOpen, setAlertOpen] = useState(false);
-    const [addValueOpen, setAddValueOpen] = useState(false);
-    const [editValueOpen, setEditValueOpen] = useState(false);
-    const [detailPloOpen, setDetailPloOpen] = useState(false);
+    const { mutateAsync: deleteCurrriculum, isLoading: isLoadingDeleteCurrriculum } = useDeleteCurruculum();
     const router = useRouter();
     const [key, setKey] = useState(0);
 
@@ -49,7 +47,7 @@ export default function Home() {
     const handleDelete = async (rowsSelected: ISubjects[]) => {
         try {
             const ids = rowsSelected.map((row: ISubjects) => row.id).join(',');
-            const res = await deleteSubjects({ ids });
+            const res = await deleteCurrriculum({ ids });
 
             if (res.success === true) {
                 setAnchorEl(null);
@@ -79,10 +77,10 @@ export default function Home() {
         router.push(`/admin/curriculum/createCurriculum`);
     };
 
-    const handleNavigationEdit = (data: ISubjects) => {
+    const handleNavigationEdit = (data: ICurriculum) => {
         sessionStorage.setItem('subjectData', JSON.stringify(data));
-        const pathname = encodeURIComponent(data?.subNameEn!)
-        router.push(`/admin/subjects/${pathname}`);
+        const pathname = encodeURIComponent(data?.degreeFullEn!)
+        router.push(`/admin/curriculum/${pathname}`);
     }
 
     const column: GridColDef[] = [
@@ -193,8 +191,8 @@ export default function Home() {
     return (
         <>
             <PageContentLayout
-                title="Curriculum"
-                icon={<AccountBoxIcon />}
+                title="หลักสูตรรายวิชา"
+                icon={<LibraryBooksIcon />}
                 actions={
                     <>
                         <ActionBtn
@@ -234,8 +232,8 @@ export default function Home() {
                     searchText={searchText}
                     onSearchTextChange={(newSearchText) => setSearchText(newSearchText)}
                     onSelectRows={(rowsSelected) => handleSelectRows(rowsSelected)}
-                    // pagination={pagination}
-                    // setPagination={setPagination}
+                    pagination={pagination}
+                    setPagination={setPagination}
                     isMultiSelectRow
                 />
 

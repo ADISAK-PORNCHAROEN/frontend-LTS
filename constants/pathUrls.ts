@@ -21,5 +21,6 @@ export const PathUrls = {
     editSubjects: "/admin/subjects/[subNameEn]",
     editAccount: "admin/accounts/[name]",
     editTeaching: "/admin/teaching/[subNameEn]",
+    editCurriculum: "admin/curriculum/[degreeFullEn]",
   },
 };

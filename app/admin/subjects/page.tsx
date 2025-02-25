@@ -23,6 +23,7 @@ import { useRouter } from 'next/navigation';
 import { ISubjects } from '#/types/LTS/ILts';
 import useDeleteSubjects from '#/hooks/useDeleteSubjects';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import MenuBookIcon from '@mui/icons-material/MenuBook';
 
 export default function Home() {
     const [rows, setRows] = useState<ISubjects[]>([]);
@@ -154,7 +155,17 @@ export default function Home() {
                 );
             },
         }),
+        // Hidden column for curriculum filtering
+        // createColumn("curriculum", "STRING", "หลักสูตร", 0, {
+        //     headerAlign: "center",
+        //     align: "center",
+        //     // hide: true, // Hide from table view
+        // }),
     ]
+
+    // Add new curriculum state
+    const [curriculumValue, setCurriculumValue] = useState<string>('');
+    const [curriculumOptions, setCurriculumOptions] = useState<{ value: string, name: string }[]>([]);
 
     useEffect(() => {
         if (subjectsData?.data) {
@@ -163,25 +174,81 @@ export default function Home() {
                 ...item
             }))
             setRows(transformedData)
+
+            // Extract unique curriculum options
+            const curriculums = new Set<string>();
+            const options: { value: string, name: string }[] = [];
+
+            transformedData.forEach(item => {
+                if (item.curriculum && item.curriculum.degreeShortTh) {
+                    const currName = item.curriculum.degreeShortTh;
+                    const currId = item.curriculum?.id?.toString() ?? '';
+                    if (!curriculums.has(currId)) {
+                        curriculums.add(currId);
+                        options.push({
+                            value: currId,
+                            name: currName
+                        });
+                    }
+                }
+            });
+
+            // Add an option for items with no curriculum
+            options.unshift({
+                value: '',
+                name: 'ทั้งหมด'
+            });
+
+            setCurriculumOptions(options);
         }
     }, [subjectsData])
 
-    const filteredRows = rows.filter((row) => {
-        if (!searchText) return true;
+    // const filteredRows = rows.filter((row) => {
+    //     if (!searchText) return true;
 
-        const value = row[searchType as keyof typeof row];
-        return value?.toString().toLowerCase().includes(searchText.toLowerCase());
+    //     const value = row[searchType as keyof typeof row];
+    //     return value?.toString().toLowerCase().includes(searchText.toLowerCase());
+    // });
+
+    const filteredRows = rows.filter((row) => {
+        // Filter by main search field
+        let mainSearchMatch = true;
+        if (searchText) {
+            const value = row[searchType as keyof typeof row];
+            mainSearchMatch = value?.toString().toLowerCase().includes(searchText.toLowerCase()) ?? false;
+        }
+
+        // Filter by curriculum
+        let curriculumMatch = true;
+        if (curriculumValue) {
+            if (!row.curriculum) {
+                curriculumMatch = false;
+            } else {
+                curriculumMatch = row.curriculum?.id?.toString() === curriculumValue;
+            }
+        }
+
+        // Both filters must match
+        return mainSearchMatch && curriculumMatch;
     });
 
     const handleSelectRows = (rowSelected: ISubjects[]) => {
         setRowsSelected(rowSelected);
     };
 
+    const handleSearchTextClear = () => {
+        setSearchText('');
+    };
+
+    const handleCurriculumChange = (value: string) => {
+        setCurriculumValue(value);
+    };
+
     return (
         <>
             <PageContentLayout
-                title="Subjects"
-                icon={<AccountBoxIcon />}
+                title="รายวิชา"
+                icon={<MenuBookIcon />}
                 actions={
                     <>
                         <ActionBtn
@@ -220,6 +287,10 @@ export default function Home() {
                     onSearchTypeChange={(newSearchType) => setSearchType(newSearchType)}
                     searchText={searchText}
                     onSearchTextChange={(newSearchText) => setSearchText(newSearchText)}
+                    onSearchTextClear={handleSearchTextClear}
+                    curriculumValue={curriculumValue}
+                    onCurriculumChange={handleCurriculumChange}
+                    curriculumOptions={curriculumOptions}
                     onSelectRows={(rowsSelected) => handleSelectRows(rowsSelected)}
                     // pagination={pagination}
                     // setPagination={setPagination}

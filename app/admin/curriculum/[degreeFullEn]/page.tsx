@@ -1,39 +1,32 @@
 "use client";
-import Image from 'next/image'
-import { SetStateAction, use, useEffect, useState } from 'react'
-import { DataGrid, GridColDef, GridValidRowModel } from '@mui/x-data-grid';
-import useGetAllUsers from '#/hooks/useGetAllUsers';
-import { IUser } from '#/types/IResponse/IResponse';
-import useDeleteUser from '#/hooks/useDeleteUser';
+import { useEffect, useState } from 'react'
 import { Button, FormControl, FormHelperText, Grid, InputLabel, Menu, MenuItem, Select, Stack, TextField, Typography } from '@mui/material';
-import useUpdateUser from '#/hooks/useUpdateUser';
 import { Controller, set, SubmitHandler, useForm } from 'react-hook-form';
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
+import CloseIcon from '@mui/icons-material/Close';
 import AddIcon from '@mui/icons-material/Add';
-import Table, { createColumn } from '#/components/table/Table';
-import TableWithSearch from '#/components/table/TableWithSearch';
 import ActionBtn from '#/components/button/ActionBtn';
 import PageContentLayout from '#/components/layout/PageContentLayout';
 import Alert from '#/components/modal/Alert';
 import AccountBoxIcon from '@mui/icons-material/AccountBox';
-import useGetAllSubjects from '#/hooks/useGetAllSubjects';
 import CardBox from '#/components/CardBox';
 import { ICurriculum, ISubjects } from '#/types/LTS/ILts';
-import { useRouter } from 'next/navigation';
-import useCreateSubjects from '#/hooks/useCreateSubjects';
-import { Resolver } from 'dns';
+import { useParams, usePathname, useRouter } from 'next/navigation';
+import useUpdateSubjects from '#/hooks/useUpdateSubjects';
+import useGetAllSubjects from '#/hooks/useGetAllSubjects';
 import { useSession } from 'next-auth/react';
-import useCreateCurriculum from '#/hooks/useCreateCurriculum';
 import useGetAllCurriculum from '#/hooks/useGetAllCurriculum';
+import useUpdateCurruculum from '#/hooks/useUpdateCurruculum';
 
-export default function Home() {
-    const [curData, setcurData] = useState<ICurriculum[]>([])
+export default function Page() {
     const router = useRouter();
+    const [subjectName, setSubjectName] = useState<string | null>(null);
+    const [subjectNameTh, setSubjectNameTh] = useState<string>("");
+    const { degreeFullEn } = useParams();
+    const pathname = decodeURIComponent(degreeFullEn as string);
     const session = useSession();
     const user = session.data?.user;
-    const { control, handleSubmit, formState: { errors } } = useForm<ICurriculum>();
-    const { mutateAsync: createCurriculum, isLoading: isLoadingCreateCurriculum } = useCreateCurriculum();
+    const { control, handleSubmit, formState: { errors }, setValue } = useForm<ICurriculum>();
+    const { mutateAsync: updateCurrriculum, isLoading: isLoadingUpdateCurrriculum } = useUpdateCurruculum();
     const { data: curriculumData, isLoading: isLoadingCurriculumData } = useGetAllCurriculum();
 
     // modal
@@ -41,22 +34,45 @@ export default function Home() {
     const [typeAlertBox, setTypeAlertBox] = useState<"success" | "warning" | "error">("success");
     const [isOpenAlertBox, setIsOpenAlertBox] = useState(false);
 
-    const status = {
-        isActive: "Active",
-        isInactive: "Inactive"
-    }
-
     useEffect(() => {
-        if (curriculumData?.data) {
-            setcurData(curriculumData?.data)
+        const storedData = sessionStorage.getItem('subjectData');
+        if (storedData) {
+            const parsedData = JSON.parse(storedData);
+            setSubjectName(parsedData.degreeFullEn);
+            setSubjectNameTh(parsedData.degreeFullTh);
+            if (parsedData.degreeFullEn === pathname) {
+                // Set form values from stored data
+                Object.keys(parsedData).map((key) => {
+                    setValue(key as keyof ICurriculum, parsedData[key]);
+                });
+            }
         }
-    }, [curriculumData])
+    }, [setValue, pathname]);
 
-    const checkExistingField = (data: ICurriculum) => {
+    const checkExistingField = (data: ICurriculum, originalData?: ICurriculum) => {
         const errors: string[] = [];
+
+        const hasDataChanged = !originalData ||
+            originalData.curriculumCode !== data.curriculumCode ||
+            originalData.nameTh !== data.nameTh ||
+            originalData.nameEn !== data.nameEn ||
+            originalData.degreeFullTh !== data.degreeFullTh ||
+            originalData.degreeShortTh !== data.degreeShortTh ||
+            originalData.degreeFullEn !== data.degreeFullEn ||
+            originalData.degreeShortEn !== data.degreeShortEn;
+
+        console.log("hasDataChanged", hasDataChanged);
+
+        if (!hasDataChanged) {
+            return errors;
+        }
 
         if (curriculumData?.data) {
             curriculumData.data.forEach((subject: ICurriculum) => {
+                if (subject.id === data.id) {
+                    return;
+                }
+
                 if (subject.curriculumCode === data.curriculumCode) {
                     errors.push("รหัสหลักสูตรนี้มีอยู่ในระบบแล้ว กรุณาตรวจสอบอีกครั้ง");
                 }
@@ -85,6 +101,9 @@ export default function Home() {
 
     const handleSubmitSubject: SubmitHandler<ICurriculum> = async (data: ICurriculum) => {
         try {
+            const originalData = sessionStorage.getItem('subjectData');
+            const parsedOriginalData = originalData ? JSON.parse(originalData) : null;
+
             const result = {
                 ...data,
                 curriculumCode: data.curriculumCode?.trim(),
@@ -94,12 +113,11 @@ export default function Home() {
                 degreeShortTh: data.degreeShortTh?.trim(),
                 degreeFullEn: data.degreeFullEn?.trim(),
                 degreeShortEn: data.degreeShortEn?.trim(),
-                createdDate: new Date(),
-                createdBy: user?.name,
-            }
-            console.log("result", result)
+                updatedDate: new Date(),
+                updatedBy: user?.name
+            };
 
-            const validationErrors = checkExistingField(result);
+            const validationErrors = checkExistingField(result, parsedOriginalData);
 
             if (validationErrors.length > 0) {
                 setTypeAlertBox("warning");
@@ -111,16 +129,18 @@ export default function Home() {
                 return;
             }
 
-            await createCurriculum(result)
+            await updateCurrriculum(result);
 
             setTypeAlertBox("success");
-            setTextAlertBox("บันทึกข้อมูลสําเร็จ");
+            setTextAlertBox("แก้ไขข้อมูลสำเร็จ");
             setIsOpenAlertBox(true);
+
             await new Promise<void>((resolve) => {
                 setTimeout(() => {
+                    sessionStorage.removeItem('subjectData');
                     setIsOpenAlertBox(false);
                     resolve();
-                }, 1500)
+                }, 1500);
             });
 
             await router.push("../curriculum");
@@ -131,17 +151,24 @@ export default function Home() {
             setIsOpenAlertBox(true);
             setTimeout(() => {
                 setIsOpenAlertBox(false);
-            }, 1500)
+            }, 1500);
         }
-    }
+    };
 
     return (
         <>
             <PageContentLayout
-                title="Create Curriculum"
+                title={`${subjectName === pathname ? `${subjectNameTh}` : "404 not found"}`}
                 icon={<AccountBoxIcon />}
                 actions={
                     <>
+                        <ActionBtn
+                            title="ยกเลิก"
+                            icon={<CloseIcon />}
+                            color='#db3131'
+                            onClick={() => router.push("../curriculum")}
+                        />
+
                         <ActionBtn
                             title="บันทึก"
                             icon={<AddIcon />}

@@ -175,7 +175,7 @@ export default function SidebarLayout({ children }: Props) {
     return (
         <Box sx={{ display: 'flex' }}>
             <CssBaseline />
-            <AppBar position="fixed" open={open} sx={{ backgroundColor: '#1a3f61' }}>
+            <AppBar position="fixed" open={open} sx={{ /* backgroundColor: '#1a3f61' */ }}>
                 <Toolbar>
                     <IconButton
                         color="inherit"

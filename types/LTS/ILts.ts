@@ -2,6 +2,7 @@ import { IUser } from "../IResponse/IResponse";
 
 export interface ISubjects {
     id?: number | null;
+    curriculum?: ICurriculum | null;
     subId?: string | null;
     subNameTh?: string | null;
     subNameEn?: string | null;

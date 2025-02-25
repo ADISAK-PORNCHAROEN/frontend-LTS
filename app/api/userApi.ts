@@ -276,10 +276,8 @@ export const deleteSubjectsApi = async (payload: ISubjects) => {
   }
 };
 
-
-
 export const updateSubjectsApi = async (payload: ISubjects) => {
-  // // console.log("payload", payload);
+  // console.log("payload", payload);
   try {
     const response = await axiosApi.put<IResponse<ISubjects>>(`/lts-subjects/updateLtsSubjects`, payload);
     // // console.log('Response:', response.data);
@@ -358,5 +356,43 @@ export const getAllCurriculumApi = async (): Promise<IResponse<ICurriculum[]>> =
       console.error('Unexpected error:', error);
     }
     throw error;
+  }
+};
+
+export const updateCurriculumApi = async (payload: ICurriculum) => {
+  // // console.log("payload", payload);
+  try {
+    const response = await axiosApi.put<IResponse<ICurriculum>>(`/lts-curruculum/updateLtsCurruculum`, payload);
+    // // console.log('Response:', response.data);
+
+    if (response?.data === undefined) {
+      throw new Error("Undefined response data");
+    }
+
+    return response.data;
+  } catch (error) {
+    if (isAxiosError(error)) {
+      console.error('Error details:', error.response?.data);
+    } else {
+      console.error('Unexpected error:', error);
+    }
+    throw error;
+  }
+};
+
+export const deleteCurriculumApi = async (payload: ICurriculum) => {
+  try {
+    const response = await axiosApi.delete<IResponse<ICurriculum>>(
+      `/lts-curruculum/deleteLtsCurruculum/${payload.ids}`
+    )
+    return response?.data;
+  } catch (err) {
+    if (isAxiosError(err)) {
+      console.error(err);
+      return { success: false, message: err.message };
+    } else {
+      console.error(err);
+      return { success: false, message: 'An unknown error occurred' };
+    }
   }
 };

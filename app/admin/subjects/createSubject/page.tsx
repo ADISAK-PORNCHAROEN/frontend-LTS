@@ -5,7 +5,7 @@ import { DataGrid, GridColDef, GridValidRowModel } from '@mui/x-data-grid';
 import useGetAllUsers from '#/hooks/useGetAllUsers';
 import { IUser } from '#/types/IResponse/IResponse';
 import useDeleteUser from '#/hooks/useDeleteUser';
-import { Button, FormControl, FormHelperText, Grid, InputLabel, Menu, MenuItem, Select, Stack, TextField, Typography } from '@mui/material';
+import { Autocomplete, Button, FormControl, FormHelperText, Grid, InputLabel, Menu, MenuItem, Select, Stack, TextField, Typography } from '@mui/material';
 import useUpdateUser from '#/hooks/useUpdateUser';
 import { Controller, set, SubmitHandler, useForm } from 'react-hook-form';
 import EditIcon from '@mui/icons-material/Edit';
@@ -19,11 +19,12 @@ import Alert from '#/components/modal/Alert';
 import AccountBoxIcon from '@mui/icons-material/AccountBox';
 import useGetAllSubjects from '#/hooks/useGetAllSubjects';
 import CardBox from '#/components/CardBox';
-import { ISubjects } from '#/types/LTS/ILts';
+import { ICurriculum, ISubjects } from '#/types/LTS/ILts';
 import { useRouter } from 'next/navigation';
 import useCreateSubjects from '#/hooks/useCreateSubjects';
 import { Resolver } from 'dns';
 import { useSession } from 'next-auth/react';
+import useGetAllCurriculum from '#/hooks/useGetAllCurriculum';
 
 export default function Home() {
     const [subData, setSubData] = useState<ISubjects[]>([])
@@ -33,6 +34,7 @@ export default function Home() {
     const { control, handleSubmit, formState: { errors } } = useForm<ISubjects>();
     const { mutateAsync: createSubjects, isLoading: isLoadingCreateSubjects } = useCreateSubjects();
     const { data: subjectsData, isLoading: isLoadingSubjectsData } = useGetAllSubjects();
+    const { data: curriculumData, isLoading: isLoadingCurriculumData } = useGetAllCurriculum();
 
     // modal
     const [textAlertBox, setTextAlertBox] = useState("");
@@ -76,7 +78,6 @@ export default function Home() {
                 subId: data.subId?.trim(),
                 subNameTh: data.subNameTh?.trim(),
                 subNameEn: data.subNameEn?.trim(),
-                // substatus: status.isActive,
                 createdDate: new Date(),
                 createdBy: user?.name,
             }
@@ -200,7 +201,31 @@ export default function Home() {
                                 />
                             </Grid>
 
-                            <Grid item xs={12}>
+                            <Grid item xs={12} md={6}>
+                                <Controller
+                                    control={control}
+                                    name="curriculum"
+                                    defaultValue={null}
+                                    render={({ field }) => (
+                                        <Autocomplete
+                                            {...field}
+                                            autoFocus
+                                            autoHighlight
+                                            size='small'
+                                            options={curriculumData?.data || []}
+                                            getOptionLabel={(option: ICurriculum) => option.degreeFullTh || ""}
+                                            onChange={(event, value) => field.onChange(value)}
+                                            value={field.value || null}
+                                            isOptionEqualToValue={(option, value) => option.id === value.id}
+                                            renderInput={(params) => (
+                                                <TextField {...params} label="หลักสูตรรายวิชา" />
+                                            )}
+                                        />
+                                    )}
+                                />
+                            </Grid>
+
+                            <Grid item xs={12} md={6}>
                                 <Controller
                                     control={control}
                                     name="subStatus"
