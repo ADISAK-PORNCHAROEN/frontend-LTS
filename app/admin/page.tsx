@@ -136,7 +136,7 @@ export default function Home() {
                 id: plo.id,
                 ploName: plo.ploName,
                 ploDesc: plo.ploDesc,
-                ploStatus: plo.ploStatus
+                // ploStatus: plo.ploStatus
             }))
             setPloColumns(transformedData);
         }

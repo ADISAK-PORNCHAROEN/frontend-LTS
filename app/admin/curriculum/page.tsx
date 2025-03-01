@@ -1,31 +1,20 @@
 "use client";
-import Image from 'next/image'
-import { SetStateAction, use, useEffect, useState } from 'react'
-import { DataGrid, GridColDef, GridValidRowModel } from '@mui/x-data-grid';
-import useGetAllUsers from '#/hooks/useGetAllUsers';
-import { IUser } from '#/types/IResponse/IResponse';
-import useDeleteUser from '#/hooks/useDeleteUser';
-import { Button, Chip, Grid, Menu, MenuItem, Stack, Typography } from '@mui/material';
-import useUpdateUser from '#/hooks/useUpdateUser';
-import { set, SubmitHandler, useForm } from 'react-hook-form';
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
+import { useEffect, useState } from 'react'
+import { GridColDef } from '@mui/x-data-grid';
+import { Menu, MenuItem } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import Table, { createColumn } from '#/components/table/Table';
 import TableWithSearch from '#/components/table/TableWithSearch';
 import ActionBtn from '#/components/button/ActionBtn';
 import PageContentLayout from '#/components/layout/PageContentLayout';
 import Alert from '#/components/modal/Alert';
-import AccountBoxIcon from '@mui/icons-material/AccountBox';
-import useGetAllSubjects from '#/hooks/useGetAllSubjects';
-import { hash, hashSync } from 'bcryptjs';
 import { useRouter } from 'next/navigation';
 import { ICurriculum, ISubjects } from '#/types/LTS/ILts';
-import useDeleteSubjects from '#/hooks/useDeleteSubjects';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import useGetAllCurriculum from '#/hooks/useGetAllCurriculum';
 import useDeleteCurruculum from '#/hooks/useDeleteCurruculum';
 import LibraryBooksIcon from '@mui/icons-material/LibraryBooks';
+import { useUrlSafeBase64 } from '#/hooks/useUrlSafeBase64';
 
 export default function Home() {
     const [rows, setRows] = useState<ISubjects[]>([]);
@@ -38,6 +27,7 @@ export default function Home() {
     const { mutateAsync: deleteCurrriculum, isLoading: isLoadingDeleteCurrriculum } = useDeleteCurruculum();
     const router = useRouter();
     const [key, setKey] = useState(0);
+    const { encode, decode } = useUrlSafeBase64();
 
     // modal
     const [textAlertBox, setTextAlertBox] = useState("");
@@ -78,9 +68,9 @@ export default function Home() {
     };
 
     const handleNavigationEdit = (data: ICurriculum) => {
-        sessionStorage.setItem('subjectData', JSON.stringify(data));
         const pathname = encodeURIComponent(data?.degreeFullEn!)
-        router.push(`/admin/curriculum/${pathname}`);
+        const encodedId = encode((data?.id ?? '').toString());
+        router.push(`/admin/curriculum/${pathname}?id=${encodedId}`);
     }
 
     const column: GridColDef[] = [

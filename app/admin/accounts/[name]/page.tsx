@@ -10,18 +10,14 @@ import Alert from '#/components/modal/Alert';
 import AccountBoxIcon from '@mui/icons-material/AccountBox';
 import CardBox from '#/components/CardBox';
 import { ISubjects } from '#/types/LTS/ILts';
-import { useParams, usePathname, useRouter } from 'next/navigation';
-import useUpdateSubjects from '#/hooks/useUpdateSubjects';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { IUser } from '#/types/IResponse/IResponse';
 import useUpdateUser from '#/hooks/useUpdateUser';
 import useGetAllSubjects from '#/hooks/useGetAllSubjects';
 import useUpdateUserSubject from '#/hooks/useUpdateUserSubject';
 import { useSession } from 'next-auth/react';
 import useGetAllUsers from '#/hooks/useGetAllUsers';
-
-// type Props = {
-//     params: Promise<{ subNameTh: string }>;
-// }
+import { useUrlSafeBase64 } from '#/hooks/useUrlSafeBase64';
 
 export default function Page() {
     const router = useRouter();
@@ -33,10 +29,15 @@ export default function Page() {
     const { mutateAsync: updateUserSubject, isLoading: isLoadingUpdateUserSubject } = useUpdateUserSubject();
     const { mutateAsync: updateUser, isLoading: isLoadingUpdateUser } = useUpdateUser();
     const { data: subjectsData, isLoading: isLoadingSubjectsData } = useGetAllSubjects();
+    const { data: userData, isLoading: isLoadinguserData } = useGetAllUsers();
     // console.log("subjectsData", subjectsData);
     const session = useSession();
     const user = session.data?.user;
     const selectedSubjects = watch('subjects') || [];
+    const { encode, decode } = useUrlSafeBase64();
+    const searchParams = useSearchParams();
+    const encodedId = searchParams.get("id");
+    const paramsId = encodedId ? decode(encodedId) : null;
 
     // modal
     const [textAlertBox, setTextAlertBox] = useState("");
@@ -44,21 +45,18 @@ export default function Page() {
     const [isOpenAlertBox, setIsOpenAlertBox] = useState(false);
 
     useEffect(() => {
-        const storedData = sessionStorage.getItem('accountsData');
-        if (storedData) {
-            const parsedData = JSON.parse(storedData);
-            setNamePath(parsedData.name);
-            setUserId(parsedData.id);
+        const parsedData = userData?.data?.find((item: IUser) => item.id === Number(paramsId));
+        if (parsedData) {
             if (parsedData.name === pathname) {
-                // Set form values from stored data
-                Object.keys(parsedData).forEach((key) => {
-                    setValue(key as keyof IUser, parsedData[key]);
+                setNamePath(parsedData.name);
+                setUserId(parsedData.id ?? 0);
+                Object.keys(parsedData).map((key) => {
+                    setValue(key as keyof IUser, parsedData[key as keyof IUser]);
                 });
             }
         }
-    }, [setValue, pathname]);
 
-    // console.log("user", user);
+    }, [setValue, pathname, paramsId, userData?.data]);
 
     const status = {
         isActive: "Active",
@@ -73,11 +71,8 @@ export default function Page() {
 
             const result = {
                 ...data,
-                // subStatus: status.isActive,
                 updatedDate: new Date(),
             }
-
-            sessionStorage.setItem('accountsData', JSON.stringify(result));
 
             const res = await updateUser(result)
 
@@ -92,7 +87,6 @@ export default function Page() {
                 setIsOpenAlertBox(true);
                 await new Promise<void>((resolve) => {
                     setTimeout(() => {
-                        sessionStorage.removeItem('accountsData');
                         setIsOpenAlertBox(false);
                         resolve();
                     }, 1500);
