@@ -4,6 +4,10 @@ import React, { useMemo } from 'react'
 import { useParams, usePathname, useSearchParams } from 'next/navigation';
 import Link from "next/link";
 import { PathUrls as Paths } from '#/constants/pathUrls';
+import useGetAllCurriculum from '#/hooks/useGetAllCurriculum';
+import { useUrlSafeBase64 } from '#/hooks/useUrlSafeBase64';
+import { ICurriculum, ISubjects } from '#/types/LTS/ILts';
+import useGetAllSubjects from '#/hooks/useGetAllSubjects';
 
 export interface TracksType {
   level: number;
@@ -27,6 +31,8 @@ export default function ApplicantTracking() {
   let checkEditAccount = false;
   let checkTeachingPage = false;
   let checkCurriculumPage = false;
+  let checkCloPage = false;
+  let checkPloPage = false;
   // let checkAddTimesheet = false;
   if (dynamicParamsKeys.length > 0) {
     dynamicParamsKeys.forEach(param => {
@@ -41,13 +47,43 @@ export default function ApplicantTracking() {
         checkTeachingPage = true
       } else if (param == 'degreeFullEn') {
         checkCurriculumPage = true
+      } else if (param == 'ploName') {
+        checkPloPage = true
+      } else if (param == 'cloName') {
+        checkCloPage = true
       }
     })
   }
 
-  // console.log("pathname", pathname)
-  // console.log("searchParams", searchParams)
-  // console.log("dynamicParams", dynamicParams)
+  //PLOs
+  const encodedCurId = searchParams.get("id");
+  // CLOs
+  const encodedSubId = searchParams.get("id");
+  const curriculumId = searchParams.get("cur");
+  const { encode, decode } = useUrlSafeBase64();
+  const paramsId = Number(encodedCurId ? decode(encodedCurId) : null);
+  const paramsSubId = Number(encodedSubId ? decode(encodedSubId) : null);
+  const paramsCurId = Number(curriculumId ? decode(curriculumId) : null);
+  console.log("encodedCurId", encodedCurId)
+  console.log("encodedSubId", encodedSubId)
+  console.log("curriculumId", curriculumId)
+  console.log("paramsId", paramsId)
+  console.log("paramsSubId", paramsSubId)
+  console.log("paramsCurId", paramsCurId)
+
+  const { data: curriculumData, isLoading: isLoadingCurriculumData } = useGetAllCurriculum();
+  const { data: subjectsData, isLoading: isLoadingSubjectsData } = useGetAllSubjects();
+
+  const curriculum = useMemo(() => {
+    return curriculumData?.data?.find((item: ICurriculum) => item.id === paramsId)?.degreeShortEn;
+  }, [curriculumData, paramsId]);
+
+  const subject = useMemo(() => {
+    return subjectsData?.data?.find((item: ISubjects) => item.id === paramsSubId && item.curriculum?.id === paramsCurId)?.subNameEn;
+  }, [subjectsData?.data, paramsSubId, paramsCurId]);
+
+  console.log("curriculum", curriculum)
+  console.log("subject", subject)
 
   pathnameWithoutDynamicParams = pathnameWithoutDynamicParams.replaceAll(`/lts`, '')
 
@@ -83,6 +119,16 @@ export default function ApplicantTracking() {
       ]
     },
     {
+      url: Paths.lts.plos, tracks: [
+        { level: 1, name: `${curriculum}`, linkTo: `${Paths.lts.plos}?id=${encodedCurId}` },
+      ]
+    },
+    {
+      url: Paths.lts.clos, tracks: [
+        { level: 1, name: `${subject}`, linkTo: `${Paths.lts.clos}?id=${encodedSubId}&cur=${encodedCurId}` },
+      ]
+    },
+    {
       url: Paths.lts.createSubjects, tracks: [
         { level: 1, name: "Subjects", linkTo: Paths.lts.subjects },
         { level: 2, name: "Create Subject", linkTo: Paths.lts.createSubjects },
@@ -92,6 +138,18 @@ export default function ApplicantTracking() {
       url: Paths.lts.createCurriculum, tracks: [
         { level: 1, name: "Curriculum", linkTo: Paths.lts.curriculum },
         { level: 2, name: "Create Curriculum", linkTo: Paths.lts.createCurriculum },
+      ]
+    },
+    {
+      url: Paths.lts.createPlo, tracks: [
+        { level: 1, name: `${curriculum}`, linkTo: `${Paths.lts.plos}?id=${encodedCurId}` },
+        { level: 2, name: "Create Plos", linkTo: Paths.lts.createPlo },
+      ]
+    },
+    {
+      url: Paths.lts.createClo, tracks: [
+        { level: 1, name: `${subject}`, linkTo: `${Paths.lts.clos}?id=${encodedSubId}&cur=${encodedCurId}` },
+        { level: 2, name: "Create Clos", linkTo: Paths.lts.createClo },
       ]
     },
     {
@@ -120,7 +178,7 @@ export default function ApplicantTracking() {
     },
   ];
 
-  if (checkCreateSubject || checkEditAccount || checkTeachingPage || checkCurriculumPage) {
+  if (checkCreateSubject || checkEditAccount || checkTeachingPage || checkCurriculumPage || checkPloPage || checkCloPage) {
 
     if (pathnameWithoutDynamicParams == `${Paths.lts.subjects}`) {
       const idx = pathUrls.findIndex(path => path.url == pathnameWithoutDynamicParams)
@@ -143,6 +201,20 @@ export default function ApplicantTracking() {
           { level: 3, name: `${decodeURIComponent(dynamicParams?.degreeFullEn as string)}`, linkTo: Paths.lts.curriculum },
         )
       }
+    } else if (pathnameWithoutDynamicParams == `${Paths.lts.plos}`) {
+      const idx = pathUrls.findIndex(path => path.url == pathnameWithoutDynamicParams)
+      if (idx != -1) {
+        pathUrls[idx].tracks.push(
+          { level: 3, name: `${decodeURIComponent(dynamicParams?.ploName as string)}`, linkTo: `${Paths.lts.plos}?id=${encodedCurId}` },
+        )
+      }
+    } else if (pathnameWithoutDynamicParams == `${Paths.lts.clos}`) {
+      const idx = pathUrls.findIndex(path => path.url == pathnameWithoutDynamicParams)
+      if (idx != -1) {
+        pathUrls[idx].tracks.push(
+          { level: 3, name: `${decodeURIComponent(dynamicParams?.cloName as string)}`, linkTo: Paths.lts.clos },
+        )
+      }
     }
   }
 
@@ -150,48 +222,6 @@ export default function ApplicantTracking() {
     pathUrls
       .find((item) => item.url === pathnameWithoutDynamicParams)
       ?.tracks.sort((a, b) => a.level - b.level) || [];
-
-  /* const findMatchPath = React.useMemo(() => {
-    return pathUrls.find(item => item.url === pathnameWithoutDynamicParams)?.tracks.sort((a, b) => a.level - b.level) || [];
-  }, [pathUrls, pathnameWithoutDynamicParams]); */
-
-  /* const clientCode = dynamicParams.clientCode ? decodeURIComponent(dynamicParams.clientCode as string) : undefined;
-  const projectName = dynamicParams.projectName ? decodeURIComponent(dynamicParams.projectName as string) : undefined;
-  const phaseId = dynamicParams.phaseId ? decodeURIComponent(dynamicParams.phaseId as string) : undefined;
-  const phaseName = dynamicParams.phaseName ? decodeURIComponent(dynamicParams.phaseName as string) : undefined;
-
-  const lastSeparatorIndex = projectName?.lastIndexOf('?');
-  const decodedProjectName = projectName?.substring(0, lastSeparatorIndex);
-  
-  // Post-process the findMatchPath to handle dynamic workspace, project routes, and special cases
-  const processedMatchPath = React.useMemo(() => {
-    if (pathnameWithoutDynamicParams.includes('/estimate')) {
-      return [
-        { level: 1, name: "Client", linkTo: Paths.projects.root },
-        ...(phaseName ? [{ level: 2, name: phaseName, linkTo: `${Paths.projects.root}/${encodeURIComponent(clientCode ?? '')}/${encodeURIComponent(projectName ?? '')}/${encodeURIComponent(phaseId ?? '')}/${encodeURIComponent(phaseName ?? '')}` }] : []),
-        { level: 3, name: "Estimate Cost", linkTo: pathname }
-      ]
-    } else if (pathnameWithoutDynamicParams.startsWith('/client')) {
-      let newTracks = [
-        { level: 1, name: "Client", linkTo: Paths.projects.root },
-      ];
-  
-      if (phaseName) {
-        newTracks.push({ level: 2, name: decodedProjectName ?? '', linkTo: `${Paths.projects.root}/${encodeURIComponent(clientCode ?? '')}/${encodeURIComponent(projectName ?? '')}` });
-        newTracks.push({ level: 3, name: phaseName, linkTo: pathname });
-      } else {
-        if (clientCode) {
-          newTracks.push({ level: 2, name: clientCode, linkTo: `${Paths.projects.root}/${encodeURIComponent(clientCode)}` });
-        }
-        if (projectName) {
-          newTracks.push({ level: 3, name: decodedProjectName ?? '', linkTo: pathname });
-        }
-      }
-
-      return newTracks;
-    }
-    return findMatchPath;
-  }, [findMatchPath, pathnameWithoutDynamicParams, clientCode, projectName, phaseId, phaseName, pathname, decodedProjectName]); */
 
   return (
     <>

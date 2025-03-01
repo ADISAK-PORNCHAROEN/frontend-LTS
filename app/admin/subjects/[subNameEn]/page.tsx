@@ -10,11 +10,12 @@ import Alert from '#/components/modal/Alert';
 import AccountBoxIcon from '@mui/icons-material/AccountBox';
 import CardBox from '#/components/CardBox';
 import { ICurriculum, ISubjects } from '#/types/LTS/ILts';
-import { useParams, usePathname, useRouter } from 'next/navigation';
+import { useParams, usePathname, useRouter, useSearchParams } from 'next/navigation';
 import useUpdateSubjects from '#/hooks/useUpdateSubjects';
 import useGetAllSubjects from '#/hooks/useGetAllSubjects';
 import { useSession } from 'next-auth/react';
 import useGetAllCurriculum from '#/hooks/useGetAllCurriculum';
+import { useUrlSafeBase64 } from '#/hooks/useUrlSafeBase64';
 
 // type Props = {
 //     params: Promise<{ subNameTh: string }>;
@@ -35,6 +36,10 @@ export default function Page() {
     const { mutateAsync: updateSubjects, isLoading: isLoadingUpdateSubjects } = useUpdateSubjects();
     const { data: subjectsData, isLoading: isLoadingSubjectsData } = useGetAllSubjects();
     const { data: curriculumData, isLoading: isLoadingCurriculumData } = useGetAllCurriculum();
+    const { encode, decode } = useUrlSafeBase64();
+    const searchParams = useSearchParams();
+    const encodedId = searchParams.get("id");
+    const paramsId = encodedId ? decode(encodedId) : null;
 
     // modal
     const [textAlertBox, setTextAlertBox] = useState("");
@@ -42,19 +47,18 @@ export default function Page() {
     const [isOpenAlertBox, setIsOpenAlertBox] = useState(false);
 
     useEffect(() => {
-        const storedData = sessionStorage.getItem('subjectData');
-        if (storedData) {
-            const parsedData = JSON.parse(storedData);
-            setSubjectName(parsedData.subNameEn);
-            setSubjectNameTh(parsedData.subNameTh);
+        const parsedData = subjectsData?.data?.find((item: ISubjects) => item.id === Number(paramsId));
+        if (parsedData) {
             if (parsedData.subNameEn === pathname) {
-                // Set form values from stored data
+                setSubjectName(parsedData.subNameEn);
+                setSubjectNameTh(parsedData.subNameTh || "");
                 Object.keys(parsedData).map((key) => {
-                    setValue(key as keyof ISubjects, parsedData[key]);
+                    setValue(key as keyof ISubjects, parsedData[key as keyof ISubjects]);
                 });
             }
         }
-    }, [setValue, pathname]);
+
+    }, [setValue, pathname, subjectsData?.data, paramsId]);
 
     const status = {
         isActive: "Active",

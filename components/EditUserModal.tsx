@@ -88,7 +88,7 @@ export default function EditTask({
               <Grid item xs={6} key={ploItem.id}>
                 <Controller
                   key={ploItem.id} // ใช้ `id` เป็น key เพื่อให้ React จัดการ component ได้ถูกต้อง
-                  name={ploItem.ploName as "id" | "ploName" | "ploDesc" | "ploStatus"} // ใช้ `ploName` เป็น name สำหรับแต่ละ field
+                  name={ploItem.ploName as "id" | "ploName" | "ploDesc"} // ใช้ `ploName` เป็น name สำหรับแต่ละ field
                   control={control}
                   render={({ field, fieldState: { error } }) => (
                     <TextField

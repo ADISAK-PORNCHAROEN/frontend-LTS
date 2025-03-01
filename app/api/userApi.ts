@@ -136,7 +136,6 @@ export const deleteUserApi = async (payload: IUser) => {
 };
 
 export const updateUserApi = async (payload: IUser) => {
-  // console.log("payload", payload);
   try {
     const response = await axiosApi.post<IResponse<IUser>>(`lts-user/updateLtsUser`, payload);
     // console.log('Response:', response.data);
@@ -174,6 +173,64 @@ export const getAllPloApi = async (): Promise<IResponse<IPlo[]>> => {
       console.error('Unexpected error:', error);
     }
     throw error;
+  }
+};
+
+export const createPloApi = async (payload: IPlo) => {
+  try {
+
+    const response = await axiosApi.post<IResponse<IPlo>>('/plo-default/createLtsPloDefault', payload);
+
+    if (response?.data === undefined) {
+      throw new Error("Undefined response data");
+    }
+
+    return response.data;
+  } catch (error) {
+    if (isAxiosError(error)) {
+      console.error('Error details:', error.response?.data);
+    } else {
+      console.error('Unexpected error:', error);
+    }
+    throw error;
+  }
+};
+
+export const updatePloApi = async (payload: IPlo) => {
+  // console.log("payload", payload);
+  try {
+    const response = await axiosApi.put<IResponse<IPlo>>(`/plo-default/updateLtsPloDefault`, payload);
+    // // console.log('Response:', response.data);
+
+    if (response?.data === undefined) {
+      throw new Error("Undefined response data");
+    }
+
+    return response.data;
+  } catch (error) {
+    if (isAxiosError(error)) {
+      console.error('Error details:', error.response?.data);
+    } else {
+      console.error('Unexpected error:', error);
+    }
+    throw error;
+  }
+};
+
+export const deletePloApi = async (payload: IPlo) => {
+  try {
+    const response = await axiosApi.delete<IResponse<IPlo>>(
+      `/plo-default/deleteLtsPloDefault/${payload.ids}`
+    )
+    return response?.data;
+  } catch (err) {
+    if (isAxiosError(err)) {
+      console.error(err);
+      return { success: false, message: err.message };
+    } else {
+      console.error(err);
+      return { success: false, message: 'An unknown error occurred' };
+    }
   }
 };
 
@@ -215,6 +272,62 @@ export const getAllCloApi = async (): Promise<IResponse<IClo[]>> => {
       console.error('Unexpected error:', error);
     }
     throw error;
+  }
+};
+
+export const createCloApi = async (payload: IClo) => {
+  try {
+
+    const response = await axiosApi.post<IResponse<IClo>>('/clo-default/createLtsCloDefault', payload);
+
+    if (response?.data === undefined) {
+      throw new Error("Undefined response data");
+    }
+
+    return response.data;
+  } catch (error) {
+    if (isAxiosError(error)) {
+      console.error('Error details:', error.response?.data);
+    } else {
+      console.error('Unexpected error:', error);
+    }
+    throw error;
+  }
+};
+
+export const updateCloApi = async (payload: IClo) => {
+  try {
+    const response = await axiosApi.put<IResponse<IClo>>(`/clo-default/updateLtsCloDefault`, payload);
+
+    if (response?.data === undefined) {
+      throw new Error("Undefined response data");
+    }
+
+    return response.data;
+  } catch (error) {
+    if (isAxiosError(error)) {
+      console.error('Error details:', error.response?.data);
+    } else {
+      console.error('Unexpected error:', error);
+    }
+    throw error;
+  }
+};
+
+export const deleteCloApi = async (payload: IClo) => {
+  try {
+    const response = await axiosApi.delete<IResponse<IClo>>(
+      `/clo-default/deleteLtsCloDefault/${payload.ids}`
+    )
+    return response?.data;
+  } catch (err) {
+    if (isAxiosError(err)) {
+      console.error(err);
+      return { success: false, message: err.message };
+    } else {
+      console.error(err);
+      return { success: false, message: 'An unknown error occurred' };
+    }
   }
 };
 
@@ -298,11 +411,8 @@ export const updateSubjectsApi = async (payload: ISubjects) => {
 };
 
 export const updateUserSubjectApi = async (payload: IUserSubject) => {
-  console.log("payload", payload.userId);
-  console.log("payload", payload.subjects);
   try {
     const response = await axiosApi.put<IResponse<IUserSubject>>(`lts-user-subjects/${payload.userId}/updateLtsUserSub`, payload.subjects);
-    console.log('Response:', response.data);
 
     if (response?.data === undefined) {
       throw new Error("Undefined response data");

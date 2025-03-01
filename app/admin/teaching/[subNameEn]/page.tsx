@@ -14,6 +14,7 @@ import { useParams, usePathname, useRouter, useSearchParams } from 'next/navigat
 import useUpdateSubjects from '#/hooks/useUpdateSubjects';
 import useGetAllSubjects from '#/hooks/useGetAllSubjects';
 import { useSession } from 'next-auth/react';
+import { useUrlSafeBase64 } from '#/hooks/useUrlSafeBase64';
 
 // type Props = {
 //     params: Promise<{ subNameTh: string }>;
@@ -21,69 +22,38 @@ import { useSession } from 'next-auth/react';
 
 export default function Page() {
     const router = useRouter();
-    const searchParams = useSearchParams();
     const [subjectName, setSubjectName] = useState<string | null>(null);
     const [subjectNameTh, setSubjectNameTh] = useState<string>("");
     const { subNameEn } = useParams();
-    const subjectId = Number(searchParams.get('id'));
-    console.log("subjectId", subjectId);
     const pathname = decodeURIComponent(subNameEn as string);
     const session = useSession();
     const user = session.data?.user;
     const { control, handleSubmit, formState: { errors }, setValue } = useForm<ISubjects>();
     const { mutateAsync: updateSubjects, isLoading: isLoadingUpdateSubjects } = useUpdateSubjects();
     const { data: subjectsData, isLoading: isLoadingSubjectsData } = useGetAllSubjects();
+    const { encode, decode } = useUrlSafeBase64();
+    const searchParams = useSearchParams();
+    const encodedId = searchParams.get("id");
+    const paramsId = encodedId ? decode(encodedId) : null;
 
     // modal
     const [textAlertBox, setTextAlertBox] = useState("");
     const [typeAlertBox, setTypeAlertBox] = useState<"success" | "warning" | "error">("success");
     const [isOpenAlertBox, setIsOpenAlertBox] = useState(false);
 
-    // useEffect(() => {
-    //     const storedData = sessionStorage.getItem('teachingData');
-    //     if (storedData) {
-    //         const parsedData = JSON.parse(storedData);
-    //         setSubjectName(parsedData.subNameEn);
-    //         setSubjectNameTh(parsedData.subNameTh);
-    //         if (parsedData.subNameEn === pathname) {
-    //             // Set form values from stored data
-    //             Object.keys(parsedData).map((key) => {
-    //                 setValue(key as keyof ISubjects, parsedData[key]);
-    //             });
-    //         }
-    //     }
-    // }, [setValue, pathname]);
-
     useEffect(() => {
-        const fetchSubjectData = async () => {
-            if (!subjectId || !subjectsData?.data) return;
-
-            // Find the subject in the fetched data using the ID from URL
-            const subject = subjectsData.data?.find((sub: ISubjects) => sub.id === subjectId);
-            console.log("subject", subject);
-
-            if (subject) {
-                // Verify the subject name matches the URL parameter
-                if (subject.subNameEn === pathname) {
-                    setSubjectName(subject.subNameEn);
-                    setSubjectNameTh(subject.subNameTh ?? "");
-
-                    // Set all form values from the found subject
-                    Object.keys(subject).forEach((key) => {
-                        setValue(key as keyof ISubjects, subject[key as keyof ISubjects]);
-                    });
-                } else {
-                    // Handle mismatch between URL name and subject data
-                    // router.push('/404');
-                }
-            } else {
-                // Handle subject not found
-                // router.push('/404');
+        const parsedData = subjectsData?.data?.find((item: ISubjects) => item.id === Number(paramsId));
+        if (parsedData) {
+            if (parsedData.subNameEn === pathname) {
+                setSubjectName(parsedData.subNameEn);
+                setSubjectNameTh(parsedData.subNameTh || "");
+                Object.keys(parsedData).map((key) => {
+                    setValue(key as keyof ISubjects, parsedData[key as keyof ISubjects]);
+                });
             }
-        };
+        }
 
-        fetchSubjectData();
-    }, [subjectId, subjectsData, pathname, setValue, router]);
+    }, [setValue, pathname, subjectsData?.data, paramsId]);
 
     const status = {
         isActive: "Active",
@@ -104,7 +74,7 @@ export default function Page() {
 
         if (subjectsData?.data) {
             subjectsData.data.forEach((subject: ISubjects) => {
-                if (subject.id === subjectId) {
+                if (subject.id === paramsId) {
                     return;
                 }
 

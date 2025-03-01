@@ -27,14 +27,18 @@ import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import LibraryBooksIcon from '@mui/icons-material/LibraryBooks';
 import { useSession } from 'next-auth/react';
 import { useState, useEffect } from 'react';
-import { Collapse, Menu, MenuItem } from '@mui/material';
+import { Chip, Collapse, Menu, MenuItem } from '@mui/material';
 import { signOut } from 'next-auth/react';
-import { usePathname, useRouter } from 'next/navigation';
+import { useParams, usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { ExpandLess, ExpandMore } from '@mui/icons-material';
 import useGetAllUsers from '#/hooks/useGetAllUsers';
-import { ISubjects } from '#/types/LTS/ILts';
+import { ICurriculum, ISubjects } from '#/types/LTS/ILts';
+import useGetAllCurriculum from '#/hooks/useGetAllCurriculum';
+import { useUrlSafeBase64 } from '#/hooks/useUrlSafeBase64';
+import useGetAllSubjects from '#/hooks/useGetAllSubjects';
+import ArticleIcon from '@mui/icons-material/Article';
 
-const drawerWidth = 240;
+const drawerWidth = 280;
 
 const DrawerHeader = styled('div')(({ theme }) => ({
     display: 'flex',
@@ -120,19 +124,42 @@ const menuItems = [
     { text: 'บัญชีผู้ใช้', icon: <PersonIcon />, path: 'accounts' },
     { text: 'หลักสูตรรายวิชา', icon: <LibraryBooksIcon />, path: 'curriculum' },
     { text: 'รายวิชา', icon: <MenuBookIcon />, path: 'subjects' },
+    // { text: 'CLOs', icon: <ClassIcon />, path: 'clos' },
+    // { text: 'PLOs', icon: <ClassIcon />, path: 'plos' },
 ];
 
 export default function SidebarLayout({ children }: Props) {
     const [open, setOpen] = useState(false);
     const [subjectOpen, setSubjectOpen] = useState(false);
+    const [plosOpen, setPlosOpen] = useState(false);
+    const [closOpen, setClosOpen] = useState(false);
     const { data: session } = useSession();
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const router = useRouter();
     const pathname = usePathname();
+    const searchParams = useSearchParams();
+    const pathId = searchParams.get('id');
+    const subId = searchParams.get("sub1");
+    const curId = searchParams.get("cur");
     const basePath = process.env.NEXT_PUBLIC_BASE_PATH;
     const { data: userData } = useGetAllUsers();
+    const { data: curriculumData, isLoading: isLoadingCurriculumData } = useGetAllCurriculum();
+    const { data: subjectsData, isLoading: isLoadingSubjectsData } = useGetAllSubjects();
     const [userSubjects, setUserSubjects] = useState<ISubjects[]>([]);
+    const [curriculumList, setCurriculumList] = useState<ICurriculum[]>([]);
+    const [subjectList, setSubjectList] = useState<ISubjects[]>([]);
     const [mounted, setMounted] = useState(false);
+    const { encode, decode } = useUrlSafeBase64();
+    const paramsSubId = Number(pathId ? decode(pathId) : null);
+    const paramsSubEditId = Number(subId ? decode(subId) : null);
+    const paramsCurId = Number(curId ? decode(curId) : null);
+    // เพิ่ม state สำหรับเก็บสถานะการแสดงผลของแต่ละ curriculum
+    const [expandedCurriculums, setExpandedCurriculums] = useState<{ [key: string]: boolean }>({});
+
+    const status = {
+        isActive: "Active",
+        isInactive: "Inactive"
+    }
 
     useEffect(() => {
         setMounted(true);
@@ -151,21 +178,53 @@ export default function SidebarLayout({ children }: Props) {
             })) ?? []
         );
         setUserSubjects(flattenedSubjects);
-    }, [userData, session?.user?.email]);
+
+        if (curriculumData?.data) {
+            const transformedData = curriculumData?.data.map((curriculum: ICurriculum) => ({
+                id: curriculum.id,
+                ...curriculum
+            }))
+            setCurriculumList(transformedData);
+        }
+
+        if (subjectsData?.data) {
+            const transformedData = subjectsData?.data.map((sub: ISubjects) => ({
+                ...sub
+            }))
+            setSubjectList(transformedData);
+        }
+
+    }, [userData, session?.user.email, curriculumData, subjectsData?.data]);
 
     const handleDrawerOpen = () => setOpen(true);
     const handleDrawerClose = () => setOpen(false);
     const handleSubjectClick = () => setSubjectOpen(!subjectOpen);
+    const handlePlosClick = () => setPlosOpen(!plosOpen);
+    const handleClosClick = () => setClosOpen(!closOpen);
 
-    const handleNavigate = (path: string, data?: ISubjects) => {
-        const currentPath = pathname.startsWith(`/admin`) ? `/admin` : `/member`;
+    const handleNavigate = (path: string, data?: ISubjects | ICurriculum) => {
+        // console.log("data", data);
+        const currentPath = pathname.startsWith("/admin") ? "/admin" : "/member";
         if (!currentPath) return;
 
-        if (data?.subNameEn) {
-            router.push(`${currentPath}/teaching/${decodeURIComponent(data.subNameEn)}?id=${data.id}`);
-        } else {
-            router.push(`${currentPath}/${path.toLowerCase()}`);
+        let targetPath = `${currentPath}/${path.toLowerCase()}`;
+
+        if (data) {
+            if ("subNameEn" in data && data.subNameEn) {
+                const encodedId = encode((data?.id ?? '').toString());
+                const curriculumId = encode((data?.curriculum?.id ?? '').toString());
+                if (path === 'teaching') {
+                    targetPath = `${currentPath}/teaching/${decodeURIComponent(data.subNameEn)}?id=${encodedId}`;
+                } else {
+                    targetPath = `${currentPath}/${path}?id=${encodedId}&cur=${curriculumId}`;
+                }
+            } else if ("degreeShortEn" in data && data.degreeShortEn) {
+                const encodedId = encode((data?.id ?? '').toString());
+                targetPath = `${currentPath}/${path}?id=${encodedId}`;
+            }
         }
+
+        router.push(targetPath);
     };
 
     if (!mounted || !session) {
@@ -254,6 +313,242 @@ export default function SidebarLayout({ children }: Props) {
                             </ListItemButton>
                         </ListItem>
                     ))}
+
+                    <ListItem disablePadding>
+                        <ListItemButton
+                            onClick={handleClosClick}
+                            sx={{
+                                minHeight: 48,
+                                justifyContent: open ? 'initial' : 'center',
+                                px: 2.5,
+                                ...(pathname.includes(`/clos`) && {
+                                    backgroundColor: 'rgba(0, 0, 0, 0.08)',
+                                })
+                            }}
+                        >
+                            <ListItemIcon
+                                sx={{
+                                    minWidth: 0,
+                                    mr: open ? 3 : 'auto',
+                                    justifyContent: 'center',
+                                }}
+                            >
+                                <ClassIcon />
+                            </ListItemIcon>
+                            <ListItemText
+                                primary="CLOs"
+                                sx={{ opacity: open ? 1 : 0 }}
+                            />
+                            {open && curriculumList && curriculumList.length > 0 && (closOpen ? <ExpandLess /> : <ExpandMore />)}
+                        </ListItemButton>
+                    </ListItem>
+
+                    <Collapse in={open && closOpen} timeout="auto" unmountOnExit>
+                        <List component="div" disablePadding>
+                            {curriculumList.map((curriculum: ICurriculum) => {
+                                // Define a state for each curriculum's expand status
+                                // You'll need to create a state object like: 
+                                // const [expandedCurriculums, setExpandedCurriculums] = useState<{[key: string]: boolean}>({});
+                                const isCurriculumExpanded = expandedCurriculums[curriculum?.id ?? 'default-id'];
+                                const isCurriculumActive = pathname.includes("/clos") && paramsCurId === curriculum?.id;
+
+                                // Get subjects for this curriculum
+                                // Assuming you have a way to get subjects for each curriculum
+                                const curriculumSubjects = subjectList.filter(subject => subject.curriculum?.id === curriculum.id && subject.subStatus === status.isActive);
+
+                                return (
+                                    <React.Fragment key={curriculum?.id}>
+                                        <ListItemButton
+                                            sx={{
+                                                pl: 4,
+                                                minHeight: 40,
+                                                backgroundColor: isCurriculumActive ? "rgba(0, 0, 0, 0.08)" : "transparent",
+                                                '&:hover': {
+                                                    backgroundColor: 'rgba(0, 0, 0, 0.08)',
+                                                },
+                                            }}
+                                            onClick={(event) => {
+                                                // Toggle expansion if subjects exist
+                                                if (curriculumSubjects && curriculumSubjects.length > 0) {
+                                                    event.stopPropagation();
+                                                    setExpandedCurriculums(prev => ({
+                                                        ...prev,
+                                                        [curriculum.id ?? 'default-id']: !prev[curriculum.id ?? 'default-id']
+                                                    }));
+                                                }
+                                            }}
+                                        >
+                                            <ListItemIcon sx={{ minWidth: 40 }}>
+                                                <MenuBookIcon fontSize="small" />
+                                            </ListItemIcon>
+                                            <ListItemText
+                                                primary={curriculum?.degreeShortTh}
+                                                secondary={curriculum?.degreeShortEn}
+                                                primaryTypographyProps={{
+                                                    fontSize: '0.9rem',
+                                                    sx: {
+                                                        whiteSpace: 'nowrap',
+                                                        overflow: 'hidden',
+                                                        textOverflow: 'ellipsis',
+                                                        maxWidth: '150px',
+                                                    },
+                                                }}
+                                                secondaryTypographyProps={{
+                                                    fontSize: '0.8rem',
+                                                    sx: {
+                                                        whiteSpace: 'nowrap',
+                                                        overflow: 'hidden',
+                                                        textOverflow: 'ellipsis',
+                                                        maxWidth: '150px',
+                                                    },
+                                                }}
+                                            />
+                                            {curriculumSubjects && curriculumSubjects.length > 0 &&
+                                                (isCurriculumExpanded ? <ExpandLess sx={{ mr: 0.5 }} /> : <ExpandMore sx={{ mr: 0.5 }} />)
+                                            }
+                                        </ListItemButton>
+
+                                        {/* Nested Collapse for subjects under this curriculum */}
+                                        {curriculumSubjects && curriculumSubjects.length > 0 && (
+                                            <Collapse in={isCurriculumExpanded} timeout="auto" unmountOnExit>
+                                                <List component="div" disablePadding>
+                                                    {curriculumSubjects?.filter(subject => subject?.subStatus === status.isActive).map((subject: ISubjects) => {
+                                                        const isEditPage = pathname.split("/").length >= 4;
+                                                        const isCreatePage = pathname.split("/").length >= 4;
+                                                        const isSubjectActive = pathname.includes("/clos") && (
+                                                            (!isEditPage && paramsSubId === subject.id && paramsCurId === subject.curriculum?.id) ||
+                                                            (isEditPage && paramsSubEditId === subject.id && paramsCurId === subject.curriculum?.id) ||
+                                                            (isCreatePage && paramsSubId === subject.id && paramsCurId === subject.curriculum?.id)
+                                                        );
+
+                                                        return (
+                                                            <ListItemButton
+                                                                key={subject?.id}
+                                                                sx={{
+                                                                    pl: 6,
+                                                                    minHeight: 40,
+                                                                    backgroundColor: isSubjectActive ? "rgba(0, 0, 0, 0.08)" : "transparent",
+                                                                    '&:hover': {
+                                                                        backgroundColor: 'rgba(0, 0, 0, 0.08)',
+                                                                    },
+                                                                }}
+                                                                onClick={() => handleNavigate('clos', subject)}
+                                                            >
+                                                                <ListItemIcon sx={{ minWidth: 40 }}>
+                                                                    <ArticleIcon fontSize="small" />
+                                                                </ListItemIcon>
+                                                                <ListItemText
+                                                                    primary={subject?.subNameTh}
+                                                                    secondary={subject?.subNameEn}
+                                                                    primaryTypographyProps={{
+                                                                        fontSize: '0.85rem',
+                                                                        sx: {
+                                                                            whiteSpace: 'nowrap',
+                                                                            overflow: 'hidden',
+                                                                            textOverflow: 'ellipsis',
+                                                                            maxWidth: '150px',
+                                                                        },
+                                                                    }}
+                                                                    secondaryTypographyProps={{
+                                                                        fontSize: '0.75rem',
+                                                                        sx: {
+                                                                            whiteSpace: 'nowrap',
+                                                                            overflow: 'hidden',
+                                                                            textOverflow: 'ellipsis',
+                                                                            maxWidth: '150px',
+                                                                        },
+                                                                    }}
+                                                                />
+                                                            </ListItemButton>
+                                                        );
+                                                    })}
+                                                </List>
+                                            </Collapse>
+                                        )}
+                                    </React.Fragment>
+                                );
+                            })}
+                        </List>
+                    </Collapse>
+
+                    {/* PLOs */}
+                    <ListItem disablePadding>
+                        <ListItemButton
+                            onClick={handlePlosClick}
+                            sx={{
+                                minHeight: 48,
+                                justifyContent: open ? 'initial' : 'center',
+                                px: 2.5,
+                                ...(pathname.includes(`/plos`) && {
+                                    backgroundColor: 'rgba(0, 0, 0, 0.08)',
+                                })
+                            }}
+                        >
+                            <ListItemIcon
+                                sx={{
+                                    minWidth: 0,
+                                    mr: open ? 3 : 'auto',
+                                    justifyContent: 'center',
+                                }}
+                            >
+                                <ClassIcon />
+                            </ListItemIcon>
+                            <ListItemText
+                                primary="PLOs"
+                                sx={{ opacity: open ? 1 : 0 }}
+                            />
+                            {open && curriculumList && curriculumList.length > 0 && (plosOpen ? <ExpandLess /> : <ExpandMore />)}
+                        </ListItemButton>
+                    </ListItem>
+
+                    <Collapse in={open && plosOpen} timeout="auto" unmountOnExit>
+                        <List component="div" disablePadding>
+                            {curriculumList.map((curriculum: ICurriculum) => {
+                                const isActive = pathname.includes("/plos") && paramsSubId === curriculum.id;
+
+                                return (
+                                    <ListItemButton
+                                        key={curriculum?.id}
+                                        sx={{
+                                            pl: 4,
+                                            minHeight: 40,
+                                            backgroundColor: isActive ? "rgba(0, 0, 0, 0.08)" : "transparent",
+                                            '&:hover': {
+                                                backgroundColor: 'rgba(0, 0, 0, 0.08)',
+                                            },
+                                        }}
+                                        onClick={() => handleNavigate('plos', curriculum)}
+                                    >
+                                        <ListItemIcon sx={{ minWidth: 40 }}>
+                                            <MenuBookIcon fontSize="small" />
+                                        </ListItemIcon>
+                                        <ListItemText
+                                            primary={curriculum?.degreeShortTh}
+                                            secondary={curriculum?.degreeShortEn}
+                                            primaryTypographyProps={{
+                                                fontSize: '0.9rem',
+                                                sx: {
+                                                    whiteSpace: 'nowrap',
+                                                    overflow: 'hidden',
+                                                    textOverflow: 'ellipsis',
+                                                    maxWidth: '150px',
+                                                },
+                                            }}
+                                            secondaryTypographyProps={{
+                                                fontSize: '0.8rem',
+                                                sx: {
+                                                    whiteSpace: 'nowrap',
+                                                    overflow: 'hidden',
+                                                    textOverflow: 'ellipsis',
+                                                    maxWidth: '150px',
+                                                },
+                                            }}
+                                        />
+                                    </ListItemButton>
+                                )
+                            })}
+                        </List>
+                    </Collapse>
                 </List>
 
                 <Divider />
@@ -291,49 +586,50 @@ export default function SidebarLayout({ children }: Props) {
 
                         <Collapse in={open && subjectOpen} timeout="auto" unmountOnExit>
                             <List component="div" disablePadding>
-                                {userSubjects.map((subject: ISubjects) => (
-                                    <ListItemButton
-                                        key={subject.id}
-                                        sx={{
-                                            pl: 4,
-                                            minHeight: 40,
-                                            backgroundColor: 'rgba(0, 0, 0, 0.02)',
-                                            ...(pathname.includes(`/teaching/${encodeURIComponent(subject.subNameEn as string)}`) && {
-                                                backgroundColor: 'rgba(0, 0, 0, 0.08)',
-                                            }),
-                                            '&:hover': {
-                                                backgroundColor: 'rgba(0, 0, 0, 0.08)',
-                                            },
-                                        }}
-                                        onClick={() => handleNavigate('teaching', subject)}
-                                    >
-                                        <ListItemIcon sx={{ minWidth: 40 }}>
-                                            <MenuBookIcon fontSize="small" />
-                                        </ListItemIcon>
-                                        <ListItemText
-                                            primary={subject.subNameTh}
-                                            secondary={subject.subNameEn}
-                                            primaryTypographyProps={{
-                                                fontSize: '0.9rem',
-                                                sx: {
-                                                    whiteSpace: 'nowrap',
-                                                    overflow: 'hidden',
-                                                    textOverflow: 'ellipsis',
-                                                    maxWidth: '150px',
+                                {userSubjects.map((subject: ISubjects) => {
+                                    const isActive = pathname.includes("/teaching") && paramsSubId === subject.id;
+
+                                    return (
+                                        <ListItemButton
+                                            key={subject.id}
+                                            sx={{
+                                                pl: 4,
+                                                minHeight: 40,
+                                                backgroundColor: isActive ? "rgba(0, 0, 0, 0.08)" : "transparent",
+                                                '&:hover': {
+                                                    backgroundColor: 'rgba(0, 0, 0, 0.08)',
                                                 },
                                             }}
-                                            secondaryTypographyProps={{
-                                                fontSize: '0.8rem',
-                                                sx: {
-                                                    whiteSpace: 'nowrap',
-                                                    overflow: 'hidden',
-                                                    textOverflow: 'ellipsis',
-                                                    maxWidth: '150px',
-                                                },
-                                            }}
-                                        />
-                                    </ListItemButton>
-                                ))}
+                                            onClick={() => handleNavigate('teaching', subject)}
+                                        >
+                                            <ListItemIcon sx={{ minWidth: 40 }}>
+                                                <MenuBookIcon fontSize="small" />
+                                            </ListItemIcon>
+                                            <ListItemText
+                                                primary={subject.subNameTh}
+                                                secondary={subject.subNameEn}
+                                                primaryTypographyProps={{
+                                                    fontSize: '0.9rem',
+                                                    sx: {
+                                                        whiteSpace: 'nowrap',
+                                                        overflow: 'hidden',
+                                                        textOverflow: 'ellipsis',
+                                                        maxWidth: '150px',
+                                                    },
+                                                }}
+                                                secondaryTypographyProps={{
+                                                    fontSize: '0.8rem',
+                                                    sx: {
+                                                        whiteSpace: 'nowrap',
+                                                        overflow: 'hidden',
+                                                        textOverflow: 'ellipsis',
+                                                        maxWidth: '150px',
+                                                    },
+                                                }}
+                                            />
+                                        </ListItemButton>
+                                    )
+                                })}
                             </List>
                         </Collapse>
 
@@ -387,13 +683,14 @@ export default function SidebarLayout({ children }: Props) {
                             </ListItemButton>
                         </ListItem>
                     </List>
-                )}
-            </Drawer>
+                )
+                }
+            </Drawer >
 
             {/* <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
                 <DrawerHeader />
                 {children}
             </Box> */}
-        </Box>
+        </Box >
     );
 }

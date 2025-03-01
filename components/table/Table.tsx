@@ -130,6 +130,12 @@ export type TableProps<R extends GridValidRowModel> = {
   pageSizeOptions?: number[] | undefined;
 
   /**
+   * Initial page size for the table pagination
+   * @default 5
+   */
+  initialPageSize?: number;
+
+  /**
    * Disable Column Menu of table
    * @default true
    */
@@ -178,6 +184,7 @@ export default function Table<R extends GridValidRowModel>({
   onSelectRow,
   onViewRow,
   pageSizeOptions = [5, 10],
+  initialPageSize = 5,
   disableColumnMenu = true,
   disableColumnFilter = true,
   disableColumnSelector = true,
@@ -346,8 +353,8 @@ export default function Table<R extends GridValidRowModel>({
 
   const handleSelectRow = useCallback((isCheck: boolean, rowData: R) => {
     if (isMultiSelectRow) {
-      setSelectedRows(prev => 
-        isCheck 
+      setSelectedRows(prev =>
+        isCheck
           ? [...prev, rowData]
           : prev.filter((item: R) => item.id !== rowData.id)
       );
@@ -417,7 +424,7 @@ export default function Table<R extends GridValidRowModel>({
             }}
             rows={rowsWithIds}
             columns={mergedColumns}
-            initialState={{ pagination: { paginationModel: { page: 0, pageSize: 5 } } }}
+            initialState={{ pagination: { paginationModel: { page: 0, pageSize: initialPageSize } } }}
             pageSizeOptions={pageSizeOptions}
             // TODO: use pagination
             paginationMode={isServerPagination ? "server" : 'client'}

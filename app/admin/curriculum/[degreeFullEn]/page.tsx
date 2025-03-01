@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from 'react'
-import { Button, FormControl, FormHelperText, Grid, InputLabel, Menu, MenuItem, Select, Stack, TextField, Typography } from '@mui/material';
+import { FormControl, Grid, TextField, Typography } from '@mui/material';
 import { Controller, set, SubmitHandler, useForm } from 'react-hook-form';
 import CloseIcon from '@mui/icons-material/Close';
 import AddIcon from '@mui/icons-material/Add';
@@ -10,12 +10,11 @@ import Alert from '#/components/modal/Alert';
 import AccountBoxIcon from '@mui/icons-material/AccountBox';
 import CardBox from '#/components/CardBox';
 import { ICurriculum, ISubjects } from '#/types/LTS/ILts';
-import { useParams, usePathname, useRouter } from 'next/navigation';
-import useUpdateSubjects from '#/hooks/useUpdateSubjects';
-import useGetAllSubjects from '#/hooks/useGetAllSubjects';
+import { useParams, usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import useGetAllCurriculum from '#/hooks/useGetAllCurriculum';
 import useUpdateCurruculum from '#/hooks/useUpdateCurruculum';
+import { useUrlSafeBase64 } from '#/hooks/useUrlSafeBase64';
 
 export default function Page() {
     const router = useRouter();
@@ -28,6 +27,10 @@ export default function Page() {
     const { control, handleSubmit, formState: { errors }, setValue } = useForm<ICurriculum>();
     const { mutateAsync: updateCurrriculum, isLoading: isLoadingUpdateCurrriculum } = useUpdateCurruculum();
     const { data: curriculumData, isLoading: isLoadingCurriculumData } = useGetAllCurriculum();
+    const { encode, decode } = useUrlSafeBase64();
+        const searchParams = useSearchParams();
+        const encodedId = searchParams.get("id");
+        const paramsId = encodedId ? decode(encodedId) : null;
 
     // modal
     const [textAlertBox, setTextAlertBox] = useState("");
@@ -35,19 +38,18 @@ export default function Page() {
     const [isOpenAlertBox, setIsOpenAlertBox] = useState(false);
 
     useEffect(() => {
-        const storedData = sessionStorage.getItem('subjectData');
-        if (storedData) {
-            const parsedData = JSON.parse(storedData);
-            setSubjectName(parsedData.degreeFullEn);
-            setSubjectNameTh(parsedData.degreeFullTh);
+        const parsedData = curriculumData?.data?.find((item: ICurriculum) => item.id === Number(paramsId));
+        if (parsedData) {
             if (parsedData.degreeFullEn === pathname) {
-                // Set form values from stored data
+                setSubjectName(parsedData.degreeFullEn);
+                setSubjectNameTh(parsedData.degreeFullTh || "");
                 Object.keys(parsedData).map((key) => {
-                    setValue(key as keyof ICurriculum, parsedData[key]);
+                    setValue(key as keyof ICurriculum, parsedData[key as keyof ICurriculum]);
                 });
             }
         }
-    }, [setValue, pathname]);
+
+    }, [setValue, pathname, paramsId, curriculumData?.data]);
 
     const checkExistingField = (data: ICurriculum, originalData?: ICurriculum) => {
         const errors: string[] = [];

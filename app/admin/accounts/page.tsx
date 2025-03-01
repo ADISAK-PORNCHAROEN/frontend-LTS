@@ -17,6 +17,7 @@ import AccountBoxIcon from '@mui/icons-material/AccountBox';
 import { useRouter } from 'next/navigation';
 import AlertConfirm from '#/components/modal/AlertConfirm';
 import PersonIcon from '@mui/icons-material/Person';
+import { useUrlSafeBase64 } from '#/hooks/useUrlSafeBase64';
 
 export default function Home() {
     const [rows, setRows] = useState<IUser[]>([]);
@@ -32,6 +33,7 @@ export default function Home() {
     const [detailPloOpen, setDetailPloOpen] = useState(false);
     const [key, setKey] = useState(0);
     const router = useRouter();
+    const { encode, decode } = useUrlSafeBase64();
 
     // modal
     const [textAlertBox, setTextAlertBox] = useState("");
@@ -81,9 +83,9 @@ export default function Home() {
     }
 
     const handleNavigationEdit = (data: IUser) => {
-        sessionStorage.setItem('accountsData', JSON.stringify(data));
         const pathname = encodeURIComponent(data?.name!);
-        router.push(`./accounts/${pathname}`);
+        const encodedId = encode((data?.id ?? '').toString());
+        router.push(`./accounts/${pathname}?id=${encodedId}`);
     }
 
 
