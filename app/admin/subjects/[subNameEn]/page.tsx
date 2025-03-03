@@ -115,7 +115,6 @@ export default function Page() {
                 updatedDate: new Date(),
                 updatedBy: user?.name
             };
-            console.log("result", result);
 
             const validationErrors = checkExistingField(result, parsedOriginalData);
 

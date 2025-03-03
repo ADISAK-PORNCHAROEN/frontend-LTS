@@ -5,7 +5,7 @@ import { DataGrid, GridColDef, GridValidRowModel } from '@mui/x-data-grid';
 import useGetAllUsers from '#/hooks/useGetAllUsers';
 import { IUser } from '#/types/IResponse/IResponse';
 import useDeleteUser from '#/hooks/useDeleteUser';
-import { Button, FormControl, FormHelperText, Grid, InputLabel, Menu, MenuItem, Select, Stack, TextField, Typography } from '@mui/material';
+import { Button, FormControl, FormControlLabel, FormHelperText, FormLabel, Grid, InputLabel, Menu, MenuItem, Radio, RadioGroup, Select, Stack, TextField, Typography } from '@mui/material';
 import useUpdateUser from '#/hooks/useUpdateUser';
 import { Controller, set, SubmitHandler, useForm } from 'react-hook-form';
 import EditIcon from '@mui/icons-material/Edit';
@@ -32,9 +32,10 @@ export default function Home() {
     const router = useRouter();
     const session = useSession();
     const user = session.data?.user;
-    const { control, handleSubmit, formState: { errors } } = useForm<ICurriculum>();
+    const { control, handleSubmit, formState: { errors }, setValue, watch } = useForm<ICurriculum>();
     const { mutateAsync: createCurriculum, isLoading: isLoadingCreateCurriculum } = useCreateCurriculum();
     const { data: curriculumData, isLoading: isLoadingCurriculumData } = useGetAllCurriculum();
+    const selectedType = watch('curriculumType');
 
     // modal
     const [textAlertBox, setTextAlertBox] = useState("");
@@ -45,6 +46,10 @@ export default function Home() {
         isActive: "Active",
         isInactive: "Inactive"
     }
+
+    useEffect(() => {
+        setValue("curriculumType", "new"); // กำหนดค่าเริ่มต้นเป็น "new"
+    }, [setValue]);
 
     useEffect(() => {
         if (curriculumData?.data) {
@@ -97,7 +102,7 @@ export default function Home() {
                 createdDate: new Date(),
                 createdBy: user?.name,
             }
-            console.log("result", result)
+            // console.log("result", result)
 
             const validationErrors = checkExistingField(result);
 
@@ -507,23 +512,52 @@ export default function Home() {
                             </Grid>
 
                             <Grid item xs={12}>
-                                <Typography variant="h6" sx={{ padding: "8px 0px 16px", fontWeight: "bold" }}>6. สถานภาพของหลักสูตรและการพิจารณาอนุมัติ/เห็นชอบหลักสูตร</Typography>
+                                <Typography variant="h6" sx={{ padding: "8px 0px 16px", fontWeight: "bold" }}>
+                                    6. สถานภาพของหลักสูตรและการพิจารณาอนุมัติ/เห็นชอบหลักสูตร
+                                </Typography>
+
+                                <Controller
+                                    control={control}
+                                    name="curriculumType"
+                                    defaultValue=""
+                                    rules={{ required: "กรุณาเลือกประเภทหลักสูตร" }}
+                                    render={({ field }) => (
+                                        <FormControl component="fieldset" error={!!errors.curriculumType}>
+                                            <FormLabel component="legend">ประเภทหลักสูตร</FormLabel>
+                                            <RadioGroup {...field} row>
+                                                <FormControlLabel value="new" control={<Radio />} label="หลักสูตรใหม่" />
+                                                <FormControlLabel value="improved" control={<Radio />} label="หลักสูตรปรับปรุง" />
+                                            </RadioGroup>
+                                            {errors.curriculumType && (
+                                                <Typography color="error" variant="caption">
+                                                    {errors.curriculumType.message}
+                                                </Typography>
+                                            )}
+                                        </FormControl>
+                                    )}
+                                />
+                            </Grid>
+
+                            <Grid item xs={12} sx={{ mt: 2 }}>
                                 <Controller
                                     control={control}
                                     name="approvalCurriculum"
                                     defaultValue=""
-                                    rules={{ required: "approvalCurriculum is required" }}
+                                    rules={{
+                                        required: selectedType === 'new' ? "กรุณากรอกข้อมูลหลักสูตรใหม่" : false
+                                    }}
                                     render={({ field }) => (
                                         <TextField
                                             {...field}
-                                            required
-                                            label="หลักสูตรใหม่"
+                                            label="รายละเอียดหลักสูตรใหม่"
                                             variant="outlined"
                                             size="small"
+                                            required
                                             fullWidth
                                             multiline
                                             minRows={4}
                                             maxRows={8}
+                                            disabled={selectedType !== 'new'}
                                             error={!!errors.approvalCurriculum}
                                             helperText={errors.approvalCurriculum?.message}
                                         />
@@ -531,23 +565,26 @@ export default function Home() {
                                 />
                             </Grid>
 
-                            <Grid item xs={12}>
+                            <Grid item xs={12} sx={{ mt: 2 }}>
                                 <Controller
                                     control={control}
                                     name="previousCurriculum"
                                     defaultValue=""
-                                    rules={{ required: "previousCurriculum is required" }}
+                                    rules={{
+                                        required: selectedType === 'improved' ? "กรุณากรอกข้อมูลหลักสูตรปรับปรุง" : false
+                                    }}
                                     render={({ field }) => (
                                         <TextField
                                             {...field}
-                                            required
-                                            label="หลักสูตรปรับปรุง"
+                                            label="รายละเอียดหลักสูตรปรับปรุง"
                                             variant="outlined"
                                             size="small"
+                                            required
                                             fullWidth
                                             multiline
                                             minRows={4}
                                             maxRows={8}
+                                            disabled={selectedType !== 'improved'}
                                             error={!!errors.previousCurriculum}
                                             helperText={errors.previousCurriculum?.message}
                                         />

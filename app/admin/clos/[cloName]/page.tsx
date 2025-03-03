@@ -40,6 +40,7 @@ export default function Page() {
     const paramsId = Number(encodedId ? decode(encodedId) : null);
     const paramsSubId = Number(subId ? decode(subId) : null);
     const paramsCurId = Number(curriculumId ? decode(curriculumId) : null);
+    console.log("paramsId", paramsId, "paramsSubId", paramsSubId, "paramsCurId", paramsCurId);
 
     // modal
     const [textAlertBox, setTextAlertBox] = useState("");
@@ -143,8 +144,8 @@ export default function Page() {
         }
     };
 
-    const subjectName = cloData?.data?.find((item: IClo) => item.subjects?.id === paramsSubId && item.curriculum?.id === paramsCurId)?.cloName ?
-        `${cloData?.data?.find((item: IClo) => item.subjects?.id === paramsSubId && item.curriculum?.id === paramsCurId)?.cloName}`
+    const subjectName = cloData?.data?.find((item: IClo) => item.subjects?.id === paramsSubId && item.curriculum?.id === paramsCurId && item.id === paramsId)?.cloName ?
+        `${cloData?.data?.find((item: IClo) => item.subjects?.id === paramsSubId && item.curriculum?.id === paramsCurId && item.id === paramsId)?.cloName}`
         : "404 Not Found";
 
     return (
@@ -158,7 +159,7 @@ export default function Page() {
                             title="ยกเลิก"
                             icon={<CloseIcon />}
                             color='#db3131'
-                            onClick={() => router.push(`../clos?id=${encodedId}&cur=${curriculumId}`)}
+                            onClick={() => router.push(`../clos?id=${subId}&cur=${curriculumId}`)}
                         />
 
                         <ActionBtn
