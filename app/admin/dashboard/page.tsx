@@ -39,7 +39,7 @@ export default function Home() {
                 subStatusIn: data.subStatus === status.isInactive 
             }));
 
-            setCountSubjectActive(transformedData.filter(item => item.subStatus).length);
+            setCountSubjectActive(transformedData.filter(item => item.subStatus).length || 0);
             setCountSubjectInactive(transformedData.filter(item => item.subStatusIn).length);
         }
     }, [status.isActive, status.isInactive, subjectsData?.data])
@@ -60,7 +60,7 @@ export default function Home() {
                     <Grid item xs={12} md={6} lg={3}>
                         <CardBoxDashboard
                             title='วิชาที่มีอยู่ในระบบ'
-                            value={subjectsData?.data?.length}
+                            value={subjectsData?.data?.length || 0}
                             subtitle="รายวิชาทั้งหมดในระบบ"
                             colorVariant='info'
                             icon={<DashboardIcon />}

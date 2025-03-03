@@ -15,6 +15,7 @@ import useDeleteSubjects from '#/hooks/useDeleteSubjects';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
 import { useUrlSafeBase64 } from '#/hooks/useUrlSafeBase64';
+import { stat } from 'node:fs/promises';
 
 export default function Home() {
     const [rows, setRows] = useState<ISubjects[]>([]);
@@ -37,6 +38,11 @@ export default function Home() {
     const [textAlertBox, setTextAlertBox] = useState("");
     const [typeAlertBox, setTypeAlertBox] = useState<"success" | "warning" | "error">("success");
     const [isOpenAlertBox, setIsOpenAlertBox] = useState(false);
+
+    const status = {
+        isActive: "Active",
+        isInactive: "Inactive"
+    }
 
     const handleDelete = async (rowsSelected: ISubjects[]) => {
         try {
@@ -109,18 +115,12 @@ export default function Home() {
             sortable: true,
             renderCell(params) {
                 return (
-                    <Typography variant="body2" color={params.row?.subStatus === 'Active' ? 'success.main' : 'error.main'}>
-                        {params.row?.subStatus === "Active" ? "🟢 Active" : "🔴 Inactive"}
+                    <Typography variant="body2" color={params.row?.subStatus === status.isActive ? 'success.main' : 'error.main'}>
+                        {params.row?.subStatus === status.isActive ? `🟢 ${status.isActive}` : `🔴 ${status.isInactive}`}
                     </Typography>
                 );
             },
         }),
-        // Hidden column for curriculum filtering
-        // createColumn("curriculum", "STRING", "หลักสูตร", 0, {
-        //     headerAlign: "center",
-        //     align: "center",
-        //     // hide: true, // Hide from table view
-        // }),
     ]
 
     // Add new curriculum state
@@ -163,22 +163,29 @@ export default function Home() {
         }
     }, [subjectsData])
 
-    // const filteredRows = rows.filter((row) => {
-    //     if (!searchText) return true;
-
-    //     const value = row[searchType as keyof typeof row];
-    //     return value?.toString().toLowerCase().includes(searchText.toLowerCase());
-    // });
-
     const filteredRows = rows.filter((row) => {
-        // Filter by main search field
-        let mainSearchMatch = true;
-        if (searchText) {
-            const value = row[searchType as keyof typeof row];
-            mainSearchMatch = value?.toString().toLowerCase().includes(searchText.toLowerCase()) ?? false;
+        // กรณีพิเศษสำหรับการค้นหา Active/Inactive
+        if (searchType === "subStatus" && searchText) {
+            const searchLower = searchText.toLowerCase();
+
+            // ถ้าค้นหาด้วย "active"
+            if (searchLower.includes("active") && !searchLower.includes("inactive")) {
+                return row.subStatus === status.isActive;
+            }
+
+            // ถ้าค้นหาด้วย "inactive"
+            if (searchLower.includes("inactive")) {
+                return row.subStatus === status.isInactive;
+            }
         }
 
-        // Filter by curriculum
+        // โลจิกการค้นหาปกติสำหรับกรณีอื่นๆ
+        if (searchText) {
+            const value = row[searchType as keyof typeof row];
+            return value?.toString().toLowerCase().includes(searchText.toLowerCase()) ?? false;
+        }
+
+        // กรองตามหลักสูตร
         let curriculumMatch = true;
         if (curriculumValue) {
             if (!row.curriculum) {
@@ -188,8 +195,7 @@ export default function Home() {
             }
         }
 
-        // Both filters must match
-        return mainSearchMatch && curriculumMatch;
+        return curriculumMatch;
     });
 
     const handleSelectRows = (rowSelected: ISubjects[]) => {
@@ -203,6 +209,16 @@ export default function Home() {
     const handleCurriculumChange = (value: string) => {
         setCurriculumValue(value);
     };
+
+    const extraSearchConfig = [
+        {
+            field: 'subStatus' as keyof ISubjects,
+            option: [
+                { value: status.isActive, name: '🟢 Active' },
+                { value: status.isInactive, name: '🔴 Inactive' }
+            ]
+        }
+    ];
 
     return (
         <>
@@ -252,6 +268,7 @@ export default function Home() {
                     onCurriculumChange={handleCurriculumChange}
                     curriculumOptions={curriculumOptions}
                     onSelectRows={(rowsSelected) => handleSelectRows(rowsSelected)}
+                    extraSearchConfig={extraSearchConfig}
                     // pagination={pagination}
                     // setPagination={setPagination}
                     isMultiSelectRow

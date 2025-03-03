@@ -8,6 +8,8 @@ import useGetAllCurriculum from '#/hooks/useGetAllCurriculum';
 import { useUrlSafeBase64 } from '#/hooks/useUrlSafeBase64';
 import { ICurriculum, ISubjects } from '#/types/LTS/ILts';
 import useGetAllSubjects from '#/hooks/useGetAllSubjects';
+import useGetAllClo from '#/hooks/useGetAllClo';
+import { IClo } from '#/types/LTS/IPlo';
 
 export interface TracksType {
   level: number;
@@ -59,31 +61,44 @@ export default function ApplicantTracking() {
   const encodedCurId = searchParams.get("id");
   // CLOs
   const encodedSubId = searchParams.get("id");
+  const subId = searchParams.get("sub1");
   const curriculumId = searchParams.get("cur");
   const { encode, decode } = useUrlSafeBase64();
   const paramsId = Number(encodedCurId ? decode(encodedCurId) : null);
   const paramsSubId = Number(encodedSubId ? decode(encodedSubId) : null);
+  const paramsSub1Id = Number(subId ? decode(subId) : null);
   const paramsCurId = Number(curriculumId ? decode(curriculumId) : null);
-  console.log("encodedCurId", encodedCurId)
-  console.log("encodedSubId", encodedSubId)
-  console.log("curriculumId", curriculumId)
-  console.log("paramsId", paramsId)
-  console.log("paramsSubId", paramsSubId)
-  console.log("paramsCurId", paramsCurId)
+  // console.log("encodedCurId", encodedCurId)
+  // console.log("encodedSubId", encodedSubId)
+  // console.log("curriculumId", curriculumId)
+  // console.log("paramsId", paramsId)
+  // console.log("paramsSubId", paramsSubId)
+  // console.log("paramsSub1Id", paramsSub1Id)
+  // console.log("paramsCurId", paramsCurId)
 
   const { data: curriculumData, isLoading: isLoadingCurriculumData } = useGetAllCurriculum();
   const { data: subjectsData, isLoading: isLoadingSubjectsData } = useGetAllSubjects();
+  const { data: cloData, isLoading: isLoadingPloData } = useGetAllClo();
 
   const curriculum = useMemo(() => {
     return curriculumData?.data?.find((item: ICurriculum) => item.id === paramsId)?.degreeShortEn;
   }, [curriculumData, paramsId]);
 
   const subject = useMemo(() => {
-    return subjectsData?.data?.find((item: ISubjects) => item.id === paramsSubId && item.curriculum?.id === paramsCurId)?.subNameEn;
-  }, [subjectsData?.data, paramsSubId, paramsCurId]);
+    const foundSubject = subjectsData?.data?.find((item: ISubjects) => item.id === paramsId && item.curriculum?.id === paramsCurId);
+    // console.log("foundSubject", foundSubject)
+    return foundSubject?.subNameEn;
+  }, [subjectsData?.data, paramsId, paramsCurId]);
 
-  console.log("curriculum", curriculum)
-  console.log("subject", subject)
+  const subject1 = useMemo(() => {
+    const foundSubject = cloData?.data?.find((item: IClo) => item.id === paramsSubId && item.subjects?.id === paramsSub1Id && item.curriculum?.id === paramsCurId);
+    // console.log("foundSubject", foundSubject)
+    return foundSubject?.subjects?.subNameEn;
+  }, [cloData?.data, paramsCurId, paramsSub1Id, paramsSubId]);
+
+  // console.log("curriculum", curriculum)
+  // console.log("subject", subject)
+  // console.log("subject1", subject1)
 
   pathnameWithoutDynamicParams = pathnameWithoutDynamicParams.replaceAll(`/lts`, '')
 
@@ -125,7 +140,7 @@ export default function ApplicantTracking() {
     },
     {
       url: Paths.lts.clos, tracks: [
-        { level: 1, name: `${subject}`, linkTo: `${Paths.lts.clos}?id=${encodedSubId}&cur=${encodedCurId}` },
+        { level: 1, name: `${subject1 ? subject1 : subject}`, linkTo: `${Paths.lts.clos}?id=${subId}&cur=${curriculumId}` },
       ]
     },
     {
@@ -148,7 +163,7 @@ export default function ApplicantTracking() {
     },
     {
       url: Paths.lts.createClo, tracks: [
-        { level: 1, name: `${subject}`, linkTo: `${Paths.lts.clos}?id=${encodedSubId}&cur=${encodedCurId}` },
+        { level: 1, name: `${subject}`, linkTo: `${Paths.lts.clos}?id=${encodedSubId}&cur=${curriculumId}` },
         { level: 2, name: "Create Clos", linkTo: Paths.lts.createClo },
       ]
     },
@@ -205,7 +220,7 @@ export default function ApplicantTracking() {
       const idx = pathUrls.findIndex(path => path.url == pathnameWithoutDynamicParams)
       if (idx != -1) {
         pathUrls[idx].tracks.push(
-          { level: 3, name: `${decodeURIComponent(dynamicParams?.ploName as string)}`, linkTo: `${Paths.lts.plos}?id=${encodedCurId}` },
+          { level: 3, name: `${decodeURIComponent(dynamicParams?.ploName as string)}`, linkTo: `${Paths.lts.plos}?id=${subId}?cur=${curriculumId}` },
         )
       }
     } else if (pathnameWithoutDynamicParams == `${Paths.lts.clos}`) {

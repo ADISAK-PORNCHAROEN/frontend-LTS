@@ -37,6 +37,7 @@ import useGetAllCurriculum from '#/hooks/useGetAllCurriculum';
 import { useUrlSafeBase64 } from '#/hooks/useUrlSafeBase64';
 import useGetAllSubjects from '#/hooks/useGetAllSubjects';
 import ArticleIcon from '@mui/icons-material/Article';
+import { IUser } from '#/types/IResponse/IResponse';
 
 const drawerWidth = 280;
 
@@ -153,6 +154,7 @@ export default function SidebarLayout({ children }: Props) {
     const paramsSubId = Number(pathId ? decode(pathId) : null);
     const paramsSubEditId = Number(subId ? decode(subId) : null);
     const paramsCurId = Number(curId ? decode(curId) : null);
+    console.log("paramsSubId", paramsSubId, "paramsSubEditId", paramsSubEditId, "paramsCurId", paramsCurId);
     // เพิ่ม state สำหรับเก็บสถานะการแสดงผลของแต่ละ curriculum
     const [expandedCurriculums, setExpandedCurriculums] = useState<{ [key: string]: boolean }>({});
 
@@ -166,10 +168,20 @@ export default function SidebarLayout({ children }: Props) {
     }, []);
 
     useEffect(() => {
+        if (!curriculumData?.data) return;
+        setCurriculumList(curriculumData.data);
+
+        if (!subjectsData?.data) return;
+        setSubjectList(subjectsData.data);
+
         if (!userData?.data || !session?.user?.email) return;
 
-        const currentUser = userData.data.find((u: any) => u.email === session.user.email);
-        if (!currentUser?.subjects) return;
+        const currentUser = userData.data.find((u: IUser) => u.email === session.user.email);
+
+        if (!currentUser?.subjects) {
+            setUserSubjects([]);
+            return;
+        }
 
         const flattenedSubjects = currentUser.subjects.flatMap((s: any) =>
             s.subjects?.map((sub: ISubjects) => ({
@@ -179,22 +191,22 @@ export default function SidebarLayout({ children }: Props) {
         );
         setUserSubjects(flattenedSubjects);
 
-        if (curriculumData?.data) {
-            const transformedData = curriculumData?.data.map((curriculum: ICurriculum) => ({
-                id: curriculum.id,
-                ...curriculum
-            }))
-            setCurriculumList(transformedData);
-        }
 
-        if (subjectsData?.data) {
-            const transformedData = subjectsData?.data.map((sub: ISubjects) => ({
-                ...sub
-            }))
-            setSubjectList(transformedData);
-        }
+    }, [userData, session?.user.email, curriculumData, subjectsData?.data, userData?.data]);
 
-    }, [userData, session?.user.email, curriculumData, subjectsData?.data]);
+    useEffect(() => {
+        // if (!curriculumData?.data) return;
+        // setCurriculumList(curriculumData.data);
+
+        // if (!subjectsData?.data) return;
+        // setSubjectList(subjectsData.data);
+
+        // const expandedCurriculums: { [key: string]: boolean } = {};
+        // curriculumData.data.forEach((curriculum: ICurriculum) => {
+        //     expandedCurriculums[curriculum.id!] = false;
+        // });
+        // setExpandedCurriculums(expandedCurriculums);
+    }, [curriculumData, subjectsData?.data]);
 
     const handleDrawerOpen = () => setOpen(true);
     const handleDrawerClose = () => setOpen(false);
@@ -413,12 +425,14 @@ export default function SidebarLayout({ children }: Props) {
                                             <Collapse in={isCurriculumExpanded} timeout="auto" unmountOnExit>
                                                 <List component="div" disablePadding>
                                                     {curriculumSubjects?.filter(subject => subject?.subStatus === status.isActive).map((subject: ISubjects) => {
-                                                        const isEditPage = pathname.split("/").length >= 4;
-                                                        const isCreatePage = pathname.split("/").length >= 4;
+
+                                                        const isEditPage = pathname.split("/").length >= 4 && !pathname.includes("/createClo");
+                                                        const isCreatePage = pathname.includes("/createClo");
                                                         const isSubjectActive = pathname.includes("/clos") && (
-                                                            (!isEditPage && paramsSubId === subject.id && paramsCurId === subject.curriculum?.id) ||
+                                                            (!isEditPage && !isCreatePage && paramsSubId === subject.id && paramsCurId === subject.curriculum?.id) ||
                                                             (isEditPage && paramsSubEditId === subject.id && paramsCurId === subject.curriculum?.id) ||
-                                                            (isCreatePage && paramsSubId === subject.id && paramsCurId === subject.curriculum?.id)
+                                                            (isCreatePage && paramsSubId === subject.id && paramsCurId === subject.curriculum?.id) ||
+                                                            (pathname.includes(`/clos/${subject.subNameEn}`) || pathname.includes(`/clos/${encodeURIComponent(subject.subNameEn as string)}`))
                                                         );
 
                                                         return (
@@ -505,6 +519,7 @@ export default function SidebarLayout({ children }: Props) {
                         <List component="div" disablePadding>
                             {curriculumList.map((curriculum: ICurriculum) => {
                                 const isActive = pathname.includes("/plos") && paramsSubId === curriculum.id;
+                                // console.log("curriculum", curriculum);
 
                                 return (
                                     <ListItemButton
@@ -580,7 +595,7 @@ export default function SidebarLayout({ children }: Props) {
                                     primary="วิชาที่รับผิดชอบ"
                                     sx={{ opacity: open ? 1 : 0 }}
                                 />
-                                {open && (subjectOpen ? <ExpandLess /> : <ExpandMore />)}
+                                {open && userSubjects.length > 0 && (subjectOpen ? <ExpandLess /> : <ExpandMore />)}
                             </ListItemButton>
                         </ListItem>
 

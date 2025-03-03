@@ -57,4 +57,5 @@ export interface ICurriculum {
     updatedDate?: Date | null;
     updatedBy?: string | null;
     ids?: string | null;
+    curriculumType?: string | null;
 }
