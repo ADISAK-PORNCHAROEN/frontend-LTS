@@ -32,6 +32,7 @@ import useGetAllCurriculum from '#/hooks/useGetAllCurriculum';
 
 export default function Home() {
     const [rows, setRows] = useState<IPlo[]>([]);
+    console.log("rows", rows);
     const [rowsSelected, setRowsSelected] = useState<IPlo[]>([]);
     const [searchText, setSearchText] = useState<string>('');
     const [searchType, setSearchType] = useState<string>("ploName");
@@ -180,6 +181,8 @@ export default function Home() {
         // Both filters must match
         return mainSearchMatch && curriculumMatch;
     });
+
+    console.log(filteredRows);
 
     const handleSelectRows = (rowSelected: IPlo[]) => {
         setRowsSelected(rowSelected);

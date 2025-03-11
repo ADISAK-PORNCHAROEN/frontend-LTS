@@ -21,6 +21,7 @@ export async function middleware(request: NextRequestWithAuth) {
 
   const Role = {
     admin: 'admin',
+    professor: 'professor',
     member: 'member',
   }
 
@@ -46,9 +47,14 @@ export async function middleware(request: NextRequestWithAuth) {
   
   // เช็ค role ต่างๆ
   const isAdminPath = request.nextUrl.pathname.startsWith('/admin')
+  const isProfessorPath = request.nextUrl.pathname.startsWith('/professor')
   const isMemberPath = request.nextUrl.pathname.startsWith('/member')
 
   if (isAdminPath && user?.role !== Role.admin) {
+    return NextResponse.redirect(new URL('/member', request.url))
+  }
+
+  if (isProfessorPath && user?.role !== Role.professor) {
     return NextResponse.redirect(new URL('/member', request.url))
   }
 

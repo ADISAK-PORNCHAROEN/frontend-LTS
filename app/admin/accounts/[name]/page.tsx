@@ -80,6 +80,7 @@ export default function Page() {
                 userId: userId,
                 subjects: resultUserSubs
             });
+            console.log("resUserSubject", resUserSubject);
 
             if (resUserSubject.success === true && res.success === true) {
                 setTypeAlertBox("success");

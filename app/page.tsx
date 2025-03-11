@@ -11,6 +11,7 @@ export default function Page() {
 
   const Role = {
     admin: 'admin',
+    professor: 'professor',
     member: 'member'
   }
 

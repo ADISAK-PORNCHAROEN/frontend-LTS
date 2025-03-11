@@ -1,7 +1,7 @@
-import { ICurriculum, ISubjects } from "./ILts";
+import { ICurriculum, ISubjects, IUserPlo } from "./ILts";
 
 export interface IPlo {
-    id?: number;
+    id?: number | null;
     curriculum?: ICurriculum | null;
     ploName?: string;
     ploDesc?: string;
@@ -10,6 +10,7 @@ export interface IPlo {
     updatedDate?: Date | null;
     updatedBy?: string | null;
     ids?: string | null;
+    cloId?: number | null;
 }
 
 export interface IClo {
@@ -35,4 +36,9 @@ export interface IPloRows {
     id?: number;
     ploData?: string;
     [key: string]: any;
+}
+
+export interface IPloChecked {
+    cloId?: number | null;
+    plos?: IUserPlo[] | null;
 }

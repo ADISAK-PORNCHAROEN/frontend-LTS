@@ -19,6 +19,13 @@ export type TableWithSearchProps<R extends GridValidRowModel> = {
   curriculumValue?: string;
   onCurriculumChange?: (newValue: string) => void;
   curriculumOptions?: { value: string, name: string }[];
+  // Year and semester search props
+  yearValue?: string;
+  onYearChange?: (newValue: string) => void;
+  yearOptions?: { value: string, name: string }[];
+  semesterValue?: string;
+  onSemesterChange?: (newValue: string) => void;
+  semesterOptions?: { value: string, name: string }[];
   // End of new props
   extraSearchConfig?: { field: keyof R, option: { value: string, name: string }[], dateFormat?: { input: string; output: string; views?: DateView[] | undefined } }[]
   slotOppositeSearch?: ReactNode;
@@ -37,6 +44,13 @@ export default function TableWithSearch<R extends GridValidRowModel>({
   curriculumValue = '',
   onCurriculumChange,
   curriculumOptions = [],
+  // Year and semester search props
+  yearValue = '',
+  onYearChange,
+  yearOptions = [],
+  semesterValue = '',
+  onSemesterChange,
+  semesterOptions = [],
   // End of new props
   extraSearchConfig,
   slotOppositeSearch,
@@ -81,6 +95,18 @@ export default function TableWithSearch<R extends GridValidRowModel>({
     }
   }
 
+  const handleYearChange = (value: string) => {
+    if (onYearChange) {
+      onYearChange(value);
+    }
+  }
+
+  const handleSemesterChange = (value: string) => {
+    if (onSemesterChange) {
+      onSemesterChange(value);
+    }
+  }
+
   return (
     <>
       <Box className="flex items-center justify-between mb-4">
@@ -88,6 +114,35 @@ export default function TableWithSearch<R extends GridValidRowModel>({
           {slotOppositeSearch && <>{slotOppositeSearch}</>}
         </Box>
         <Box className="flex items-center justify-end gap-4">
+
+          {/* Semester search dropdown */}
+          {semesterOptions.length > 0 && (
+            <Autocomplete
+              className="w-56"
+              size='small'
+              options={semesterOptions}
+              getOptionLabel={(option) => option.name}
+              renderInput={(params) => (<TextField {...params} label="ภาคการศึกษา" />)}
+              onChange={(_, newValue) => handleSemesterChange(newValue ? newValue.value : '')}
+              value={semesterOptions.find(option => option.value === semesterValue) || null}
+              disabled={isOpenAdvanceSearch}
+            />
+          )}
+
+          {/* Year search dropdown */}
+          {yearOptions.length > 0 && (
+            <Autocomplete
+              className="w-32"
+              size='small'
+              options={yearOptions}
+              getOptionLabel={(option) => option.name}
+              renderInput={(params) => (<TextField {...params} label="ปีการศึกษา" />)}
+              onChange={(_, newValue) => handleYearChange(newValue ? newValue.value : '')}
+              value={yearOptions.find(option => option.value === yearValue) || null}
+              disabled={isOpenAdvanceSearch}
+            />
+          )}
+
           {/* New Curriculum search dropdown */}
           {curriculumOptions.length > 0 && (
             <Autocomplete
@@ -95,7 +150,7 @@ export default function TableWithSearch<R extends GridValidRowModel>({
               size='small'
               options={curriculumOptions}
               getOptionLabel={(option) => option.name}
-              renderInput={(params) => (<TextField {...params} />)}
+              renderInput={(params) => (<TextField {...params} label="หลักสูตร" />)}
               onChange={(_, newValue) => handleCurriculumChange(newValue ? newValue.value : '')}
               value={curriculumOptions.find(option => option.value === curriculumValue) || null}
               disabled={isOpenAdvanceSearch}

@@ -213,7 +213,7 @@ export const CustomColumnDialog = <R extends GridValidRowModel>(props: CustomCol
         maxWidth={'sm'}
       >
         <DialogTitle id="alert-dialog-title">
-          <div className="text-[#A075EC]">
+          <div className="">
           <span >{"View Configure"}</span>
           </div>
           {/* <Checkbox className=" ml-4 mr-1 p-0" checked={selectedColumns.length === customColumns.length} onChange={(e) => handleSelectAllColumn(e.target.checked)} />
@@ -333,7 +333,7 @@ export const CustomColumnDialog = <R extends GridValidRowModel>(props: CustomCol
             style={{ width: 112 }}
             icon={<CheckIcon />}
             onClick={handleConfirm}
-            color='#8286FF'
+            // color='#8286FF'
           />
         </DialogActions>
       </Dialog>
@@ -363,7 +363,7 @@ export const CustomColumnDialog = <R extends GridValidRowModel>(props: CustomCol
             style={{ width: 112 }}
             icon={<CheckIcon />}
             onClick={handleClear}
-            color='#8286FF'
+            // color='#8286FF'
           />
         </DialogActions>
       </Dialog>
@@ -386,7 +386,7 @@ export const CustomColumnDialog = <R extends GridValidRowModel>(props: CustomCol
             style={{ width: 112 }}
             icon={<ThumbUpAltIcon />}
             onClick={() => setOpenConfirmMinSelect(false)}
-            color='#8286FF'
+            // color='#8286FF'
           />
         </DialogActions>
       </Dialog>

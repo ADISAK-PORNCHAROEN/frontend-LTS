@@ -96,7 +96,7 @@ export default function Home() {
     }
 
     const column: GridColDef[] = [
-        createColumn("cloName", "STRING", "ชื่อ CLO", 350, {
+        createColumn("cloName", "STRING", "CLO", 350, {
             headerAlign: "center",
             align: "center",
             sortable: true
