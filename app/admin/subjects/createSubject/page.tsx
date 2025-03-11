@@ -81,7 +81,6 @@ export default function Home() {
                 createdDate: new Date(),
                 createdBy: user?.name,
             }
-            console.log("result", result)
 
             const validationErrors = checkExistingField(result);
 

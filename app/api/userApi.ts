@@ -1,8 +1,8 @@
 
 import axiosApi, { isAxiosError } from "#/utils/axiosApi";
 import { IAccount, IResponse, IUser } from "#/types/IResponse/IResponse";
-import { IClo, IPlo, IPloClo, IPloRows } from "#/types/LTS/IPlo";
-import { ICurriculum, ISubjects, IUserSubject } from "#/types/LTS/ILts";
+import { IClo, IPlo, IPloChecked, IPloClo, IPloRows } from "#/types/LTS/IPlo";
+import { ICurriculum, IExcel, ISubjects, IUserClo, IUserPlo, IUserSubject } from "#/types/LTS/ILts";
 
 //nextauth api
 export const findUserByEmailApi = async (email: string): Promise<IUser | null> => {
@@ -275,6 +275,26 @@ export const getAllCloApi = async (): Promise<IResponse<IClo[]>> => {
   }
 };
 
+export const getAllCloListApi = async (): Promise<IResponse<IClo[]>> => {
+  try {
+    const response = await axiosApi.get<IResponse<IClo[]>>(
+      '/clo-default/getAllLtsUserCloList'
+    );
+    // // console.log('Response:', response.data);
+    if (response?.data === undefined) {
+      throw new Error("Undefined response data");
+    }
+    return response.data;
+  } catch (error) {
+    if (isAxiosError(error)) {
+      console.error('Error details:', error.response?.data);
+    } else {
+      console.error('Unexpected error:', error);
+    }
+    throw error;
+  }
+};
+
 export const createCloApi = async (payload: IClo) => {
   try {
 
@@ -429,6 +449,206 @@ export const updateUserSubjectApi = async (payload: IUserSubject) => {
   }
 };
 
+export const getAllUserCloApi = async (): Promise<IResponse<IUserClo[]>> => {
+  try {
+    const response = await axiosApi.get<IResponse<IUserClo[]>>(
+      '/user-clo/getAllUserClo'
+    );
+    // // console.log('Response:', response.data);
+    if (response?.data === undefined) {
+      throw new Error("Undefined response data");
+    }
+    return response.data;
+  } catch (error) {
+    if (isAxiosError(error)) {
+      console.error('Error details:', error.response?.data);
+    } else {
+      console.error('Unexpected error:', error);
+    }
+    throw error;
+  }
+};
+
+export const createUserCloApi = async (payload: IUserClo) => {
+  try {
+
+    const response = await axiosApi.post<IResponse<IUserClo>>('/user-clo/createUserClo', payload);
+
+    if (response?.data === undefined) {
+      throw new Error("Undefined response data");
+    }
+
+    return response.data;
+  } catch (error) {
+    if (isAxiosError(error)) {
+      console.error('Error details:', error.response?.data);
+    } else {
+      console.error('Unexpected error:', error);
+    }
+    throw error;
+  }
+};
+
+export const createUserCloWithCloApi = async (payload: IUserClo) => {
+  try {
+    const { userId, ...newPayload } = payload; // create a new variable newPayload without userId
+
+    const response = await axiosApi.post<IResponse<IUserClo>>(`/user-clo/${userId}/createCloWithPlo`, newPayload);
+
+    if (response?.data === undefined) {
+      throw new Error("Undefined response data");
+    }
+
+    return response.data;
+  } catch (error) {
+    if (isAxiosError(error)) {
+      console.error('Error details:', error.response?.data);
+    } else {
+      console.error('Unexpected error:', error);
+    }
+    throw error;
+  }
+};
+
+export const createUserCloWithCloUpdateApi = async (payload: IUserClo) => {
+  try {
+    const response = await axiosApi.post<IResponse<IUserClo>>(`/user-clo/create-with-ids`, payload);
+
+    if (response?.data === undefined) {
+      throw new Error("Undefined response data");
+    }
+
+    return response.data;
+  } catch (error) {
+    if (isAxiosError(error)) {
+      console.error('Error details:', error.response?.data);
+    } else {
+      console.error('Unexpected error:', error);
+    }
+    throw error;
+  }
+};
+
+export const updateUserCloApi = async (payload: IUserClo) => {
+  console.log("payload", payload);
+  try {
+    const response = await axiosApi.put<IResponse<IUserClo>>(`user-clo/updateUserClo`, payload);
+
+    if (response?.data === undefined) {
+      throw new Error("Undefined response data");
+    }
+
+    return response.data;
+  } catch (error) {
+    if (isAxiosError(error)) {
+      console.error('Error details:', error.response?.data);
+    } else {
+      console.error('Unexpected error:', error);
+    }
+    throw error;
+  }
+};
+
+export const updateNewUserCloApi = async (payload: IUserClo) => {
+  console.log("payload", payload);
+  try {
+    const response = await axiosApi.put<IResponse<IUserClo>>(`user-clo/updateNewUserClo`, payload);
+
+    if (response?.data === undefined) {
+      throw new Error("Undefined response data");
+    }
+
+    return response.data;
+  } catch (error) {
+    if (isAxiosError(error)) {
+      console.error('Error details:', error.response?.data);
+    } else {
+      console.error('Unexpected error:', error);
+    }
+    throw error;
+  }
+};
+
+export const updateUserPloApi = async (payload: IUserPlo) => {
+  console.log("payload", payload);
+  try {
+    const response = await axiosApi.put<IResponse<IUserPlo>>(`user-plo/${payload.userId}/updateUserPlo?curriculumId=${payload.curriculumId}&cloId=${payload.cloId}`, payload.plo);
+
+    if (response?.data === undefined) {
+      throw new Error("Undefined response data");
+    }
+
+    return response.data;
+  } catch (error) {
+    if (isAxiosError(error)) {
+      console.error('Error details:', error.response?.data);
+    } else {
+      console.error('Unexpected error:', error);
+    }
+    throw error;
+  }
+};
+
+export const updateUserPloManyApi = async (payload: IUserPlo) => {
+  console.log("payload", payload);
+  const { userId, curriculumId, ...newPayload } = payload;
+
+  try {
+    const response = await axiosApi.put<IResponse<IUserPlo>>(`user-plo/${payload.userId}/updateMultipleUserPlo?curriculumId=${payload.curriculumId}`, newPayload);
+
+    if (response?.data === undefined) {
+      throw new Error("Undefined response data");
+    }
+
+    return response.data;
+  } catch (error) {
+    if (isAxiosError(error)) {
+      console.error('Error details:', error.response?.data);
+    } else {
+      console.error('Unexpected error:', error);
+    }
+    throw error;
+  }
+};
+
+export const updatePloCheckedApi = async (payload: IPloChecked) => {
+  // console.log("payload", payload);
+  try {
+    const response = await axiosApi.put<IResponse<IPloChecked>>(`/user-plo/updateCheckedUserPlo?cloId=${payload.cloId}`, payload.plos);
+    // // console.log('Response:', response.data);
+
+    if (response?.data === undefined) {
+      throw new Error("Undefined response data");
+    }
+
+    return response.data;
+  } catch (error) {
+    if (isAxiosError(error)) {
+      console.error('Error details:', error.response?.data);
+    } else {
+      console.error('Unexpected error:', error);
+    }
+    throw error;
+  }
+};
+
+export const deleteUserCloApi = async (payload: IUserClo) => {
+  try {
+    const response = await axiosApi.delete<IResponse<IUserClo>>(
+      `/user-clo/deleteUserClo/${payload.ids}`
+    )
+    return response?.data;
+  } catch (err) {
+    if (isAxiosError(err)) {
+      console.error(err);
+      return { success: false, message: err.message };
+    } else {
+      console.error(err);
+      return { success: false, message: 'An unknown error occurred' };
+    }
+  }
+};
+
 export const createCurriculumApi = async (payload: ICurriculum) => {
   try {
 
@@ -504,5 +724,52 @@ export const deleteCurriculumApi = async (payload: ICurriculum) => {
       console.error(err);
       return { success: false, message: 'An unknown error occurred' };
     }
+  }
+};
+
+//Excel
+export const getExcelApi = async (payload: IExcel) => {
+  try {
+    // เปลี่ยนการเรียก API ให้รับ response เป็น Blob แทน JSON
+    const response = await axiosApi.get(`/excel/clo-report`, {
+      params: {
+        userId: payload.userId,
+        subId: payload.subId,
+        semester: payload.semester,
+        year: payload.year
+      },
+      responseType: 'blob', // สำคัญมาก! ต้องระบุว่าต้องการ response เป็น blob
+    });
+
+    // ตรวจสอบว่ามี response หรือไม่
+    if (!response.data) {
+      throw new Error("Undefined response data");
+    }
+
+    // สร้าง URL object จาก blob ที่ได้รับมา
+    const blob = new Blob([response.data], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    });
+    const url = window.URL.createObjectURL(blob);
+
+    // สร้าง element a เพื่อดาวน์โหลดไฟล์
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `clo_report_${payload.year}_${payload.semester}.xlsx`;
+    document.body.appendChild(a);
+    a.click();
+
+    // ทำความสะอาด
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+
+    return { success: true, message: 'ดาวน์โหลดสำเร็จ' };
+  } catch (error) {
+    if (isAxiosError(error)) {
+      console.error('Error details:', error.response?.data);
+    } else {
+      console.error('Unexpected error:', error);
+    }
+    throw error;
   }
 };

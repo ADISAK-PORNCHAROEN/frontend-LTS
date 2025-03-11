@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from 'react'
-import { Button, FormControl, FormHelperText, Grid, InputLabel, Menu, MenuItem, Select, Stack, TextField, Typography } from '@mui/material';
+import { Autocomplete, Button, FormControl, FormHelperText, Grid, InputLabel, Menu, MenuItem, Select, Stack, TextField, Typography } from '@mui/material';
 import { Controller, set, SubmitHandler, useForm } from 'react-hook-form';
 import CloseIcon from '@mui/icons-material/Close';
 import AddIcon from '@mui/icons-material/Add';
@@ -9,11 +9,12 @@ import PageContentLayout from '#/components/layout/PageContentLayout';
 import Alert from '#/components/modal/Alert';
 import AccountBoxIcon from '@mui/icons-material/AccountBox';
 import CardBox from '#/components/CardBox';
-import { ISubjects } from '#/types/LTS/ILts';
+import { ICurriculum, ISubjects } from '#/types/LTS/ILts';
 import { useParams, usePathname, useRouter, useSearchParams } from 'next/navigation';
 import useUpdateSubjects from '#/hooks/useUpdateSubjects';
 import useGetAllSubjects from '#/hooks/useGetAllSubjects';
 import { useSession } from 'next-auth/react';
+import useGetAllCurriculum from '#/hooks/useGetAllCurriculum';
 import { useUrlSafeBase64 } from '#/hooks/useUrlSafeBase64';
 
 // type Props = {
@@ -22,6 +23,9 @@ import { useUrlSafeBase64 } from '#/hooks/useUrlSafeBase64';
 
 export default function Page() {
     const router = useRouter();
+    // const { subNameTh } = use(params);
+    // const path = decodeURIComponent(subNameTh);
+    // console.log("pathname:", path)
     const [subjectName, setSubjectName] = useState<string | null>(null);
     const [subjectNameTh, setSubjectNameTh] = useState<string>("");
     const { subNameEn } = useParams();
@@ -31,6 +35,7 @@ export default function Page() {
     const { control, handleSubmit, formState: { errors }, setValue } = useForm<ISubjects>();
     const { mutateAsync: updateSubjects, isLoading: isLoadingUpdateSubjects } = useUpdateSubjects();
     const { data: subjectsData, isLoading: isLoadingSubjectsData } = useGetAllSubjects();
+    const { data: curriculumData, isLoading: isLoadingCurriculumData } = useGetAllCurriculum();
     const { encode, decode } = useUrlSafeBase64();
     const searchParams = useSearchParams();
     const encodedId = searchParams.get("id");
@@ -68,13 +73,15 @@ export default function Page() {
             originalData.subNameTh !== data.subNameTh ||
             originalData.subNameEn !== data.subNameEn;
 
+        console.log("hasDataChanged", hasDataChanged);
+
         if (!hasDataChanged) {
             return errors;
         }
 
         if (subjectsData?.data) {
             subjectsData.data.forEach((subject: ISubjects) => {
-                if (subject.id === paramsId) {
+                if (subject.id === data.id) {
                     return;
                 }
 
@@ -96,12 +103,11 @@ export default function Page() {
 
     const handleSubmitSubject: SubmitHandler<ISubjects> = async (data: ISubjects) => {
         try {
-            // const originalData = sessionStorage.getItem('subjectData');
-            // const parsedOriginalData = originalData ? JSON.parse(originalData) : null;
+            const originalData = sessionStorage.getItem('subjectData');
+            const parsedOriginalData = originalData ? JSON.parse(originalData) : null;
 
             const result = {
                 ...data,
-                // id: subjectId,
                 subId: data.subId?.trim(),
                 subNameTh: data.subNameTh?.trim(),
                 subNameEn: data.subNameEn?.trim(),
@@ -110,7 +116,7 @@ export default function Page() {
                 updatedBy: user?.name
             };
 
-            const validationErrors = checkExistingField(result);
+            const validationErrors = checkExistingField(result, parsedOriginalData);
 
             if (validationErrors.length > 0) {
                 setTypeAlertBox("warning");
@@ -151,10 +157,17 @@ export default function Page() {
     return (
         <>
             <PageContentLayout
-                title={`${subjectName == pathname ? `${subjectNameTh}` : "404 not found"}`}
+                title={`${subjectName === pathname ? `${subjectNameTh}` : "404 not found"}`}
                 icon={<AccountBoxIcon />}
                 actions={
                     <>
+                        <ActionBtn
+                            title="ยกเลิก"
+                            icon={<CloseIcon />}
+                            color='#db3131'
+                            onClick={() => router.push("../subjects")}
+                        />
+
                         <ActionBtn
                             title="บันทึก"
                             icon={<AddIcon />}
@@ -230,7 +243,31 @@ export default function Page() {
                                 />
                             </Grid>
 
-                            <Grid item xs={12}>
+                            <Grid item xs={12} md={6}>
+                                <Controller
+                                    control={control}
+                                    name="curriculum"
+                                    defaultValue={null}
+                                    render={({ field }) => (
+                                        <Autocomplete
+                                            {...field}
+                                            autoFocus
+                                            autoHighlight
+                                            size='small'
+                                            options={curriculumData?.data || []}
+                                            getOptionLabel={(option: ICurriculum) => option.degreeFullTh || ""}
+                                            onChange={(event, value) => field.onChange(value)}
+                                            value={field.value || null}
+                                            isOptionEqualToValue={(option, value) => option.id === value.id}
+                                            renderInput={(params) => (
+                                                <TextField {...params} label="หลักสูตรรายวิชา" />
+                                            )}
+                                        />
+                                    )}
+                                />
+                            </Grid>
+
+                            <Grid item xs={12} md={6}>
                                 <Controller
                                     control={control}
                                     name="subStatus"

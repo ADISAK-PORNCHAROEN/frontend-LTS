@@ -1,15 +1,13 @@
 "use client";
-import Image from 'next/image'
-import { SetStateAction, use, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { IUser } from '#/types/IResponse/IResponse';
-import { Button, Grid, Menu, MenuItem, Stack, Typography } from '@mui/material';
+import { Grid } from '@mui/material';
 import PageContentLayout from '#/components/layout/PageContentLayout';
 import Alert from '#/components/modal/Alert';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import BookIcon from '@mui/icons-material/Book';
 import PeopleIcon from '@mui/icons-material/People';
 import PendingIcon from '@mui/icons-material/Pending';
-import CardBox from '#/components/CardBox';
 import useGetAllSubjects from '#/hooks/useGetAllSubjects';
 import CardBoxDashboard from '#/components/CardBoxDashboard';
 
@@ -18,7 +16,6 @@ export default function Home() {
     const [countSubjectActive, setCountSubjectActive] = useState<number>(0);
     const [countSubjectInactive, setCountSubjectInactive] = useState<number>(0);
     const { data: subjectsData, isLoading: isLoadingSubjectsData } = useGetAllSubjects();
-    console.log("subject", subjectsData?.data)
 
     // modal
     const [textAlertBox, setTextAlertBox] = useState("");
@@ -36,7 +33,7 @@ export default function Home() {
             const transformedData = subjectsData?.data.map((data) => ({
                 ...data,
                 subStatus: data.subStatus === status.isActive,
-                subStatusIn: data.subStatus === status.isInactive 
+                subStatusIn: data.subStatus === status.isInactive
             }));
 
             setCountSubjectActive(transformedData.filter(item => item.subStatus).length || 0);
@@ -60,7 +57,7 @@ export default function Home() {
                     <Grid item xs={12} md={6} lg={3}>
                         <CardBoxDashboard
                             title='วิชาที่มีอยู่ในระบบ'
-                            value={subjectsData?.data?.length || 0}
+                            value={subjectsData?.data?.length || "0"}
                             subtitle="รายวิชาทั้งหมดในระบบ"
                             colorVariant='info'
                             icon={<DashboardIcon />}
@@ -69,7 +66,7 @@ export default function Home() {
                     <Grid item xs={12} md={6} lg={3}>
                         <CardBoxDashboard
                             title='วิชาที่เปิดสอน'
-                            value={countSubjectActive}
+                            value={countSubjectActive || "0"}
                             subtitle="รายวิชาที่เปิดในเทอมปัจจุบัน"
                             colorVariant='success'
                             icon={<BookIcon />}
