@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from 'react'
+import { useEffect, useState, ChangeEvent, KeyboardEvent } from 'react'
 import { FormControl, FormControlLabel, FormLabel, Grid, Radio, RadioGroup, TextField, Typography } from '@mui/material';
 import { Controller, set, SubmitHandler, useForm } from 'react-hook-form';
 import CloseIcon from '@mui/icons-material/Close';
@@ -9,8 +9,8 @@ import PageContentLayout from '#/components/layout/PageContentLayout';
 import Alert from '#/components/modal/Alert';
 import AccountBoxIcon from '@mui/icons-material/AccountBox';
 import CardBox from '#/components/CardBox';
-import { ICurriculum, ISubjects } from '#/types/LTS/ILts';
-import { useParams, usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { ICurriculum } from '#/types/LTS/ILts';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import useGetAllCurriculum from '#/hooks/useGetAllCurriculum';
 import useUpdateCurruculum from '#/hooks/useUpdateCurruculum';
@@ -20,7 +20,6 @@ export default function Page() {
     const router = useRouter();
     const [subjectName, setSubjectName] = useState<string | null>(null);
     const [subjectNameTh, setSubjectNameTh] = useState<string>("");
-    // const [curriculumType, setCurriculumType] = useState('');
     const { degreeFullEn } = useParams();
     const pathname = decodeURIComponent(degreeFullEn as string);
     const session = useSession();
@@ -38,14 +37,6 @@ export default function Page() {
     const [textAlertBox, setTextAlertBox] = useState("");
     const [typeAlertBox, setTypeAlertBox] = useState<"success" | "warning" | "error">("success");
     const [isOpenAlertBox, setIsOpenAlertBox] = useState(false);
-
-    // useEffect(() => {
-    //     if (selectedType === 'new') {
-    //         setValue('previousCurriculum', '');
-    //     } else if (selectedType === 'improved') {
-    //         setValue('approvalCurriculum', '');
-    //     }
-    // }, [selectedType, setValue]);
 
     useEffect(() => {
         const parsedData = curriculumData?.data?.find((item: ICurriculum) => item.id === Number(paramsId));
@@ -73,7 +64,7 @@ export default function Page() {
             originalData.degreeFullEn !== data.degreeFullEn ||
             originalData.degreeShortEn !== data.degreeShortEn;
 
-        console.log("hasDataChanged", hasDataChanged);
+        // console.log("hasDataChanged", hasDataChanged);
 
         if (!hasDataChanged) {
             return errors;
@@ -198,7 +189,7 @@ export default function Page() {
                                     control={control}
                                     name="curriculumCode"
                                     defaultValue=""
-                                    rules={{ required: "curriculumCode is required" }}
+                                    rules={{ required: "กรุณากรอกรหัสหลักสูตร" }}
                                     render={({ field }) => (
                                         <TextField
                                             {...field}
@@ -219,7 +210,7 @@ export default function Page() {
                                     control={control}
                                     name="nameTh"
                                     defaultValue=""
-                                    rules={{ required: "nameTh is required" }}
+                                    rules={{ required: "กรุณากรอกชื่อหลักสูตร (ภาษาไทย)" }}
                                     render={({ field }) => (
                                         <TextField
                                             {...field}
@@ -240,7 +231,7 @@ export default function Page() {
                                     control={control}
                                     name="nameEn"
                                     defaultValue=""
-                                    rules={{ required: "nameEn is required" }}
+                                    rules={{ required: "กรุณากรอกชื่อหลักสูตร (ภาษาอังกฤษ)" }}
                                     render={({ field }) => (
                                         <TextField
                                             {...field}
@@ -265,7 +256,7 @@ export default function Page() {
                                     control={control}
                                     name="degreeFullTh"
                                     defaultValue=""
-                                    rules={{ required: "degreeFullTh is required" }}
+                                    rules={{ required: "กรุณากรอกชื่อปริญญาเต็ม (ภาษาไทย)" }}
                                     render={({ field }) => (
                                         <TextField
                                             {...field}
@@ -286,7 +277,7 @@ export default function Page() {
                                     control={control}
                                     name="degreeShortTh"
                                     defaultValue=""
-                                    rules={{ required: "degreeShortTh is required" }}
+                                    rules={{ required: "กรุณากรอกชื่อปริญญาย่อ (ภาษาไทย)" }}
                                     render={({ field }) => (
                                         <TextField
                                             {...field}
@@ -307,7 +298,7 @@ export default function Page() {
                                     control={control}
                                     name="degreeFullEn"
                                     defaultValue=""
-                                    rules={{ required: "degreeFullEn is required" }}
+                                    rules={{ required: "กรุณากรอกชื่อปริญญาเต็ม (ภาษาอังกฤษ)" }}
                                     render={({ field }) => (
                                         <TextField
                                             {...field}
@@ -328,7 +319,7 @@ export default function Page() {
                                     control={control}
                                     name="degreeShortEn"
                                     defaultValue=""
-                                    rules={{ required: "degreeShortEn is required" }}
+                                    rules={{ required: "กรุณากรอกชื่อปริญญาย่อ (ภาษาอังกฤษ)" }}
                                     render={({ field }) => (
                                         <TextField
                                             {...field}
@@ -350,7 +341,7 @@ export default function Page() {
                                     control={control}
                                     name="major"
                                     defaultValue=""
-                                    rules={{ required: "major is required" }}
+                                    rules={{ required: "กรุณากรอกวิชาเอก" }}
                                     render={({ field }) => (
                                         <TextField
                                             {...field}
@@ -375,7 +366,7 @@ export default function Page() {
                                     control={control}
                                     name="totalCredits"
                                     defaultValue=""
-                                    rules={{ required: "totalCredits is required" }}
+                                    rules={{ required: "กรุณากรอกจำนวนหน่วยกิต" }}
                                     render={({ field }) => (
                                         <TextField
                                             {...field}
@@ -403,7 +394,7 @@ export default function Page() {
                                     control={control}
                                     name="programType"
                                     defaultValue=""
-                                    rules={{ required: "programType is required" }}
+                                    rules={{ required: "กรุณากรอกรูปแบบของหลักสูตร" }}
                                     render={({ field }) => (
                                         <TextField
                                             {...field}
@@ -424,7 +415,7 @@ export default function Page() {
                                     control={control}
                                     name="degreeCategory"
                                     defaultValue=""
-                                    rules={{ required: "degreeCategory is required" }}
+                                    rules={{ required: "กรุณากรอกประเภทของหลักสูตร" }}
                                     render={({ field }) => (
                                         <TextField
                                             {...field}
@@ -445,7 +436,7 @@ export default function Page() {
                                     control={control}
                                     name="language"
                                     defaultValue=""
-                                    rules={{ required: "language is required" }}
+                                    rules={{ required: "กรุณากรอกภาษาที่ใช้ในหลักสูตร" }}
                                     render={({ field }) => (
                                         <TextField
                                             {...field}
@@ -466,7 +457,7 @@ export default function Page() {
                                     control={control}
                                     name="acceptance"
                                     defaultValue=""
-                                    rules={{ required: "acceptance is required" }}
+                                    rules={{ required: "กรุณากรอกการรับเข้าศึกษา" }}
                                     render={({ field }) => (
                                         <TextField
                                             {...field}
@@ -487,7 +478,7 @@ export default function Page() {
                                     control={control}
                                     name="integration"
                                     defaultValue=""
-                                    rules={{ required: "integration is required" }}
+                                    rules={{ required: "กรุณากรอกการบูรณาการหลักสูตร" }}
                                     render={({ field }) => (
                                         <TextField
                                             {...field}
@@ -508,7 +499,7 @@ export default function Page() {
                                     control={control}
                                     name="collaboration"
                                     defaultValue=""
-                                    rules={{ required: "collaboration is required" }}
+                                    rules={{ required: "กรุณากรอกความร่วมมือกับสถาบันอื่น" }}
                                     render={({ field }) => (
                                         <TextField
                                             {...field}
@@ -529,7 +520,7 @@ export default function Page() {
                                     control={control}
                                     name="degreeGranted"
                                     defaultValue=""
-                                    rules={{ required: "degreeGranted is required" }}
+                                    rules={{ required: "กรุณากรอกการให้ปริญญาแก่ผู้สำเร็จการศึกษา" }}
                                     render={({ field }) => (
                                         <TextField
                                             {...field}
@@ -632,7 +623,7 @@ export default function Page() {
                                     control={control}
                                     name="qualityAssurance"
                                     defaultValue=""
-                                    rules={{ required: "qualityAssurance is required" }}
+                                    rules={{ required: "กรุณากรอกความพร้อมในการเผยแพร่หลักสูตรคุณภาพและมาตรฐาน" }}
                                     render={({ field }) => (
                                         <TextField
                                             {...field}
@@ -657,7 +648,7 @@ export default function Page() {
                                     control={control}
                                     name="career"
                                     defaultValue=""
-                                    rules={{ required: "career is required" }}
+                                    rules={{ required: "กรุณากรอกอาชีพที่สามารถประกอบได้หลังสำเร็จการศึกษา" }}
                                     render={({ field }) => (
                                         <TextField
                                             {...field}
@@ -672,15 +663,7 @@ export default function Page() {
                                             error={!!errors.career}
                                             helperText={errors.career?.message}
                                             onChange={(e) => {
-                                                // Auto-format numbered list
-                                                const value = e.target.value;
-                                                const lines = value.split('\n');
-                                                const formattedLines = lines.map((line, index) => {
-                                                    // If line starts with a number, don't add a new number
-                                                    if (/^\d+\./.test(line)) return line;
-                                                    return `8.${index + 1}. ${line.replace(/^\d+\.\s*/, '')}`;
-                                                });
-                                                field.onChange(formattedLines.join('\n'));
+                                                field.onChange(e.target.value);
                                             }}
                                         />
                                     )}

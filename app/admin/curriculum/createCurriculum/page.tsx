@@ -1,28 +1,16 @@
 "use client";
-import Image from 'next/image'
 import { SetStateAction, use, useEffect, useState } from 'react'
-import { DataGrid, GridColDef, GridValidRowModel } from '@mui/x-data-grid';
-import useGetAllUsers from '#/hooks/useGetAllUsers';
-import { IUser } from '#/types/IResponse/IResponse';
-import useDeleteUser from '#/hooks/useDeleteUser';
+import CloseIcon from '@mui/icons-material/Close';
 import { Button, FormControl, FormControlLabel, FormHelperText, FormLabel, Grid, InputLabel, Menu, MenuItem, Radio, RadioGroup, Select, Stack, TextField, Typography } from '@mui/material';
-import useUpdateUser from '#/hooks/useUpdateUser';
-import { Controller, set, SubmitHandler, useForm } from 'react-hook-form';
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
+import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 import AddIcon from '@mui/icons-material/Add';
-import Table, { createColumn } from '#/components/table/Table';
-import TableWithSearch from '#/components/table/TableWithSearch';
 import ActionBtn from '#/components/button/ActionBtn';
 import PageContentLayout from '#/components/layout/PageContentLayout';
 import Alert from '#/components/modal/Alert';
 import AccountBoxIcon from '@mui/icons-material/AccountBox';
-import useGetAllSubjects from '#/hooks/useGetAllSubjects';
 import CardBox from '#/components/CardBox';
-import { ICurriculum, ISubjects } from '#/types/LTS/ILts';
+import { ICurriculum } from '#/types/LTS/ILts';
 import { useRouter } from 'next/navigation';
-import useCreateSubjects from '#/hooks/useCreateSubjects';
-import { Resolver } from 'dns';
 import { useSession } from 'next-auth/react';
 import useCreateCurriculum from '#/hooks/useCreateCurriculum';
 import useGetAllCurriculum from '#/hooks/useGetAllCurriculum';
@@ -48,7 +36,7 @@ export default function Home() {
     }
 
     useEffect(() => {
-        setValue("curriculumType", "new"); // กำหนดค่าเริ่มต้นเป็น "new"
+        setValue("curriculumType", "new");
     }, [setValue]);
 
     useEffect(() => {
@@ -143,10 +131,17 @@ export default function Home() {
     return (
         <>
             <PageContentLayout
-                title="Create Curriculum"
+                title="สร้างหลักสูตร"
                 icon={<AccountBoxIcon />}
                 actions={
                     <>
+                        <ActionBtn
+                            title="ยกเลิก"
+                            icon={<CloseIcon />}
+                            color='#db3131'
+                            onClick={() => router.push("../curriculum")}
+                        />
+
                         <ActionBtn
                             title="บันทึก"
                             icon={<AddIcon />}
@@ -164,7 +159,7 @@ export default function Home() {
                                     control={control}
                                     name="curriculumCode"
                                     defaultValue=""
-                                    rules={{ required: "curriculumCode is required" }}
+                                    rules={{ required: "กรุณากรอกรหัสหลักสูตร" }}
                                     render={({ field }) => (
                                         <TextField
                                             {...field}
@@ -185,7 +180,7 @@ export default function Home() {
                                     control={control}
                                     name="nameTh"
                                     defaultValue=""
-                                    rules={{ required: "nameTh is required" }}
+                                    rules={{ required: "กรุณากรอกชื่อหลักสูตร (ภาษาไทย)" }}
                                     render={({ field }) => (
                                         <TextField
                                             {...field}
@@ -206,7 +201,7 @@ export default function Home() {
                                     control={control}
                                     name="nameEn"
                                     defaultValue=""
-                                    rules={{ required: "nameEn is required" }}
+                                    rules={{ required: "กรุณากรอกชื่อหลักสูตร (ภาษาอังกฤษ)" }}
                                     render={({ field }) => (
                                         <TextField
                                             {...field}
@@ -231,7 +226,7 @@ export default function Home() {
                                     control={control}
                                     name="degreeFullTh"
                                     defaultValue=""
-                                    rules={{ required: "degreeFullTh is required" }}
+                                    rules={{ required: "กรุณากรอกชื่อปริญญาเต็ม (ภาษาไทย)" }}
                                     render={({ field }) => (
                                         <TextField
                                             {...field}
@@ -252,7 +247,7 @@ export default function Home() {
                                     control={control}
                                     name="degreeShortTh"
                                     defaultValue=""
-                                    rules={{ required: "degreeShortTh is required" }}
+                                    rules={{ required: "กรุณากรอกชื่อปริญญาย่อ (ภาษาไทย)" }}
                                     render={({ field }) => (
                                         <TextField
                                             {...field}
@@ -273,7 +268,7 @@ export default function Home() {
                                     control={control}
                                     name="degreeFullEn"
                                     defaultValue=""
-                                    rules={{ required: "degreeFullEn is required" }}
+                                    rules={{ required: "กรุณากรอกชื่อปริญญาเต็ม (ภาษาอังกฤษ)" }}
                                     render={({ field }) => (
                                         <TextField
                                             {...field}
@@ -294,7 +289,7 @@ export default function Home() {
                                     control={control}
                                     name="degreeShortEn"
                                     defaultValue=""
-                                    rules={{ required: "degreeShortEn is required" }}
+                                    rules={{ required: "กรุณากรอกชื่อปริญญาย่อ (ภาษาอังกฤษ)" }}
                                     render={({ field }) => (
                                         <TextField
                                             {...field}
@@ -316,7 +311,7 @@ export default function Home() {
                                     control={control}
                                     name="major"
                                     defaultValue=""
-                                    rules={{ required: "major is required" }}
+                                    rules={{ required: "กรุณากรอกวิชาเอก" }}
                                     render={({ field }) => (
                                         <TextField
                                             {...field}
@@ -341,7 +336,7 @@ export default function Home() {
                                     control={control}
                                     name="totalCredits"
                                     defaultValue=""
-                                    rules={{ required: "totalCredits is required" }}
+                                    rules={{ required: "กรุณากรอกจำนวนหน่วยกิต" }}
                                     render={({ field }) => (
                                         <TextField
                                             {...field}
@@ -369,7 +364,7 @@ export default function Home() {
                                     control={control}
                                     name="programType"
                                     defaultValue=""
-                                    rules={{ required: "programType is required" }}
+                                    rules={{ required: "กรุณากรอกรูปแบบของหลักสูตร" }}
                                     render={({ field }) => (
                                         <TextField
                                             {...field}
@@ -390,7 +385,7 @@ export default function Home() {
                                     control={control}
                                     name="degreeCategory"
                                     defaultValue=""
-                                    rules={{ required: "degreeCategory is required" }}
+                                    rules={{ required: "กรุณากรอกประเภทของหลักสูตร" }}
                                     render={({ field }) => (
                                         <TextField
                                             {...field}
@@ -411,7 +406,7 @@ export default function Home() {
                                     control={control}
                                     name="language"
                                     defaultValue=""
-                                    rules={{ required: "language is required" }}
+                                    rules={{ required: "กรุณากรอกภาษาที่ใช้ในหลักสูตร" }}
                                     render={({ field }) => (
                                         <TextField
                                             {...field}
@@ -432,7 +427,7 @@ export default function Home() {
                                     control={control}
                                     name="acceptance"
                                     defaultValue=""
-                                    rules={{ required: "acceptance is required" }}
+                                    rules={{ required: "กรุณากรอกการรับเข้าศึกษา" }}
                                     render={({ field }) => (
                                         <TextField
                                             {...field}
@@ -453,7 +448,7 @@ export default function Home() {
                                     control={control}
                                     name="integration"
                                     defaultValue=""
-                                    rules={{ required: "integration is required" }}
+                                    rules={{ required: "กรุณากรอกการบูรณาการหลักสูตร" }}
                                     render={({ field }) => (
                                         <TextField
                                             {...field}
@@ -474,7 +469,7 @@ export default function Home() {
                                     control={control}
                                     name="collaboration"
                                     defaultValue=""
-                                    rules={{ required: "collaboration is required" }}
+                                    rules={{ required: "กรุณากรอกความร่วมมือกับสถาบันอื่น" }}
                                     render={({ field }) => (
                                         <TextField
                                             {...field}
@@ -495,7 +490,7 @@ export default function Home() {
                                     control={control}
                                     name="degreeGranted"
                                     defaultValue=""
-                                    rules={{ required: "degreeGranted is required" }}
+                                    rules={{ required: "กรุณากรอกการให้ปริญญาแก่ผู้สำเร็จการศึกษา" }}
                                     render={({ field }) => (
                                         <TextField
                                             {...field}
@@ -598,7 +593,7 @@ export default function Home() {
                                     control={control}
                                     name="qualityAssurance"
                                     defaultValue=""
-                                    rules={{ required: "qualityAssurance is required" }}
+                                    rules={{ required: "กรุณากรอกความพร้อมในการเผยแพร่หลักสูตรคุณภาพและมาตรฐาน" }}
                                     render={({ field }) => (
                                         <TextField
                                             {...field}
@@ -623,7 +618,7 @@ export default function Home() {
                                     control={control}
                                     name="career"
                                     defaultValue=""
-                                    rules={{ required: "career is required" }}
+                                    rules={{ required: "กรุณากรอกอาชีพที่สามารถประกอบได้หลังสำเร็จการศึกษา" }}
                                     render={({ field }) => (
                                         <TextField
                                             {...field}
@@ -638,15 +633,7 @@ export default function Home() {
                                             error={!!errors.career}
                                             helperText={errors.career?.message}
                                             onChange={(e) => {
-                                                // Auto-format numbered list
-                                                const value = e.target.value;
-                                                const lines = value.split('\n');
-                                                const formattedLines = lines.map((line, index) => {
-                                                    // If line starts with a number, don't add a new number
-                                                    if (/^\d+\./.test(line)) return line;
-                                                    return `8.${index + 1}. ${line.replace(/^\d+\.\s*/, '')}`;
-                                                });
-                                                field.onChange(formattedLines.join('\n'));
+                                                field.onChange(e.target.value);
                                             }}
                                         />
                                     )}

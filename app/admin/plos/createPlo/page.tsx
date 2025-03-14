@@ -1,29 +1,16 @@
 "use client";
-import Image from 'next/image'
-import { SetStateAction, use, useEffect, useState } from 'react'
-import { DataGrid, GridColDef, GridValidRowModel } from '@mui/x-data-grid';
-import useGetAllUsers from '#/hooks/useGetAllUsers';
-import { IUser } from '#/types/IResponse/IResponse';
-import useDeleteUser from '#/hooks/useDeleteUser';
-import { Autocomplete, Button, FormControl, FormHelperText, Grid, InputLabel, Menu, MenuItem, Select, Stack, TextField, Typography } from '@mui/material';
-import useUpdateUser from '#/hooks/useUpdateUser';
-import { Controller, set, SubmitHandler, useForm } from 'react-hook-form';
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
+import { useEffect, useState } from 'react'
+import { Autocomplete, FormControl, Grid, TextField, Typography } from '@mui/material';
+import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 import CloseIcon from '@mui/icons-material/Close';
 import AddIcon from '@mui/icons-material/Add';
-import Table, { createColumn } from '#/components/table/Table';
-import TableWithSearch from '#/components/table/TableWithSearch';
 import ActionBtn from '#/components/button/ActionBtn';
 import PageContentLayout from '#/components/layout/PageContentLayout';
 import Alert from '#/components/modal/Alert';
 import AccountBoxIcon from '@mui/icons-material/AccountBox';
-import useGetAllSubjects from '#/hooks/useGetAllSubjects';
 import CardBox from '#/components/CardBox';
-import { ICurriculum, ISubjects } from '#/types/LTS/ILts';
+import { ICurriculum } from '#/types/LTS/ILts';
 import { useRouter, useSearchParams } from 'next/navigation';
-import useCreateSubjects from '#/hooks/useCreateSubjects';
-import { Resolver } from 'dns';
 import { useSession } from 'next-auth/react';
 import useGetAllCurriculum from '#/hooks/useGetAllCurriculum';
 import { IPlo } from '#/types/LTS/IPlo';
@@ -163,12 +150,12 @@ export default function Home() {
                                     control={control}
                                     name="ploName"
                                     defaultValue=""
-                                    rules={{ required: "ploName is required" }}
+                                    rules={{ required: "กรุณากรอก PLO" }}
                                     render={({ field }) => (
                                         <TextField
                                             {...field}
                                             required
-                                            label="ชื่อ PLO"
+                                            label="PLO"
                                             variant="outlined"
                                             size="small"
                                             placeholder='Ex. PLO1'
@@ -185,7 +172,7 @@ export default function Home() {
                                     control={control}
                                     name="ploDesc"
                                     defaultValue=""
-                                    rules={{ required: "ploDesc is required" }}
+                                    rules={{ required: "กรุณากรอกคำอธิบาย PLO" }}
                                     render={({ field }) => (
                                         <TextField
                                             {...field}
@@ -209,7 +196,7 @@ export default function Home() {
                                     control={control}
                                     name="curriculum"
                                     defaultValue={null}
-                                    rules={{ required: "curriculum is required" }}
+                                    rules={{ required: "กรุณากรอกหลักสูตร" }}
                                     render={({ field }) => (
                                         <Autocomplete
                                             {...field}

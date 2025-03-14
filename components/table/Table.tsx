@@ -222,17 +222,17 @@ export default function Table<R extends GridValidRowModel>({
   })
 
   const fixColumns: GridColDef<R>[] = [
-    createColumn('customColumn', 'STRING', '', 52, {
-      headerAlign: 'center',
-      renderHeader: () => (
-        <>
-          {isOrganize && <BackupTableIcon
-            titleAccess="edit table column"
-            onClick={handleCustomColumn}
-            className="cursor-pointer" />}
-        </>),
-      renderCell: (params) => null
-    }),
+    // createColumn('customColumn', 'STRING', '', 52, {
+    //   headerAlign: 'center',
+    //   renderHeader: () => (
+    //     <>
+    //       {isOrganize && <BackupTableIcon
+    //         titleAccess="edit table column"
+    //         onClick={handleCustomColumn}
+    //         className="cursor-pointer" />}
+    //     </>),
+    //   renderCell: (params) => null
+    // }),
     createColumn<R>('checkbox', 'STRING', '', 60, {
       headerAlign: 'center',
       align: 'center',

@@ -20,6 +20,7 @@ const createClo = "CREATE_CLO"
 const getFindEmail = "GET_FIND_EMAIL"
 
 const getExcel = "GET_EXCEL"
+const uploadExcel = "UPLOAD_EXCEL"
 
 const getAllSubjects = "GET_ALL_SUBJECTS"
 const deleteSubjects = "DELETE_SUBJECTS"
@@ -29,6 +30,7 @@ const createSubjects = "CREATE_SUBJECTS"
 const updateUserSubjects = "UPDATE_USER_SUBJECTS"
 
 const getAllUserClo = "GET_ALL_USER_CLO"
+const getAllUserCloList = "GET_ALL_USER_CLO_LIST"
 const deleteUserClo = "DELETE_USER_CLO"
 const updateUserClo = "UPDATE_USER_CLO"
 const updateNewUserClo = "UPDATE_NEW_USER_CLO"
@@ -43,6 +45,11 @@ const getAllCurriculum = "GET_ALL_CURRICULUM"
 const deleteCurriculum = "DELETE_CURRICULUM"
 const updateCurriculum = "UPDATE_CURRICULUM"
 const createCurriculum = "CREATE_CURRICULUM"
+
+const getAllUserExcel = "GET_ALL_USER_EXCEL"
+const deleteUserExcel = "DELETE_USER_EXCEL"
+const updateExcelName = "UPDATE_EXCEL_NAME"
+const updateExcelScore = "UPDATE_EXCEL_SCORE"
 export {
     getAllUsers,
     deleteUser,
@@ -61,12 +68,14 @@ export {
     createClo,
     getFindEmail,
     getExcel,
+    uploadExcel,
     getAllSubjects,
     deleteSubjects,
     updateSubjects,
     createSubjects,
     updateUserSubjects,
     getAllUserClo,
+    getAllUserCloList,
     deleteUserClo,
     updateUserClo,
     updateNewUserClo,
@@ -78,5 +87,9 @@ export {
     getAllCurriculum,
     deleteCurriculum,
     updateCurriculum,
-    createCurriculum
+    createCurriculum,
+    getAllUserExcel,
+    deleteUserExcel,
+    updateExcelName,
+    updateExcelScore,
 }

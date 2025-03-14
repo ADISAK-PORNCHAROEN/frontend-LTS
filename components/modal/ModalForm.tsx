@@ -118,7 +118,7 @@ function ModalForm({
                         onClick={handleSaveAllChanges}
                         color="primary"
                         variant="contained"
-                        startIcon={<SaveIcon />}
+                        // startIcon={<SaveIcon />}
                         disabled={loading}
                         sx={{
                             minWidth: '100px',

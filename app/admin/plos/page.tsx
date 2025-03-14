@@ -1,27 +1,15 @@
 "use client";
-import Image from 'next/image'
-import { SetStateAction, use, useEffect, useState } from 'react'
-import { DataGrid, GridColDef, GridValidRowModel } from '@mui/x-data-grid';
-import useGetAllUsers from '#/hooks/useGetAllUsers';
-import { IUser } from '#/types/IResponse/IResponse';
-import useDeleteUser from '#/hooks/useDeleteUser';
-import { Button, Chip, Grid, Menu, MenuItem, Stack, Typography } from '@mui/material';
-import useUpdateUser from '#/hooks/useUpdateUser';
-import { set, SubmitHandler, useForm } from 'react-hook-form';
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
+import { useEffect, useState } from 'react'
+import { GridColDef } from '@mui/x-data-grid';
+import { Menu, MenuItem } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import Table, { createColumn } from '#/components/table/Table';
 import TableWithSearch from '#/components/table/TableWithSearch';
 import ActionBtn from '#/components/button/ActionBtn';
 import PageContentLayout from '#/components/layout/PageContentLayout';
 import Alert from '#/components/modal/Alert';
-import AccountBoxIcon from '@mui/icons-material/AccountBox';
-import useGetAllSubjects from '#/hooks/useGetAllSubjects';
-import { hash, hashSync } from 'bcryptjs';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ICurriculum, ISubjects } from '#/types/LTS/ILts';
-import useDeleteSubjects from '#/hooks/useDeleteSubjects';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
 import useGetAllPlo from '#/hooks/useGetAllPlo';
@@ -32,7 +20,6 @@ import useGetAllCurriculum from '#/hooks/useGetAllCurriculum';
 
 export default function Home() {
     const [rows, setRows] = useState<IPlo[]>([]);
-    console.log("rows", rows);
     const [rowsSelected, setRowsSelected] = useState<IPlo[]>([]);
     const [searchText, setSearchText] = useState<string>('');
     const [searchType, setSearchType] = useState<string>("ploName");
@@ -41,10 +28,6 @@ export default function Home() {
     const { data: ploData, isLoading: isLoadingPloData } = useGetAllPlo();
     const { data: curriculumData, isLoading: isLoadingCurriculumData } = useGetAllCurriculum();
     const { mutateAsync: deletePlo, isLoading: isLoadingDeletePlo } = useDeletePlo();
-    const [alertOpen, setAlertOpen] = useState(false);
-    const [addValueOpen, setAddValueOpen] = useState(false);
-    const [editValueOpen, setEditValueOpen] = useState(false);
-    const [detailPloOpen, setDetailPloOpen] = useState(false);
     const router = useRouter();
     const [key, setKey] = useState(0);
     const [curriculumValue, setCurriculumValue] = useState<string>('');
@@ -70,14 +53,14 @@ export default function Home() {
                 setRowsSelected([]);
                 setKey(key + 1);
 
-                setTextAlertBox("Delete success");
+                setTextAlertBox("ลบข้อมูลสําเร็จ");
                 setTypeAlertBox("success");
                 setIsOpenAlertBox(true);
                 setTimeout(() => {
                     setIsOpenAlertBox(false);
                 }, 1500);
             } else {
-                setTextAlertBox("Fail to delete");
+                setTextAlertBox("ได้เกิดข้อผิดพลาดในการลบข้อมูล");
                 setTypeAlertBox("error");
                 setIsOpenAlertBox(true);
                 setTimeout(() => {
@@ -87,11 +70,6 @@ export default function Home() {
         } catch (error) {
             console.error("Error deleting subjects:", error);
         }
-    }
-
-    const handleDetailPLO = async (data: any) => {
-        // setDetailPlo(data);
-        setDetailPloOpen(true);
     }
 
     const handleNavigationCreate = () => {
@@ -108,7 +86,7 @@ export default function Home() {
     }
 
     const column: GridColDef[] = [
-        createColumn("ploName", "STRING", "ชื่อ PLO", 350, {
+        createColumn("ploName", "STRING", "PLOs", 350, {
             headerAlign: "center",
             align: "center",
             sortable: true
@@ -117,11 +95,6 @@ export default function Home() {
             headerAlign: "center",
             align: "center",
         }),
-        // createColumn("curriculum", "STRING", "หลักสูตร", 0, {
-        //     headerAlign: "center",
-        //     align: "center",
-        //     // hide: true, // Hide from table view
-        // }),
     ]
 
     useEffect(() => {
@@ -150,7 +123,6 @@ export default function Home() {
                 }
             });
 
-            // Add an option for items with no curriculum
             options.unshift({
                 value: '',
                 name: 'ทั้งหมด'
@@ -161,14 +133,12 @@ export default function Home() {
     }, [paramsId, ploData])
 
     const filteredRows = rows.filter((row) => {
-        // Filter by main search field
         let mainSearchMatch = true;
         if (searchText) {
             const value = row[searchType as keyof typeof row];
             mainSearchMatch = value?.toString().toLowerCase().includes(searchText.toLowerCase()) ?? false;
         }
 
-        // Filter by curriculum
         let curriculumMatch = true;
         if (curriculumValue) {
             if (!row.curriculum) {
@@ -178,11 +148,8 @@ export default function Home() {
             }
         }
 
-        // Both filters must match
         return mainSearchMatch && curriculumMatch;
     });
-
-    console.log(filteredRows);
 
     const handleSelectRows = (rowSelected: IPlo[]) => {
         setRowsSelected(rowSelected);
@@ -240,12 +207,13 @@ export default function Home() {
                     searchText={searchText}
                     onSearchTextChange={(newSearchText) => setSearchText(newSearchText)}
                     onSearchTextClear={handleSearchTextClear}
-                    curriculumValue={curriculumValue}
-                    onCurriculumChange={handleCurriculumChange}
-                    curriculumOptions={curriculumOptions}
+                    // กรองตามหลักสูตร
+                    // curriculumValue={curriculumValue}
+                    // onCurriculumChange={handleCurriculumChange}
+                    // curriculumOptions={curriculumOptions}
                     onSelectRows={(rowsSelected) => handleSelectRows(rowsSelected)}
-                    // pagination={pagination}
-                    // setPagination={setPagination}
+                    pagination={pagination}
+                    setPagination={setPagination}
                     pageSizeOptions={[10, 20]}
                     initialPageSize={10}
                     isMultiSelectRow

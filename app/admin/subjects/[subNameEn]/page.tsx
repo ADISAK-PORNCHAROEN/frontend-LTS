@@ -1,8 +1,7 @@
 "use client";
 import { useEffect, useState } from 'react'
 import { Autocomplete, Button, FormControl, FormHelperText, Grid, InputLabel, Menu, MenuItem, Select, Stack, TextField, Typography } from '@mui/material';
-import { Controller, set, SubmitHandler, useForm } from 'react-hook-form';
-import CloseIcon from '@mui/icons-material/Close';
+import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 import AddIcon from '@mui/icons-material/Add';
 import ActionBtn from '#/components/button/ActionBtn';
 import PageContentLayout from '#/components/layout/PageContentLayout';
@@ -17,15 +16,8 @@ import { useSession } from 'next-auth/react';
 import useGetAllCurriculum from '#/hooks/useGetAllCurriculum';
 import { useUrlSafeBase64 } from '#/hooks/useUrlSafeBase64';
 
-// type Props = {
-//     params: Promise<{ subNameTh: string }>;
-// }
-
 export default function Page() {
     const router = useRouter();
-    // const { subNameTh } = use(params);
-    // const path = decodeURIComponent(subNameTh);
-    // console.log("pathname:", path)
     const [subjectName, setSubjectName] = useState<string | null>(null);
     const [subjectNameTh, setSubjectNameTh] = useState<string>("");
     const { subNameEn } = useParams();
@@ -73,7 +65,7 @@ export default function Page() {
             originalData.subNameTh !== data.subNameTh ||
             originalData.subNameEn !== data.subNameEn;
 
-        console.log("hasDataChanged", hasDataChanged);
+        // console.log("hasDataChanged", hasDataChanged);
 
         if (!hasDataChanged) {
             return errors;
@@ -157,17 +149,10 @@ export default function Page() {
     return (
         <>
             <PageContentLayout
-                title={`${subjectName === pathname ? `${subjectNameTh}` : "404 not found"}`}
+                title="Create Subject"
                 icon={<AccountBoxIcon />}
                 actions={
                     <>
-                        <ActionBtn
-                            title="ยกเลิก"
-                            icon={<CloseIcon />}
-                            color='#db3131'
-                            onClick={() => router.push("../subjects")}
-                        />
-
                         <ActionBtn
                             title="บันทึก"
                             icon={<AddIcon />}
@@ -185,7 +170,7 @@ export default function Page() {
                                     control={control}
                                     name="subId"
                                     defaultValue=""
-                                    rules={{ required: "Subject ID is required" }}
+                                    rules={{ required: "กรุณากรอกรหัสวิชา" }}
                                     render={({ field }) => (
                                         <TextField
                                             {...field}
@@ -206,7 +191,7 @@ export default function Page() {
                                     control={control}
                                     name="subNameTh"
                                     defaultValue=""
-                                    rules={{ required: "Subject Name Th is required" }}
+                                    rules={{ required: "กรุณากรอกชื่อวิชา (ภาษาไทย)" }}
                                     render={({ field }) => (
                                         <TextField
                                             {...field}
@@ -227,7 +212,7 @@ export default function Page() {
                                     control={control}
                                     name="subNameEn"
                                     defaultValue=""
-                                    rules={{ required: "Subject Name En is required" }}
+                                    rules={{ required: "กรุณากรอกชื่อวิชา (ภาษาอังกฤษ)" }}
                                     render={({ field }) => (
                                         <TextField
                                             {...field}
@@ -272,7 +257,7 @@ export default function Page() {
                                     control={control}
                                     name="subStatus"
                                     defaultValue=""
-                                    rules={{ required: "สถานะรายวิชาต้องเลือก" }}
+                                    rules={{ required: "กรุณาเลือกสถานะรายวิชา" }}
                                     render={({ field }) => (
                                         <FormControl fullWidth size="small" error={!!errors.subStatus}>
                                             <InputLabel>{<span>สถานะรายวิชา{" "} <span style={{ color: "red" }}>*</span> </span>}</InputLabel>
@@ -312,7 +297,7 @@ export default function Page() {
                                     control={control}
                                     name="subClo"
                                     defaultValue=""
-                                    rules={{ required: "Subject CLO is required" }}
+                                    rules={{ required: "กรุณากรอกสมรรถนะรายวิชา" }}
                                     render={({ field }) => (
                                         <TextField
                                             {...field}
@@ -327,15 +312,7 @@ export default function Page() {
                                             error={!!errors.subClo}
                                             helperText={errors.subClo?.message}
                                             onChange={(e) => {
-                                                // Auto-format numbered list
-                                                const value = e.target.value;
-                                                const lines = value.split('\n');
-                                                const formattedLines = lines.map((line, index) => {
-                                                    // If line starts with a number, don't add a new number
-                                                    if (/^\d+\./.test(line)) return line;
-                                                    return `${index + 1}. ${line.replace(/^\d+\.\s*/, '')}`;
-                                                });
-                                                field.onChange(formattedLines.join('\n'));
+                                                field.onChange(e.target.value);
                                             }}
                                         />
                                     )}
@@ -348,7 +325,7 @@ export default function Page() {
                                     control={control}
                                     name="subDescTh"
                                     defaultValue=""
-                                    rules={{ required: "Subject Description Th is required" }}
+                                    rules={{ required: "กรุณากรอกคำอธิบายรายวิชา (ภาษาไทย)" }}
                                     render={({ field }) => (
                                         <TextField
                                             {...field}
@@ -372,7 +349,7 @@ export default function Page() {
                                     control={control}
                                     name="subDescEn"
                                     defaultValue=""
-                                    rules={{ required: "Subject Description En is required" }}
+                                    rules={{ required: "กรุณากรอกคำอธิบายรายวิชา (ภาษาอังกฤษ)" }}
                                     render={({ field }) => (
                                         <TextField
                                             {...field}
@@ -402,5 +379,5 @@ export default function Page() {
                 />
             </PageContentLayout>
         </>
-    )
+    );
 }

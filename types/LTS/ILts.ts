@@ -2,10 +2,20 @@ import { IUser } from "../IResponse/IResponse";
 import { IClo, IPlo } from "./IPlo";
 
 export interface IExcel {
+    subName?: string | null;
     userId?: number | null;
     subId?: number | null;
     semester?: number | null;
     year?: string | null;
+    createdDate?: Date | null;
+    createdBy?: string | null;
+    updatedDate?: Date | null;
+    updatedBy?: string | null;
+
+    id?: number | null;
+    userCloId?: number | null;
+    excelId?: number | null;
+    score?: number | null;
 }
 
 export interface ISubjects {
@@ -73,6 +83,19 @@ export interface IUserClo {
     ploIds?: number[] | null;
 }
 
+export interface IUserCloList {
+    id?: number | null;
+    userId?: number | null;
+    curriculumId?: number | null;
+    subId?: number | null;
+    cloId?: number | null;
+    cloName?: string | null;
+    cloDesc?: string | null;
+    semester?: number | null;
+    year?: string | null;
+    ids?: string | null;
+}
+
 export interface ICurriculum {
     id?: number | null;
     curriculumCode?: string | null;
@@ -101,4 +124,20 @@ export interface ICurriculum {
     updatedBy?: string | null;
     ids?: string | null;
     curriculumType?: string | null;
+}
+
+export interface IUserExcel {
+    id?: number | null;
+    subId?: number | null;
+    semester?: number | null;
+    year?: string | null;
+    fullName?: string | null;
+    // clos?: IUserCloList[] | null;
+    excel?: IExcel[] | null;
+    ids?: string | null;
+    score?: number | null;
+    createdDate?: Date | null;
+    createdBy?: string | null;
+    updatedDate?: Date | null;
+    updatedBy?: string | null;
 }
