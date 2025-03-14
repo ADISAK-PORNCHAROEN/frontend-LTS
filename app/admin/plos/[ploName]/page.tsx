@@ -17,12 +17,10 @@ import { IPlo } from '#/types/LTS/IPlo';
 import useGetAllPlo from '#/hooks/useGetAllPlo';
 import useUpdatePlo from '#/hooks/useUpdatePlo';
 import { useUrlSafeBase64 } from '#/hooks/useUrlSafeBase64';
-import { resolve } from 'path';
 
 export default function Page() {
     const router = useRouter();
     const [ploNames, setPloNames] = useState<string | null>(null);
-    // const [subjectNameTh, setSubjectNameTh] = useState<string>("");
     const { ploName } = useParams();
     const pathname = decodeURIComponent(ploName as string);
     const session = useSession();
@@ -100,7 +98,6 @@ export default function Page() {
                 updatedDate: new Date(),
                 updatedBy: user?.name
             };
-            // console.log("result", result);
 
             const validationErrors = checkExistingField(result, parsedOriginalData);
 
@@ -171,15 +168,15 @@ export default function Page() {
                                     control={control}
                                     name="ploName"
                                     defaultValue=""
-                                    rules={{ required: "ploName is required" }}
+                                    rules={{ required: "กรุณากรอก PLO" }}
                                     render={({ field }) => (
                                         <TextField
                                             {...field}
                                             required
-                                            label="ชื่อ PLO"
+                                            label="PLO"
                                             variant="outlined"
                                             size="small"
-                                            placeholder='Ex. PLO1'
+                                            placeholder='ตัวอย่าง PLO1'
                                             fullWidth
                                             error={!!errors.ploName}
                                             helperText={errors.ploName?.message}
@@ -193,7 +190,7 @@ export default function Page() {
                                     control={control}
                                     name="ploDesc"
                                     defaultValue=""
-                                    rules={{ required: "ploDesc is required" }}
+                                    rules={{ required: "กรุณากรอกคำอธิบาย PLO" }}
                                     render={({ field }) => (
                                         <TextField
                                             {...field}
@@ -217,7 +214,7 @@ export default function Page() {
                                     control={control}
                                     name="curriculum"
                                     defaultValue={null}
-                                    rules={{ required: "curriculum is required" }}
+                                    rules={{ required: "กรุณาเลือกหลักสูตร" }}
                                     render={({ field }) => (
                                         <Autocomplete
                                             {...field}

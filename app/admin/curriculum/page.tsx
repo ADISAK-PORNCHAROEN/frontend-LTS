@@ -44,14 +44,14 @@ export default function Home() {
                 setRowsSelected([]);
                 setKey(key + 1);
 
-                setTextAlertBox("Delete success");
+                setTextAlertBox("ลบข้อมูลสําเร็จ");
                 setTypeAlertBox("success");
                 setIsOpenAlertBox(true);
                 setTimeout(() => {
                     setIsOpenAlertBox(false);
                 }, 1500);
             } else {
-                setTextAlertBox("Fail to delete");
+                setTextAlertBox("เกิดข้อผิดพลาดในการลบข้อมูล");  
                 setTypeAlertBox("error");
                 setIsOpenAlertBox(true);
                 setTimeout(() => {

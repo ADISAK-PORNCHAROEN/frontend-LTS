@@ -1,7 +1,8 @@
 "use client";
-import { useSession } from 'next-auth/react'
-import React, { useCallback, useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useCallback, useEffect, useState } from 'react'
+import { Backdrop, CircularProgress } from '@mui/material';
+import { signOut, useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 
 export default function Page() {
   const router = useRouter()
@@ -10,9 +11,9 @@ export default function Page() {
   const user = session?.user;
 
   const Role = {
-    admin: 'admin',
-    professor: 'professor',
-    member: 'member'
+    isAdmin: "admin",
+    isCoordinator: "program_coordinator",
+    isInstructor: "instructor"
   }
 
   const handleRedirect = useCallback(async () => {
@@ -20,11 +21,19 @@ export default function Page() {
       try {
         setIsLoading(true)
 
-        // await new Promise(resolve => setTimeout(resolve, 300))
+        await new Promise(resolve => setTimeout(resolve, 300))
 
-        // await new Promise(resolve => setTimeout(resolve, 100))
-        // await router.push('/api/auth/redirect')
-        // await router.refresh()
+        if (user?.role === Role.isInstructor) {
+          await router.push('/instructor/dashboard')
+        } else if (user?.role === Role.isAdmin) {
+          await router.push('/admin/dashboard')
+        } else if (user?.role === Role.isCoordinator) {
+          await router.push('/coordinator/dashboard')
+        }
+
+        // รอให้การ navigate เสร็จสมบูรณ์
+        await new Promise(resolve => setTimeout(resolve, 100))
+        await router.refresh()
 
       } catch (error) {
         console.error('Redirect error:', error)
@@ -33,9 +42,8 @@ export default function Page() {
       }
     } else if (status === 'unauthenticated') {
       setIsLoading(false)
-      await router.push('/signIn')
     }
-  }, [session, status, router]);
+  }, [session, status, user?.role, Role.isInstructor, Role.isAdmin, Role.isCoordinator, router]);
 
   useEffect(() => {
     handleRedirect()
@@ -53,8 +61,13 @@ export default function Page() {
   }
 
   return (
-    <div>
-
-    </div>
+    <>
+      <Backdrop
+        sx={(theme) => ({ color: '#fff', zIndex: theme.zIndex.drawer + 1 })}
+        open={true}
+      >
+        <CircularProgress color="inherit" />
+      </Backdrop>
+    </>
   )
 }

@@ -76,7 +76,7 @@ export default function Page() {
     } else if (pathname.startsWith("/coordinator")) {
         currentPath = "/coordinator";
     }
-
+    
     // เปลี่ยนนิยาม state
     const [semesterOptions, setSemesterOptions] = useState<{ value: string, name: string, hasData?: boolean }[]>([
         { value: "1", name: "ภาคการศึกษาที่ 1", hasData: false },

@@ -19,12 +19,10 @@ import ListItemText from '@mui/material/ListItemText';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import PersonIcon from '@mui/icons-material/Person';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
-import MailIcon from '@mui/icons-material/Mail';
 import ClassIcon from '@mui/icons-material/Class';
-import DeleteIcon from '@mui/icons-material/Delete';
-import ReportIcon from '@mui/icons-material/Report';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import LibraryBooksIcon from '@mui/icons-material/LibraryBooks';
+import AssessmentIcon from '@mui/icons-material/Assessment';
 import { useSession } from 'next-auth/react';
 import { useState, useEffect } from 'react';
 import { Chip, Collapse, Menu, MenuItem } from '@mui/material';
@@ -163,6 +161,8 @@ export default function SidebarLayout({ children }: Props) {
     // console.log("paramsSubId", paramsSubId, "paramsSubEditId", paramsSubEditId, "paramsCurId", paramsCurId);
     // เพิ่ม state สำหรับเก็บสถานะการแสดงผลของแต่ละ curriculum
     const [expandedCurriculums, setExpandedCurriculums] = useState<{ [key: string]: boolean }>({});
+    // เพิ่ม state นี้ในส่วนของ hooks ของ component
+    const [expandedSubjectEvals, setExpandedSubjectEvals] = useState<Record<string, boolean>>({});
 
     const status = {
         isActive: "Active",
@@ -221,14 +221,14 @@ export default function SidebarLayout({ children }: Props) {
     const handleClosClick = () => setClosOpen(!closOpen);
 
     const handleNavigate = (path: string, data?: ISubjects | ICurriculum) => {
-        console.log("data", data);
-        // const currentPath = pathname.startsWith("/admin") ? "/admin" : "/member";
-        
-        let currentPath = "/member"; // ค่าเริ่มต้น
+        // console.log("data", data);
+        // console.log("path", path);
+
+        let currentPath = "/instructor";
         if (pathname.startsWith("/admin")) {
             currentPath = "/admin";
-        } else if (pathname.startsWith("/professor")) {
-            currentPath = "/professor";
+        } else if (pathname.startsWith("/coordinator")) {
+            currentPath = "/coordinator";
         }
 
         if (!currentPath) return;
@@ -245,6 +245,9 @@ export default function SidebarLayout({ children }: Props) {
                 } else {
                     targetPath = `${currentPath}/${path}?id=${encodedId}&cur=${curriculumId}`;
                 }
+                if (path === 'evaluation') {
+                    targetPath = `${currentPath}/teaching/evaluation?sub=${subId}&cur=${curriculumId}`;
+                }
             } else if ("degreeShortEn" in data && data.degreeShortEn) {
                 const encodedId = encode((data?.id ?? '').toString());
                 targetPath = `${currentPath}/${path}?id=${encodedId}`;
@@ -256,6 +259,12 @@ export default function SidebarLayout({ children }: Props) {
 
     if (!mounted || !session) {
         return <>{children}</>;
+    }
+
+    const Role = {
+        isAdmin: "admin",
+        isCoordinator: "program_coordinator",
+        isInstructor: "instructor"
     }
 
     return (
@@ -310,7 +319,7 @@ export default function SidebarLayout({ children }: Props) {
 
                 <Divider />
 
-                {(session?.user?.role === 'admin') && (
+                {(session?.user?.role === Role.isAdmin) && (
                     <List>
                         {menuItems.map((item) => (
                             <ListItem key={item.text} disablePadding>
@@ -530,7 +539,6 @@ export default function SidebarLayout({ children }: Props) {
                             <List component="div" disablePadding>
                                 {curriculumList.map((curriculum: ICurriculum) => {
                                     const isActive = pathname.includes("/plos") && paramsSubId === curriculum.id;
-                                    // console.log("curriculum", curriculum);
 
                                     return (
                                         <ListItemButton
@@ -580,10 +588,10 @@ export default function SidebarLayout({ children }: Props) {
 
                 <Divider />
 
-                {(session?.user?.role === 'admin' || session?.user?.role === 'professor') && (
+                {(session?.user?.role === Role.isAdmin || session?.user?.role === Role.isInstructor || session?.user?.role === Role.isCoordinator) && (
 
                     <List>
-                        {(session?.user?.role === 'professor') && (
+                        {(session?.user?.role === Role.isInstructor || session?.user?.role === Role.isCoordinator) && (
                             menuItemsIsProfessor.map((item) => (
                                 <ListItem key={item.text} disablePadding>
                                     <ListItemButton
@@ -647,48 +655,108 @@ export default function SidebarLayout({ children }: Props) {
                         <Collapse in={open && subjectOpen} timeout="auto" unmountOnExit>
                             <List component="div" disablePadding>
                                 {userSubjects.map((subject: ISubjects) => {
+                                    // Add a new state to track each subject's evaluation collapse state
+                                    const isSubjectEvalExpanded = expandedSubjectEvals[subject.id!];
                                     const isActive = pathname.includes("/teaching") && paramsSUBId === subject.id;
+                                    const isActiveEval = pathname.includes("/evaluation") && paramsSUBId === subject.id;
 
                                     return (
-                                        <ListItemButton
-                                            key={subject.id}
-                                            sx={{
-                                                pl: 4,
-                                                minHeight: 40,
-                                                backgroundColor: isActive ? "rgba(0, 0, 0, 0.08)" : "transparent",
-                                                '&:hover': {
-                                                    backgroundColor: 'rgba(0, 0, 0, 0.08)',
-                                                },
-                                            }}
-                                            onClick={() => handleNavigate('teaching', subject)}
-                                        >
-                                            <ListItemIcon sx={{ minWidth: 40 }}>
-                                                <MenuBookIcon fontSize="small" />
-                                            </ListItemIcon>
-                                            <ListItemText
-                                                primary={subject.subNameTh}
-                                                secondary={subject.subNameEn}
-                                                primaryTypographyProps={{
-                                                    fontSize: '0.9rem',
-                                                    sx: {
-                                                        whiteSpace: 'nowrap',
-                                                        overflow: 'hidden',
-                                                        textOverflow: 'ellipsis',
-                                                        maxWidth: '150px',
+                                        <React.Fragment key={subject.id}>
+                                            <ListItemButton
+                                                sx={{
+                                                    pl: 4,
+                                                    minHeight: 40,
+                                                    backgroundColor: isActive ? "rgba(0, 0, 0, 0.08)" : "transparent",
+                                                    '&:hover': {
+                                                        backgroundColor: 'rgba(0, 0, 0, 0.08)',
                                                     },
                                                 }}
-                                                secondaryTypographyProps={{
-                                                    fontSize: '0.8rem',
-                                                    sx: {
-                                                        whiteSpace: 'nowrap',
-                                                        overflow: 'hidden',
-                                                        textOverflow: 'ellipsis',
-                                                        maxWidth: '150px',
-                                                    },
-                                                }}
-                                            />
-                                        </ListItemButton>
-                                    )
+                                                onClick={() => handleNavigate('teaching', subject)}
+                                            >
+                                                <ListItemIcon sx={{ minWidth: 40 }}>
+                                                    <MenuBookIcon fontSize="small" />
+                                                </ListItemIcon>
+                                                <ListItemText
+                                                    primary={subject.subNameTh}
+                                                    secondary={subject.subNameEn}
+                                                    primaryTypographyProps={{
+                                                        fontSize: '0.9rem',
+                                                        sx: {
+                                                            whiteSpace: 'nowrap',
+                                                            overflow: 'hidden',
+                                                            textOverflow: 'ellipsis',
+                                                            maxWidth: '150px',
+                                                        },
+                                                    }}
+                                                    secondaryTypographyProps={{
+                                                        fontSize: '0.8rem',
+                                                        sx: {
+                                                            whiteSpace: 'nowrap',
+                                                            overflow: 'hidden',
+                                                            textOverflow: 'ellipsis',
+                                                            maxWidth: '150px',
+                                                        },
+                                                    }}
+                                                />
+                                                {/* Add expand toggle button that stops propagation to prevent navigation */}
+                                                <IconButton
+                                                    size="small"
+                                                    onClick={(event) => {
+                                                        event.stopPropagation();
+                                                        setExpandedSubjectEvals(prev => ({
+                                                            ...prev,
+                                                            [subject.id!]: !prev[subject.id!]
+                                                        }));
+                                                    }}
+                                                >
+                                                    {isSubjectEvalExpanded ? <ExpandLess fontSize="small" /> : <ExpandMore fontSize="small" />}
+                                                </IconButton>
+                                            </ListItemButton>
+
+                                            {/* Nested Collapse for evaluations under this subject */}
+                                            <Collapse in={isSubjectEvalExpanded} timeout="auto" unmountOnExit>
+                                                <List component="div" disablePadding>
+                                                    <ListItemButton
+                                                        sx={{
+                                                            pl: 6,
+                                                            minHeight: 10,
+                                                            backgroundColor: isActiveEval ? "rgba(0, 0, 0, 0.08)" : "transparent",
+                                                            '&:hover': {
+                                                                backgroundColor: 'rgba(0, 0, 0, 0.08)',
+                                                            },
+                                                        }}
+                                                        onClick={() => handleNavigate('evaluation', subject)}
+                                                    >
+                                                        <ListItemIcon sx={{ minWidth: 40 }}>
+                                                            <AssessmentIcon fontSize="small" />
+                                                        </ListItemIcon>
+                                                        <ListItemText
+                                                            primary="ประเมินรายวิชา"
+                                                            secondary="Course Evaluation"
+                                                            primaryTypographyProps={{
+                                                                fontSize: '0.9rem',
+                                                                sx: {
+                                                                    whiteSpace: 'nowrap',
+                                                                    overflow: 'hidden',
+                                                                    textOverflow: 'ellipsis',
+                                                                    maxWidth: '150px',
+                                                                },
+                                                            }}
+                                                            secondaryTypographyProps={{
+                                                                fontSize: '0.8rem',
+                                                                sx: {
+                                                                    whiteSpace: 'nowrap',
+                                                                    overflow: 'hidden',
+                                                                    textOverflow: 'ellipsis',
+                                                                    maxWidth: '150px',
+                                                                },
+                                                            }}
+                                                        />
+                                                    </ListItemButton>
+                                                </List>
+                                            </Collapse>
+                                        </React.Fragment>
+                                    );
                                 })}
                             </List>
                         </Collapse>

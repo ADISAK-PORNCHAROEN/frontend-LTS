@@ -23,6 +23,12 @@ export default function Page() {
     const [typeAlertBox, setTypeAlertBox] = useState<"success" | "warning" | "error">("success");
     const [isOpenAlertBox, setIsOpenAlertBox] = useState(false);
 
+    const Role = {
+        isAdmin: "admin",
+        isCoordinator: "program_coordinator",
+        isInstructor: "instructor"
+    }
+
     const handleClickShowPassword = () => setShowPassword((show) => !show);
 
     const handleMouseDownPassword = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -35,7 +41,7 @@ export default function Page() {
 
     const connectSignIn = () => {
         setTypeAlertBox("success");
-        setTextAlertBox("Signup successfully.");
+        setTextAlertBox("สมัครสมาชิกเสร็จสิ้น");
         setIsOpenAlertBox(true);
         setTimeout(() => {
             setIsOpenAlertBox(false);
@@ -46,21 +52,18 @@ export default function Page() {
     const onSubmit = async (data: FieldValues) => {
         if (data.password !== data.confirmPassword) {
             setTypeAlertBox("warning");
-            setTextAlertBox("Password and confirm password do not match.");
+            setTextAlertBox("รหัสผ่านและยืนยันรหัสผ่านไม่ตรงกัน");
             setIsOpenAlertBox(true);
             setTimeout(() => {
                 setIsOpenAlertBox(false);
             }, 1500);
         }
-        // console.log("Submitted data:", data);
 
         const createUserData = {
             ...data,
-            // name: data.firstname + " " + data.lastname,
             password: bcrypt.hashSync(data.password, 10),
-            role: 'member',
+            role: Role.isInstructor,
         };
-        // console.log("Create user data:", createUserData);
 
         await createUser(createUserData);
 
@@ -73,7 +76,7 @@ export default function Page() {
                 <div className="flex flex-col items-center space-y-4 bg-white p-6 rounded-md shadow-lg w-96">
                     <div className="w-full space-y-4">
                         <Typography variant="h5" align="center" gutterBottom fontWeight={'bold'}>
-                            Sign up
+                            สมัครสมาชิก
                         </Typography>
                         <Box sx={{ my: 2 }}>
                             <hr />
@@ -82,12 +85,12 @@ export default function Page() {
                             name="fname"
                             control={control}
                             defaultValue=""
-                            rules={{ required: "Firstname is required" }}
+                            rules={{ required: "กรุณากรอกชื่อ" }}
                             render={({ field, fieldState: { error } }) => (
                                 <TextField
                                     {...field}
                                     required
-                                    label="Firstname"
+                                    label="ชื่อ"
                                     variant="outlined"
                                     size="small"
                                     fullWidth
@@ -101,12 +104,12 @@ export default function Page() {
                             name="lname"
                             control={control}
                             defaultValue=""
-                            rules={{ required: "Lastname is required" }}
+                            rules={{ required: "กรุณากรอกนามสกุล" }}
                             render={({ field, fieldState: { error } }) => (
                                 <TextField
                                     {...field}
                                     required
-                                    label="Lastname"
+                                    label="นามสกุล"
                                     variant="outlined"
                                     size="small"
                                     fullWidth
@@ -121,17 +124,17 @@ export default function Page() {
                             control={control}
                             defaultValue=""
                             rules={{
-                                required: "Email is required",
+                                required: "กรุณากรอกอีเมล",
                                 pattern: {
                                     value: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/,
-                                    message: "Invalid email address"
+                                    message: "รูปแบบอีเมลไม่ถูกต้อง"
                                 }
                             }}
                             render={({ field, fieldState: { error } }) => (
                                 <TextField
                                     {...field}
                                     required
-                                    label="Email"
+                                    label="อีเมล"
                                     variant="outlined"
                                     size="small"
                                     fullWidth
@@ -145,12 +148,12 @@ export default function Page() {
                             name="password"
                             control={control}
                             defaultValue=""
-                            rules={{ required: "Password is required" }}
+                            rules={{ required: "กรุณากรอกรหัสผ่าน" }}
                             render={({ field, fieldState: { error } }) => (
                                 <TextField
                                     {...field}
                                     required
-                                    label="Password"
+                                    label="รหัสผ่าน"
                                     variant="outlined"
                                     size="small"
                                     type={showPassword ? 'text' : 'password'}
@@ -161,7 +164,7 @@ export default function Page() {
                                         endAdornment: (
                                             <InputAdornment position="end">
                                                 <IconButton
-                                                    aria-label={showPassword ? 'hide the password' : 'display the password'}
+                                                    aria-label={showPassword ? 'ซ่อนรหัสผ่าน' : 'แสดงรหัสผ่าน'}
                                                     onClick={handleClickShowPassword}
                                                     onMouseDown={handleMouseDownPassword}
                                                     onMouseUp={handleMouseUpPassword}
@@ -180,15 +183,15 @@ export default function Page() {
                             control={control}
                             defaultValue=""
                             rules={{
-                                required: "Please confirm your password",
-                                validate: (value) => value === password || "Passwords do not match"
+                                required: "กรุณายืนยันรหัสผ่าน",
+                                validate: (value) => value === password || "รหัสผ่านไม่ตรงกัน"
                             }}
                             render={({ field, fieldState: { error } }) => (
                                 <TextField
                                     {...field}
                                     required
                                     fullWidth
-                                    label="Confirm Password"
+                                    label="ยืนยันรหัสผ่าน"
                                     variant="outlined"
                                     size="small"
                                     type={showConfirmPassword ? 'text' : 'password'}
@@ -215,13 +218,13 @@ export default function Page() {
                         className="w-full rounded-lg"
                         variant="contained"
                     >
-                        Sign up
+                        สมัครสมาชิก
                     </Button>
 
                     <Typography align="center" gutterBottom>
-                        Already have an account?{' '}
+                        มีบัญชีอยู่แล้ว?{' '}
                         <Link href="/lts/api/auth/signIn" className="">
-                            Sign In
+                            เข้าสู่ระบบ
                         </Link>
                     </Typography>
                 </div>

@@ -20,9 +20,9 @@ export async function middleware(request: NextRequestWithAuth) {
   //  console.log('User:', user)
 
   const Role = {
-    admin: 'admin',
-    professor: 'professor',
-    member: 'member',
+    isAdmin: "admin",
+    isCoordinator: "program_coordinator",
+    isInstructor: "instructor"
   }
 
   // ถ้าไม่มี user และไม่ได้อยู่ในหน้า login/signup ให้ redirect ไปหน้า login
@@ -44,22 +44,22 @@ export async function middleware(request: NextRequestWithAuth) {
       return NextResponse.redirect(new URL('/lts/api/auth/redirect', request.url))
     }
   }
-  
+
   // เช็ค role ต่างๆ
   const isAdminPath = request.nextUrl.pathname.startsWith('/admin')
-  const isProfessorPath = request.nextUrl.pathname.startsWith('/professor')
-  const isMemberPath = request.nextUrl.pathname.startsWith('/member')
+  const isCoordinator = request.nextUrl.pathname.startsWith('/coordinator')
+  const isInstructor = request.nextUrl.pathname.startsWith('/instructor')
 
-  if (isAdminPath && user?.role !== Role.admin) {
-    return NextResponse.redirect(new URL('/member', request.url))
+  if (isAdminPath && user?.role !== Role.isAdmin) {
+    return NextResponse.redirect(new URL('/instructor', request.url))
   }
 
-  if (isProfessorPath && user?.role !== Role.professor) {
-    return NextResponse.redirect(new URL('/member', request.url))
+  if (isCoordinator && user?.role !== Role.isCoordinator) {
+    return NextResponse.redirect(new URL('/instructor', request.url))
   }
 
-  if (isMemberPath && user?.role !== Role.member) {
-    return NextResponse.redirect(new URL('/admin', request.url))
+  if (isInstructor && user?.role !== Role.isInstructor) {
+    return NextResponse.redirect(new URL('/lts/instructor', request.url))
   }
 
   return NextResponse.next()

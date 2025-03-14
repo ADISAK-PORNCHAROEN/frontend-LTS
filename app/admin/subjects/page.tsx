@@ -269,8 +269,10 @@ export default function Home() {
                     curriculumOptions={curriculumOptions}
                     onSelectRows={(rowsSelected) => handleSelectRows(rowsSelected)}
                     extraSearchConfig={extraSearchConfig}
-                    // pagination={pagination}
-                    // setPagination={setPagination}
+                    pagination={pagination}
+                    setPagination={setPagination}
+                    pageSizeOptions={[10, 20]}
+                    initialPageSize={10}
                     isMultiSelectRow
                 />
 

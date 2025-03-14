@@ -62,11 +62,13 @@ export default function ApplicantTracking() {
   // CLOs
   const encodedSubId = searchParams.get("id");
   const subId = searchParams.get("sub1");
+  const sub2Id = searchParams.get("sub");
   const curriculumId = searchParams.get("cur");
   const { encode, decode } = useUrlSafeBase64();
   const paramsId = Number(encodedCurId ? decode(encodedCurId) : null);
   const paramsSubId = Number(encodedSubId ? decode(encodedSubId) : null);
   const paramsSub1Id = Number(subId ? decode(subId) : null);
+  const paramsSub2Id = Number(sub2Id ? decode(sub2Id) : null);
   const paramsCurId = Number(curriculumId ? decode(curriculumId) : null);
   // console.log("encodedCurId", encodedCurId)
   // console.log("encodedSubId", encodedSubId)
@@ -81,19 +83,31 @@ export default function ApplicantTracking() {
   const { data: cloData, isLoading: isLoadingPloData } = useGetAllClo();
 
   const curriculum = useMemo(() => {
-    return curriculumData?.data?.find((item: ICurriculum) => item.id === paramsId)?.degreeShortEn;
+    return curriculumData?.data?.find((item: ICurriculum) => item.id === paramsId)?.degreeShortTh;
   }, [curriculumData, paramsId]);
 
   const subject = useMemo(() => {
     const foundSubject = subjectsData?.data?.find((item: ISubjects) => item.id === paramsId && item.curriculum?.id === paramsCurId);
     // console.log("foundSubject", foundSubject)
-    return foundSubject?.subNameEn;
+    return foundSubject?.subNameTh;
   }, [subjectsData?.data, paramsId, paramsCurId]);
+
+  const subjectTh = useMemo(() => {
+    const foundSubject = subjectsData?.data?.find((item: ISubjects) => item.id === paramsSub2Id && item.curriculum?.id === paramsCurId);
+    // console.log("foundSubject", foundSubject)
+    return foundSubject?.subNameTh;
+  }, [subjectsData?.data, paramsSub2Id, paramsCurId]);
+
+  const subjectTh1 = useMemo(() => {
+    const foundSubject = subjectsData?.data?.find((item: ISubjects) => item.id === paramsId);
+    // console.log("foundSubject", foundSubject)
+    return foundSubject?.subNameTh;
+  }, [subjectsData?.data, paramsId]);
 
   const subject1 = useMemo(() => {
     const foundSubject = cloData?.data?.find((item: IClo) => item.id === paramsSubId && item.subjects?.id === paramsSub1Id && item.curriculum?.id === paramsCurId);
     // console.log("foundSubject", foundSubject)
-    return foundSubject?.subjects?.subNameEn;
+    return foundSubject?.subjects?.subNameTh;
   }, [cloData?.data, paramsCurId, paramsSub1Id, paramsSubId]);
 
   // console.log("curriculum", curriculum)
@@ -112,25 +126,22 @@ export default function ApplicantTracking() {
     {
       url: Paths.lts.accounts, tracks: [
         // { level: 1, name: "LTS", linkTo: Paths.lts.root },
-        { level: 1, name: "Accounts", linkTo: Paths.lts.accounts },
+        { level: 1, name: "บัญชีผู้ใช้", linkTo: Paths.lts.accounts },
       ]
     },
     {
       url: Paths.lts.subjects, tracks: [
-        { level: 1, name: "Subjects", linkTo: Paths.lts.subjects },
+        { level: 1, name: "รายวิชา", linkTo: Paths.lts.subjects },
       ]
     },
     {
       url: Paths.lts.teaching, tracks: [
-        {
-          level: 1, name: dynamicParams?.subNameEn ? decodeURIComponent(dynamicParams.subNameEn as string) : "Teaching",
-          linkTo: Paths.lts.teaching
-        },
+        { level: 1, name: `${subjectTh}`, linkTo: Paths.lts.teaching },
       ]
     },
     {
       url: Paths.lts.curriculum, tracks: [
-        { level: 1, name: "Curriculum", linkTo: Paths.lts.curriculum },
+        { level: 1, name: "หลักสูตรรายวิชา", linkTo: Paths.lts.curriculum },
       ]
     },
     {
@@ -145,50 +156,62 @@ export default function ApplicantTracking() {
     },
     {
       url: Paths.lts.createSubjects, tracks: [
-        { level: 1, name: "Subjects", linkTo: Paths.lts.subjects },
-        { level: 2, name: "Create Subject", linkTo: Paths.lts.createSubjects },
+        { level: 1, name: "รายวิชา", linkTo: Paths.lts.subjects },
+        { level: 2, name: "สร้างรายวิชา", linkTo: Paths.lts.createSubjects },
       ]
     },
     {
       url: Paths.lts.createCurriculum, tracks: [
-        { level: 1, name: "Curriculum", linkTo: Paths.lts.curriculum },
-        { level: 2, name: "Create Curriculum", linkTo: Paths.lts.createCurriculum },
+        { level: 1, name: "หลักสูตรรายวิชา", linkTo: Paths.lts.curriculum },
+        { level: 2, name: "สร้างหลักสูตรรายวิชา", linkTo: Paths.lts.createCurriculum },
       ]
     },
     {
       url: Paths.lts.createPlo, tracks: [
         { level: 1, name: `${curriculum}`, linkTo: `${Paths.lts.plos}?id=${encodedCurId}` },
-        { level: 2, name: "Create Plos", linkTo: Paths.lts.createPlo },
+        { level: 2, name: "สร้าง Plos", linkTo: Paths.lts.createPlo },
       ]
     },
     {
       url: Paths.lts.createClo, tracks: [
         { level: 1, name: `${subject}`, linkTo: `${Paths.lts.clos}?id=${encodedSubId}&cur=${curriculumId}` },
-        { level: 2, name: "Create Clos", linkTo: Paths.lts.createClo },
+        { level: 2, name: "สร้าง Clos", linkTo: Paths.lts.createClo },
+      ]
+    },
+    {
+      url: Paths.lts.createTeaching, tracks: [
+        { level: 1, name: `${subjectTh}`, linkTo: `${Paths.lts.teaching}?sub=${sub2Id}&cur=${curriculumId}` },
+        { level: 2, name: "สร้างรายงานการประเมิน", linkTo: Paths.lts.createTeaching },
       ]
     },
     {
       url: Paths.lts.editSubjects, tracks: [
-        { level: 1, name: "Subjects", linkTo: Paths.lts.subjects },
-        { level: 2, name: "Edit Subject", linkTo: Paths.lts.editSubjects },
+        { level: 1, name: "รายวิชา", linkTo: Paths.lts.subjects },
+        { level: 2, name: "แก้ไขรายวิชา", linkTo: Paths.lts.editSubjects },
       ]
     },
     {
       url: Paths.lts.editAccount, tracks: [
-        { level: 1, name: "Accounts", linkTo: Paths.lts.accounts },
-        { level: 2, name: "Edit Accounts", linkTo: Paths.lts.editAccount },
+        { level: 1, name: "บัญชีผู้ใช้งาน", linkTo: Paths.lts.accounts },
+        { level: 2, name: "แก้ไขบัญชีผู้ใช้งาน", linkTo: Paths.lts.editAccount },
       ]
     },
     {
       url: Paths.lts.editTeaching, tracks: [
-        { level: 1, name: "Teaching", linkTo: Paths.lts.teaching },
-        { level: 2, name: "Edit Teaching", linkTo: Paths.lts.editTeaching },
+        { level: 1, name: `${subjectTh}`, linkTo: `${Paths.lts.teaching}?sub=${sub2Id}&cur=${curriculumId}` },
+        { level: 2, name: "แก้ไขรายงานการประเมิน", linkTo: Paths.lts.editTeaching },
       ]
     },
     {
       url: Paths.lts.editCurriculum, tracks: [
-        { level: 1, name: "Curriculum", linkTo: Paths.lts.curriculum },
-        { level: 2, name: "Edit Curriculum", linkTo: Paths.lts.editCurriculum },
+        { level: 1, name: "หลักสูตรรายวิชา", linkTo: Paths.lts.curriculum },
+        { level: 2, name: "แก้ไขหลักสูตรรายวิชา", linkTo: Paths.lts.editCurriculum },
+      ]
+    },
+    {
+      url: Paths.lts.evaluation, tracks: [
+        { level: 1, name: `${subjectTh}`, linkTo: `${Paths.lts.teaching}?sub=${sub2Id}&cur=${curriculumId}` },
+        { level: 2, name: `ประเมินรายวิชา ${subjectTh}`, linkTo: Paths.lts.evaluation },
       ]
     },
   ];
@@ -199,7 +222,7 @@ export default function ApplicantTracking() {
       const idx = pathUrls.findIndex(path => path.url == pathnameWithoutDynamicParams)
       if (idx != -1) {
         pathUrls[idx].tracks.push(
-          { level: 3, name: `${decodeURIComponent(dynamicParams?.subNameEn as string)}`, linkTo: Paths.lts.subjects },
+          { level: 3, name: `${subjectTh1}`, linkTo: Paths.lts.subjects },
         )
       }
     } else if (pathnameWithoutDynamicParams == `${Paths.lts.accounts}`) {
@@ -213,7 +236,7 @@ export default function ApplicantTracking() {
       const idx = pathUrls.findIndex(path => path.url == pathnameWithoutDynamicParams)
       if (idx != -1) {
         pathUrls[idx].tracks.push(
-          { level: 3, name: `${decodeURIComponent(dynamicParams?.degreeFullEn as string)}`, linkTo: Paths.lts.curriculum },
+          { level: 3, name: `${curriculum}`, linkTo: Paths.lts.curriculum },
         )
       }
     } else if (pathnameWithoutDynamicParams == `${Paths.lts.plos}`) {

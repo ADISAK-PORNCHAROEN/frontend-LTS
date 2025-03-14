@@ -12,9 +12,9 @@ export default function SignIn() {
     const user = session?.user;
 
     const Role = {
-        isAdmin: 'admin',
-        isProfessor: 'professor',
-        isMember: 'member'
+        isAdmin: "admin",
+        isCoordinator: "program_coordinator",
+        isInstructor: "instructor"
     }
 
     const handleRedirect = useCallback(async () => {
@@ -22,15 +22,14 @@ export default function SignIn() {
             try {
                 setIsLoading(true)
 
-                // ให้เวลา NextJS โหลด CSS และ assets ต่างๆ ก่อน
                 await new Promise(resolve => setTimeout(resolve, 300))
 
-                if (user?.role === Role.isMember) {
-                    await router.push('/member')
+                if (user?.role === Role.isInstructor) {
+                    await router.push('/instructor/dashboard')
                 } else if (user?.role === Role.isAdmin) {
                     await router.push('/admin/dashboard')
-                } else if (user?.role === Role.isProfessor) {
-                    await router.push('/professor/dashboard')
+                } else if (user?.role === Role.isCoordinator) {
+                    await router.push('/coordinator/dashboard')
                 }
 
                 // รอให้การ navigate เสร็จสมบูรณ์
@@ -45,7 +44,7 @@ export default function SignIn() {
         } else if (status === 'unauthenticated') {
             setIsLoading(false)
         }
-    }, [session, status, user?.role, Role.isMember, Role.isAdmin, Role.isProfessor, router]);
+    }, [session, status, user?.role, Role.isInstructor, Role.isAdmin, Role.isCoordinator, router]);
 
     useEffect(() => {
         handleRedirect()

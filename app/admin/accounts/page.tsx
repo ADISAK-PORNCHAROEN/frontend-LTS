@@ -1,19 +1,16 @@
 "use client";
-import Image from 'next/image'
-import { SetStateAction, use, useEffect, useState } from 'react'
-import { DataGrid, GridColDef, GridValidRowModel } from '@mui/x-data-grid';
+import { useEffect, useState } from 'react'
+import { GridColDef } from '@mui/x-data-grid';
 import useGetAllUsers from '#/hooks/useGetAllUsers';
-import { IAccount, IUser } from '#/types/IResponse/IResponse';
+import { IUser } from '#/types/IResponse/IResponse';
 import useDeleteUser from '#/hooks/useDeleteUser';
-import { Button, Grid, Menu, MenuItem, Stack, Typography } from '@mui/material';
+import { Menu, MenuItem } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import AddIcon from '@mui/icons-material/Add';
 import Table, { createColumn } from '#/components/table/Table';
 import TableWithSearch from '#/components/table/TableWithSearch';
 import ActionBtn from '#/components/button/ActionBtn';
 import PageContentLayout from '#/components/layout/PageContentLayout';
 import Alert from '#/components/modal/Alert';
-import AccountBoxIcon from '@mui/icons-material/AccountBox';
 import { useRouter } from 'next/navigation';
 import AlertConfirm from '#/components/modal/AlertConfirm';
 import PersonIcon from '@mui/icons-material/Person';
@@ -24,13 +21,10 @@ export default function Home() {
     const [rowsSelected, setRowsSelected] = useState<IUser[]>([]);
     const [searchText, setSearchText] = useState<string>('');
     const [searchType, setSearchType] = useState<string>("name");
+    const [pagination, setPagination] = useState({ pageSize: 10, page: 0 });
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const { data: userData, isLoading: isLoadinguserData } = useGetAllUsers();
     const { mutateAsync: deleteUser, isLoading: isLoadingDeleteUser } = useDeleteUser();
-    const [alertOpen, setAlertOpen] = useState(false);
-    const [addValueOpen, setAddValueOpen] = useState(false);
-    const [editValueOpen, setEditValueOpen] = useState(false);
-    const [detailPloOpen, setDetailPloOpen] = useState(false);
     const [key, setKey] = useState(0);
     const router = useRouter();
     const { encode, decode } = useUrlSafeBase64();
@@ -41,6 +35,18 @@ export default function Home() {
     const [isOpenAlertBox, setIsOpenAlertBox] = useState(false);
 
     const [isOpenConfirmModalAlert, setIsOpenConfirmModalAlert] = useState(false);
+
+    const Role = {
+        isAdmin: "admin",
+        isCoordinator: "program_coordinator",
+        isInstructor: "instructor"
+    }
+
+    const roles = [
+        { value: Role.isAdmin, label: "ผู้ดูแลระบบ" },
+        { value: Role.isCoordinator, label: "อาจารย์ผู้รับผิดชอบหลักสูตร" },
+        { value: Role.isInstructor, label: "อาจารย์ผู้สอน" }
+    ];
 
     const handleConfirmDelete = () => {
         setAnchorEl(null);
@@ -58,14 +64,14 @@ export default function Home() {
                 setRowsSelected([]);
                 setKey(key + 1);
 
-                setTextAlertBox("Delete success");
+                setTextAlertBox("ลบข้อมูลสําเร็จ");
                 setTypeAlertBox("success");
                 setIsOpenAlertBox(true);
                 setTimeout(() => {
                     setIsOpenAlertBox(false);
                 }, 1500);
             } else {
-                setTextAlertBox("Delete fail");
+                setTextAlertBox("ได้เกิดข้อผิดพลาดในการลบข้อมูล");
                 setTypeAlertBox("warning");
                 setIsOpenAlertBox(true);
                 setTimeout(() => {
@@ -97,12 +103,17 @@ export default function Home() {
         createColumn("role", "STRING", "ตำแหน่ง", 400, {
             headerAlign: "center",
             align: "center",
+            renderCell(params) {
+                return <>
+                    {roles.find((role) => role.value === params.value)?.label}
+                </>
+            },
         }),
         createColumn("subjects", "STRING", "วิชาที่รับผิดชอบ", 400, {
             headerAlign: "center",
             align: "center",
             renderCell(params) {
-                return params.value?.length > 0 ? params.value.length.toString() : '-'
+                return params.value?.length > 0 ? params.value.length.toString() : '0';
             }
         })
     ]
@@ -180,6 +191,10 @@ export default function Home() {
                     searchText={searchText}
                     onSearchTextChange={(newSearchText) => setSearchText(newSearchText)}
                     onSelectRows={(rowsSelected) => handleSelectRows(rowsSelected)}
+                    pagination={pagination}
+                    setPagination={setPagination}
+                    pageSizeOptions={[10, 20]}
+                    initialPageSize={10}
                     isMultiSelectRow
                 />
 

@@ -40,7 +40,6 @@ export default function Page() {
     const paramsId = Number(encodedId ? decode(encodedId) : null);
     const paramsSubId = Number(subId ? decode(subId) : null);
     const paramsCurId = Number(curriculumId ? decode(curriculumId) : null);
-    console.log("paramsId", paramsId, "paramsSubId", paramsSubId, "paramsCurId", paramsCurId);
 
     // modal
     const [textAlertBox, setTextAlertBox] = useState("");
@@ -49,7 +48,7 @@ export default function Page() {
 
     useEffect(() => {
         const parsedData = cloData?.data?.find((item: IClo) => item.id === paramsId && item.subjects?.id === paramsSubId && item.curriculum?.id === paramsCurId);
-        console.log("parsedData", parsedData);
+        // console.log("parsedData", parsedData);
         if (parsedData) {
             if (parsedData.cloName === pathname) {
                 setCloNames(parsedData.cloName);
@@ -179,7 +178,7 @@ export default function Page() {
                                     control={control}
                                     name="cloName"
                                     defaultValue=""
-                                    rules={{ required: "cloName is required" }}
+                                    rules={{ required: "กรุณากรอกชื่อ CLO" }}
                                     render={({ field }) => (
                                         <TextField
                                             {...field}
@@ -201,7 +200,7 @@ export default function Page() {
                                     control={control}
                                     name="cloDesc"
                                     defaultValue=""
-                                    rules={{ required: "cloDesc is required" }}
+                                    rules={{ required: "กรุณากรอกคำอธิบาย CLO" }}
                                     render={({ field }) => (
                                         <TextField
                                             {...field}
@@ -225,7 +224,7 @@ export default function Page() {
                                     control={control}
                                     name="curriculum"
                                     defaultValue={null}
-                                    rules={{ required: "curriculum is required" }}
+                                    rules={{ required: "กรุณาเลือกหลักสูตร" }}
                                     render={({ field }) => (
                                         <Autocomplete
                                             {...field}
@@ -254,7 +253,7 @@ export default function Page() {
                                     control={control}
                                     name="subjects"
                                     defaultValue={null}
-                                    rules={{ required: "subjects is required" }}
+                                    rules={{ required: "กรุณาเลือกรายวิชา" }}
                                     render={({ field }) => (
                                         <Autocomplete
                                             {...field}
@@ -264,7 +263,7 @@ export default function Page() {
                                             options={subjectsData?.data?.filter((item: ISubjects) => item.id === paramsSubId) || []}
                                             getOptionLabel={(option: ISubjects) => option.subNameTh || ""}
                                             onChange={(event, value) => field.onChange(value)}
-                                            value={field.value || null}
+                                            value={field.value}
                                             isOptionEqualToValue={(option, value) => option.id === value.id}
                                             renderInput={(params) => (
                                                 <TextField {...params} label="รายวิชา"

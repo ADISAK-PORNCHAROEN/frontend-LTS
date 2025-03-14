@@ -137,7 +137,7 @@ export default function Home() {
     return (
         <>
             <PageContentLayout
-                title="Create PLO"
+                title="สร้าง CLOs"
                 icon={<AccountBoxIcon />}
                 actions={
                     <>
@@ -165,7 +165,7 @@ export default function Home() {
                                     control={control}
                                     name="cloName"
                                     defaultValue=""
-                                    rules={{ required: "cloName is required" }}
+                                    rules={{ required: "กรุณากรอกชื่อ CLO" }}
                                     render={({ field }) => (
                                         <TextField
                                             {...field}
@@ -187,7 +187,7 @@ export default function Home() {
                                     control={control}
                                     name="cloDesc"
                                     defaultValue=""
-                                    rules={{ required: "cloDesc is required" }}
+                                    rules={{ required: "กรุณากรอกคำอธิบาย CLO" }}
                                     render={({ field }) => (
                                         <TextField
                                             {...field}
@@ -211,7 +211,7 @@ export default function Home() {
                                     control={control}
                                     name="curriculum"
                                     defaultValue={null}
-                                    rules={{ required: "curriculum is required" }}
+                                    rules={{ required: "กรุณาเลือกหลักสูตร" }}
                                     render={({ field }) => (
                                         <Autocomplete
                                             {...field}
@@ -240,7 +240,7 @@ export default function Home() {
                                     control={control}
                                     name="subjects"
                                     defaultValue={null}
-                                    rules={{ required: "subjects is required" }}
+                                    rules={{ required: "กรุณาเลือกรายวิชา" }}
                                     render={({ field }) => (
                                         <Autocomplete
                                             {...field}
@@ -250,13 +250,13 @@ export default function Home() {
                                             options={subjectsData?.data?.filter((item: ISubjects) => item.id === paramsSubId) || []}
                                             getOptionLabel={(option: ISubjects) => option.subNameTh || ""}
                                             onChange={(event, value) => field.onChange(value)}
-                                            value={field.value || defaultCurriculum}
+                                            value={field.value}
                                             isOptionEqualToValue={(option, value) => option.id === value.id}
                                             renderInput={(params) => (
                                                 <TextField {...params} label="รายวิชา"
                                                     required
-                                                    error={!!errors.curriculum}
-                                                    helperText={errors.curriculum?.message}
+                                                    error={!!errors.subjects}
+                                                    helperText={errors.subjects?.message}
                                                 />
                                             )}
                                         />

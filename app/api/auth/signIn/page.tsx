@@ -22,11 +22,6 @@ export default function SignIn() {
   const [typeAlertBox, setTypeAlertBox] = useState<"success" | "warning" | "error">("success");
   const [isOpenAlertBox, setIsOpenAlertBox] = useState(false);
 
-  const Role = {
-    admin: 'admin',
-    member: 'member'
-  }
-
   const handleRedirect = useCallback(async () => {
     if (session && status === 'authenticated') {
       try {
@@ -107,7 +102,7 @@ export default function SignIn() {
             fontWeight="bold"
             className="mb-4"
           >
-            Sign In
+            เข้าสู่ระบบ
           </Typography>
 
           <Box sx={{ my: 2 }}>
@@ -119,7 +114,7 @@ export default function SignIn() {
               fullWidth
               required
               id="email"
-              label="Email"
+              label="อีเมล"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -133,7 +128,7 @@ export default function SignIn() {
               fullWidth
               required
               id="password"
-              label="Password"
+              label="รหัสผ่าน"
               type={showPassword ? 'text' : 'password'}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -161,13 +156,13 @@ export default function SignIn() {
               disabled={loading}
               className="mt-6 w-full rounded-lg"
             >
-              {loading ? 'Signing in...' : 'Sign In'}
+              {loading ? 'กำลังเข้าสู่ระบบ...' : 'เข้าสู่ระบบ'}
             </Button>
 
             <Typography align="center" gutterBottom>
-              Don&apos;t have an account?{' '}
+              ยังไม่มีบัญชีใช่หรือไม่?{' '}
               <Link href="/lts/api/auth/signUp" className="">
-                Sign up
+                สมัครสมาชิก
               </Link>
             </Typography>
           </div>

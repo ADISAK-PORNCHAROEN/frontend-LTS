@@ -1,18 +1,9 @@
 "use client";
 import Image from 'next/image'
-import { SetStateAction, use, useEffect, useState } from 'react'
-import { DataGrid, GridColDef, GridValidRowModel } from '@mui/x-data-grid';
-import useGetAllUsers from '#/hooks/useGetAllUsers';
-import { IUser } from '#/types/IResponse/IResponse';
-import useDeleteUser from '#/hooks/useDeleteUser';
+import { useEffect, useState } from 'react'
 import { Autocomplete, Button, FormControl, FormHelperText, Grid, InputLabel, Menu, MenuItem, Select, Stack, TextField, Typography } from '@mui/material';
-import useUpdateUser from '#/hooks/useUpdateUser';
 import { Controller, set, SubmitHandler, useForm } from 'react-hook-form';
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
-import Table, { createColumn } from '#/components/table/Table';
-import TableWithSearch from '#/components/table/TableWithSearch';
 import ActionBtn from '#/components/button/ActionBtn';
 import PageContentLayout from '#/components/layout/PageContentLayout';
 import Alert from '#/components/modal/Alert';
@@ -22,7 +13,6 @@ import CardBox from '#/components/CardBox';
 import { ICurriculum, ISubjects } from '#/types/LTS/ILts';
 import { useRouter } from 'next/navigation';
 import useCreateSubjects from '#/hooks/useCreateSubjects';
-import { Resolver } from 'dns';
 import { useSession } from 'next-auth/react';
 import useGetAllCurriculum from '#/hooks/useGetAllCurriculum';
 
@@ -142,7 +132,7 @@ export default function Home() {
                                     control={control}
                                     name="subId"
                                     defaultValue=""
-                                    rules={{ required: "Subject ID is required" }}
+                                    rules={{ required: "กรุณากรอกรหัสวิชา" }}
                                     render={({ field }) => (
                                         <TextField
                                             {...field}
@@ -163,7 +153,7 @@ export default function Home() {
                                     control={control}
                                     name="subNameTh"
                                     defaultValue=""
-                                    rules={{ required: "Subject Name Th is required" }}
+                                    rules={{ required: "กรุณากรอกชื่อวิชา (ภาษาไทย)" }}
                                     render={({ field }) => (
                                         <TextField
                                             {...field}
@@ -184,7 +174,7 @@ export default function Home() {
                                     control={control}
                                     name="subNameEn"
                                     defaultValue=""
-                                    rules={{ required: "Subject Name En is required" }}
+                                    rules={{ required: "กรุณากรอกชื่อวิชา (ภาษาอังกฤษ)" }}
                                     render={({ field }) => (
                                         <TextField
                                             {...field}
@@ -229,7 +219,7 @@ export default function Home() {
                                     control={control}
                                     name="subStatus"
                                     defaultValue=""
-                                    rules={{ required: "สถานะรายวิชาต้องเลือก" }}
+                                    rules={{ required: "กรุณาเลือกสถานะรายวิชา" }}
                                     render={({ field }) => (
                                         <FormControl fullWidth size="small" error={!!errors.subStatus}>
                                             <InputLabel>{<span>สถานะรายวิชา{" "} <span style={{ color: "red" }}>*</span> </span>}</InputLabel>
@@ -269,7 +259,7 @@ export default function Home() {
                                     control={control}
                                     name="subClo"
                                     defaultValue=""
-                                    rules={{ required: "Subject CLO is required" }}
+                                    rules={{ required: "กรุณากรอกสมรรถนะรายวิชา" }}
                                     render={({ field }) => (
                                         <TextField
                                             {...field}
@@ -284,15 +274,7 @@ export default function Home() {
                                             error={!!errors.subClo}
                                             helperText={errors.subClo?.message}
                                             onChange={(e) => {
-                                                // Auto-format numbered list
-                                                const value = e.target.value;
-                                                const lines = value.split('\n');
-                                                const formattedLines = lines.map((line, index) => {
-                                                    // If line starts with a number, don't add a new number
-                                                    if (/^\d+\./.test(line)) return line;
-                                                    return `${index + 1}. ${line.replace(/^\d+\.\s*/, '')}`;
-                                                });
-                                                field.onChange(formattedLines.join('\n'));
+                                                field.onChange(e.target.value);
                                             }}
                                         />
                                     )}
@@ -305,7 +287,7 @@ export default function Home() {
                                     control={control}
                                     name="subDescTh"
                                     defaultValue=""
-                                    rules={{ required: "Subject Description Th is required" }}
+                                    rules={{ required: "กรุณากรอกคำอธิบายรายวิชา (ภาษาไทย)" }}
                                     render={({ field }) => (
                                         <TextField
                                             {...field}
@@ -329,7 +311,7 @@ export default function Home() {
                                     control={control}
                                     name="subDescEn"
                                     defaultValue=""
-                                    rules={{ required: "Subject Description En is required" }}
+                                    rules={{ required: "กรุณากรอกคำอธิบายรายวิชา (ภาษาอังกฤษ)" }}
                                     render={({ field }) => (
                                         <TextField
                                             {...field}
@@ -359,5 +341,5 @@ export default function Home() {
                 />
             </PageContentLayout>
         </>
-    )
+    );
 }

@@ -87,7 +87,7 @@ export default function Home() {
     };
 
     const handleNavigationEdit = (data: IClo) => {
-        console.log("data", data);
+        // console.log("data", data);
         const pathname = encodeURIComponent(data?.cloName ?? '');
         const encodeCloId = encode((data.id ?? '').toString());
         const encodeSubId = encode((data.subjects?.id ?? '').toString());
@@ -96,7 +96,7 @@ export default function Home() {
     }
 
     const column: GridColDef[] = [
-        createColumn("cloName", "STRING", "CLO", 350, {
+        createColumn("cloName", "STRING", "CLOs", 350, {
             headerAlign: "center",
             align: "center",
             sortable: true
@@ -129,7 +129,7 @@ export default function Home() {
 
     const subjectName = subjectsData?.data?.find((item: ISubjects) => item.id === paramsSubId && item.curriculum?.id === paramsCurId)?.subNameTh ?
         `CLOs ${subjectsData?.data?.find((item: ISubjects) => item.id === paramsSubId && item.curriculum?.id === paramsCurId)?.subNameTh}`
-        : "404 Not Found";
+        : "404 not found";
 
     return (
         <>
@@ -157,7 +157,7 @@ export default function Home() {
                             <MenuItem sx={{ width: '100px', backgroundColor: "#FFF" }} onClick={() => handleDelete(rowsSelected)}>ลบข้อมูล</MenuItem>
                         </Menu>
                         <ActionBtn
-                            title="สร้างรายวิชา"
+                            title="สร้าง CLOs"
                             icon={<AddIcon />}
                             onClick={handleNavigationCreate}
                         />

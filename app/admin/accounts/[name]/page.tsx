@@ -63,7 +63,17 @@ export default function Page() {
         isInactive: "Inactive"
     }
 
-    const roles = ["admin", "professor", "member"];
+    const Role = {
+        isAdmin: "admin",
+        isCoordinator: "program_coordinator",
+        isInstructor: "instructor"
+    }
+
+    const roles = [
+        { value: Role.isAdmin, label: "ผู้ดูแลระบบ" },
+        { value: Role.isCoordinator, label: "อาจารย์ผู้รับผิดชอบหลักสูตร" },
+        { value: Role.isInstructor, label: "อาจารย์ผู้สอน" }
+    ];
 
     const handleSubmitSubject: SubmitHandler<IUser> = async (data: IUser) => {
         try {
@@ -80,11 +90,10 @@ export default function Page() {
                 userId: userId,
                 subjects: resultUserSubs
             });
-            console.log("resUserSubject", resUserSubject);
 
             if (resUserSubject.success === true && res.success === true) {
                 setTypeAlertBox("success");
-                setTextAlertBox("Edit Success");
+                setTextAlertBox("แก้ไขสำเร็จ");
                 setIsOpenAlertBox(true);
                 await new Promise<void>((resolve) => {
                     setTimeout(() => {
@@ -96,7 +105,7 @@ export default function Page() {
                 await router.push("../accounts");
             } else {
                 setTypeAlertBox("warning");
-                setTextAlertBox("Edit Fail");
+                setTextAlertBox("แก้ไขไม่สำเร็จ");
                 setIsOpenAlertBox(true);
                 await new Promise<void>((resolve) => {
                     setTimeout(() => {
@@ -124,23 +133,20 @@ export default function Page() {
                 actions={
                     <>
                         <ActionBtn
-                            title="Cancel"
+                            title="ยกเลิก"
                             icon={<CloseIcon />}
                             color='#db3131'
                             onClick={() => router.push("../accounts")}
                         />
 
                         <ActionBtn
-                            title="Save"
+                            title="บันทึก"
                             icon={<AddIcon />}
                             onClick={handleSubmit((data) => handleSubmitSubject(data))}
                         />
                     </>
                 }
             >
-                {/* {isLoadingSubjectsData ? (
-                    <CircularProgress size={24} />
-                ) : ( */}
                 <CardBox>
                     <FormControl fullWidth>
                         <Grid container spacing={2}>
@@ -153,7 +159,7 @@ export default function Page() {
                                     control={control}
                                     name="fname"
                                     defaultValue=""
-                                    rules={{ required: "First Name is required" }}
+                                    rules={{ required: "กรุณากรอกชื่อ" }}
                                     render={({ field }) => (
                                         <TextField
                                             {...field}
@@ -174,7 +180,7 @@ export default function Page() {
                                     control={control}
                                     name="lname"
                                     defaultValue=""
-                                    rules={{ required: "Last Name is required" }}
+                                    rules={{ required: "กรุณากรอกนามสกุล" }}
                                     render={({ field }) => (
                                         <TextField
                                             {...field}
@@ -196,10 +202,10 @@ export default function Page() {
                                     control={control}
                                     defaultValue=""
                                     rules={{
-                                        required: "Email is required",
+                                        required: "กรุณากรอกอีเมล",
                                         pattern: {
                                             value: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/,
-                                            message: "Invalid email address"
+                                            message: "อีเมลไม่ถูกต้อง"
                                         }
                                     }}
                                     render={({ field, fieldState: { error } }) => (
@@ -223,16 +229,24 @@ export default function Page() {
                                     control={control}
                                     name="role"
                                     defaultValue=""
-                                    rules={{ required: "Role is required" }}
+                                    rules={{ required: "กรุณากรอกตำแหน่ง" }}
                                     render={({ field: { onChange, value } }) => (
                                         <Autocomplete
                                             disablePortal
                                             fullWidth
                                             size='small'
                                             options={roles}
-                                            value={value || null}
-                                            onChange={(_, newValue) => onChange(newValue)}
-                                            renderInput={(params) =>
+                                            value={roles.find(role => role.value === value) || null}
+                                            onChange={(_, newValue) => {
+                                                onChange(newValue ? newValue.value : '')
+                                            }}
+                                            isOptionEqualToValue={(option, value) => {
+                                                if (typeof value === 'string') {
+                                                    return option.value === value;
+                                                }
+                                                return option.value === value.value;
+                                            }}
+                                            renderInput={(params) => (
                                                 <TextField
                                                     {...params}
                                                     label="ตำแหน่ง"
@@ -240,7 +254,7 @@ export default function Page() {
                                                     helperText={errors.role?.message}
                                                     required
                                                 />
-                                            }
+                                            )}
                                         />
                                     )}
                                 />
@@ -251,10 +265,6 @@ export default function Page() {
                                     control={control}
                                     name="subjects"
                                     defaultValue={[]}
-                                    // rules={{
-                                    //     required: "กรุณาเลือกวิชาที่รับผิดชอบอย่างน้อย 1 วิชา",
-                                    //     validate: value => (value?.length > 0) || "กรุณาเลือกวิชาที่รับผิดชอบอย่างน้อย 1 วิชา"
-                                    // }}
                                     render={({ field: { onChange, value } }) => (
                                         <Autocomplete
                                             multiple
@@ -300,7 +310,6 @@ export default function Page() {
                                                     label="วิชาที่รับผิดชอบ"
                                                     error={!!errors.subjects}
                                                     helperText={errors.subjects?.message?.toString()}
-                                                // required
                                                 />
                                             )}
                                             renderTags={(selectedOptions, getTagProps) =>
@@ -326,7 +335,6 @@ export default function Page() {
                             </Grid>
 
                             {selectedSubjects.length > 0 && (
-                                // console.log("selectedSubjects", selectedSubjects),
                                 <Grid item xs={12}>
                                     <Typography variant="subtitle1" sx={{ mb: 1 }}>
                                         รายการวิชาที่รับผิดชอบ ({selectedSubjects.length} วิชา)
@@ -353,7 +361,6 @@ export default function Page() {
                         </Grid>
                     </FormControl>
                 </CardBox>
-                {/* )} */}
 
                 <Alert
                     text={textAlertBox}
