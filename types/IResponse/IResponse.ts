@@ -31,7 +31,8 @@ export interface IUser {
     lname?: string | null;
     email?: string | null;
     password?: string | null;
-    image?: string | null;
+    // image?: string | null;
+    curriculumId?: number | null;
     role?: string | null;   
     subjects?: IUserSubject1[] | null;
     createdDate?: Date | null;

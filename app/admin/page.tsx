@@ -31,7 +31,6 @@ export default function Page() {
                     await router.push('/coordinator/dashboard')
                 }
 
-                // รอให้การ navigate เสร็จสมบูรณ์
                 await new Promise(resolve => setTimeout(resolve, 100))
                 await router.refresh()
 

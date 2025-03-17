@@ -9,7 +9,7 @@ import ActionBtn from '#/components/button/ActionBtn';
 import PageContentLayout from '#/components/layout/PageContentLayout';
 import Alert from '#/components/modal/Alert';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ICurriculum, ISubjects } from '#/types/LTS/ILts';
+import { ICurriculum } from '#/types/LTS/ILts';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
 import useGetAllPlo from '#/hooks/useGetAllPlo';
@@ -17,6 +17,7 @@ import { IPlo } from '#/types/LTS/IPlo';
 import useDeletePlo from '#/hooks/useDeletePlo';
 import { useUrlSafeBase64 } from '#/hooks/useUrlSafeBase64';
 import useGetAllCurriculum from '#/hooks/useGetAllCurriculum';
+import AlertConfirm from '#/components/modal/AlertConfirm';
 
 export default function Home() {
     const [rows, setRows] = useState<IPlo[]>([]);
@@ -41,9 +42,15 @@ export default function Home() {
     const [textAlertBox, setTextAlertBox] = useState("");
     const [typeAlertBox, setTypeAlertBox] = useState<"success" | "warning" | "error">("success");
     const [isOpenAlertBox, setIsOpenAlertBox] = useState(false);
+    const [isOpenConfirmModalAlert, setIsOpenConfirmModalAlert] = useState(false);
 
+    const handleConfirmDelete = () => {
+        setAnchorEl(null);
+        setIsOpenConfirmModalAlert(true);
+    }
 
     const handleDelete = async (rowsSelected: IPlo[]) => {
+        setIsOpenConfirmModalAlert(false);
         try {
             const ids = rowsSelected.map((row: IPlo) => row.id).join(',');
             const res = await deletePlo({ ids });
@@ -78,7 +85,6 @@ export default function Home() {
     };
 
     const handleNavigationEdit = (data: IPlo) => {
-        // sessionStorage.setItem('subjectData', JSON.stringify(data));
         const pathname = encodeURIComponent(data?.ploName!)
         const encodedId = encode((paramsId ?? '').toString());
         const encodedPloId = encode((data.id ?? '').toString());
@@ -105,7 +111,6 @@ export default function Home() {
             }))
             setRows(transformedData.filter(item => item.curriculum?.id == paramsId));
 
-            // Extract unique curriculum options
             const curriculums = new Set<string>();
             const options: { value: string, name: string }[] = [];
 
@@ -186,7 +191,7 @@ export default function Home() {
                                 "& .MuiMenu-list": { paddingY: '0px', backgroundColor: "#FFF" },
                             }}
                         >
-                            <MenuItem sx={{ width: '100px', backgroundColor: "#FFF" }} onClick={() => handleDelete(rowsSelected)}>ลบข้อมูล</MenuItem>
+                            <MenuItem sx={{ width: '100px', backgroundColor: "#FFF" }} onClick={handleConfirmDelete}>ลบข้อมูล</MenuItem>
                         </Menu>
                         <ActionBtn
                             title="สร้างรายวิชา"
@@ -224,6 +229,14 @@ export default function Home() {
                     type={typeAlertBox}
                     isOpen={isOpenAlertBox}
                     setIsOpen={setIsOpenAlertBox}
+                />
+
+                <AlertConfirm
+                    isOpen={isOpenConfirmModalAlert}
+                    setIsOpen={setIsOpenConfirmModalAlert}
+                    onConfirm={() => handleDelete(rowsSelected)}
+                    description="ข้อมูลที่เกี่ยวข้องจะถูกลบด้วย"
+                    title="คุณแน่ใจหรือไม่?"
                 />
             </PageContentLayout>
         </>

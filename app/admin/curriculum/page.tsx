@@ -15,6 +15,7 @@ import useGetAllCurriculum from '#/hooks/useGetAllCurriculum';
 import useDeleteCurruculum from '#/hooks/useDeleteCurruculum';
 import LibraryBooksIcon from '@mui/icons-material/LibraryBooks';
 import { useUrlSafeBase64 } from '#/hooks/useUrlSafeBase64';
+import AlertConfirm from '#/components/modal/AlertConfirm';
 
 export default function Home() {
     const [rows, setRows] = useState<ISubjects[]>([]);
@@ -33,8 +34,15 @@ export default function Home() {
     const [textAlertBox, setTextAlertBox] = useState("");
     const [typeAlertBox, setTypeAlertBox] = useState<"success" | "warning" | "error">("success");
     const [isOpenAlertBox, setIsOpenAlertBox] = useState(false);
+    const [isOpenConfirmModalAlert, setIsOpenConfirmModalAlert] = useState(false);
+
+    const handleConfirmDelete = () => {
+        setAnchorEl(null);
+        setIsOpenConfirmModalAlert(true);
+    }
 
     const handleDelete = async (rowsSelected: ISubjects[]) => {
+        setIsOpenConfirmModalAlert(false);
         try {
             const ids = rowsSelected.map((row: ISubjects) => row.id).join(',');
             const res = await deleteCurrriculum({ ids });
@@ -51,7 +59,7 @@ export default function Home() {
                     setIsOpenAlertBox(false);
                 }, 1500);
             } else {
-                setTextAlertBox("เกิดข้อผิดพลาดในการลบข้อมูล");  
+                setTextAlertBox("เกิดข้อผิดพลาดในการลบข้อมูล");
                 setTypeAlertBox("error");
                 setIsOpenAlertBox(true);
                 setTimeout(() => {
@@ -201,7 +209,7 @@ export default function Home() {
                                 "& .MuiMenu-list": { paddingY: '0px', backgroundColor: "#FFF" },
                             }}
                         >
-                            <MenuItem sx={{ width: '100px', backgroundColor: "#FFF" }} onClick={() => handleDelete(rowsSelected)}>ลบข้อมูล</MenuItem>
+                            <MenuItem sx={{ width: '100px', backgroundColor: "#FFF" }} onClick={handleConfirmDelete}>ลบข้อมูล</MenuItem>
                         </Menu>
                         <ActionBtn
                             title="สร้างหลักสูตร"
@@ -232,6 +240,14 @@ export default function Home() {
                     type={typeAlertBox}
                     isOpen={isOpenAlertBox}
                     setIsOpen={setIsOpenAlertBox}
+                />
+
+                <AlertConfirm
+                    isOpen={isOpenConfirmModalAlert}
+                    setIsOpen={setIsOpenConfirmModalAlert}
+                    onConfirm={() => handleDelete(rowsSelected)}
+                    description="ข้อมูลที่เกี่ยวข้องจะถูกลบด้วย"
+                    title="คุณแน่ใจหรือไม่?"
                 />
             </PageContentLayout>
         </>

@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from 'react'
 import { GridColDef } from '@mui/x-data-grid';
-import { Menu, MenuItem, Checkbox } from '@mui/material';
+import { Menu, MenuItem, Checkbox, Backdrop, CircularProgress, Tooltip } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import Table, { createColumn } from '#/components/table/Table';
 import ActionBtn from '#/components/button/ActionBtn';
@@ -27,11 +27,13 @@ import useUpdateNewUserClo from '#/hooks/useUpdateNewUserClo';
 import useGetAllCloList from '#/hooks/useGetAllCloList';
 import useCreateUserCloWithPloUpdate from '#/hooks/useCreateUserCloWithPloUpdate';
 import CheckIcon from '@mui/icons-material/Check';
+import AlertConfirm from '#/components/modal/AlertConfirm';
 import useGetAllUsers from '#/hooks/useGetAllUsers';
+import AccessDeniedPage from '#/components/AccessDeniedPage';
 
 export default function Page() {
     const [rows, setRows] = useState<IUserClo[]>([]);
-    const [modalRows, setModalRows] = useState<IUserClo[]>([]); // สร้าง state แยกสำหรับ modal
+    const [modalRows, setModalRows] = useState<IUserClo[]>([]);
     const [rowsSelected, setRowsSelected] = useState<IUserClo[]>([]);
     const [searchText, setSearchText] = useState<string>('');
     const [searchType, setSearchType] = useState<string>("cloName");
@@ -48,10 +50,13 @@ export default function Page() {
     const { mutateAsync: createUserCloWithPloUpdate, isLoading: isLoadingCreateUserCloWithPloUpdate } = useCreateUserCloWithPloUpdate();
     const { mutateAsync: updateNewUserClo, isLoading: isLoadingUpdateNewUserClo } = useUpdateNewUserClo();
     const { data: userCloList, isLoading: isLoadingUserCloList } = useGetAllCloList();
+    const { data: userData, isLoading: isLoadingUserData } = useGetAllUsers();
     const [pendingChanges, setPendingChanges] = useState<{
         cloId: string | number | null | undefined;
         plos: IUserPlo[];
     }[]>([]);
+    const [hasAccess, setHasAccess] = useState<boolean | null>(null);
+    const [isCheckingAccess, setIsCheckingAccess] = useState(true);
     const session = useSession();
     const user = session.data?.user;
     const router = useRouter();
@@ -69,6 +74,45 @@ export default function Page() {
     const [typeAlertBox, setTypeAlertBox] = useState<"success" | "warning" | "error">("success");
     const [isOpenAlertBox, setIsOpenAlertBox] = useState(false);
     const [isOpenAlertForm, setIsOpenAlertForm] = useState(false);
+    const [isOpenConfirmModalAlert, setIsOpenConfirmModalAlert] = useState(false);
+
+    const Role = {
+        isAdmin: "admin",
+        isCoordinator: "program_coordinator",
+        isInstructor: "instructor"
+    }
+
+    useEffect(() => {
+        const checkAccess = async () => {
+            if (!userData?.data || !user || !paramsSubId || !paramsCurId) {
+                return;
+            }
+
+            let hasPermission = false;
+
+            if (user.role === Role.isAdmin) {
+                hasPermission = true;
+            } else {
+                const currentUser = userData.data.find((u: any) => u.id === user.id);
+
+                if (currentUser) {
+                    const hasSubject = currentUser.subjects?.some((subject: any) => {
+                        return subject.subjects?.some((sub: any) =>
+                            sub.id === paramsSubId &&
+                            sub.curriculum?.id === paramsCurId
+                        );
+                    });
+
+                    hasPermission = !!hasSubject;
+                }
+            }
+
+            setHasAccess(hasPermission);
+            setIsCheckingAccess(false);
+        };
+
+        checkAccess();
+    }, [userData, user, paramsSubId, paramsCurId, Role.isAdmin, Role.isCoordinator]);
 
     let currentPath = "/instructor";
     if (pathname.startsWith("/admin")) {
@@ -76,15 +120,14 @@ export default function Page() {
     } else if (pathname.startsWith("/coordinator")) {
         currentPath = "/coordinator";
     }
-    
-    // เปลี่ยนนิยาม state
+
     const [semesterOptions, setSemesterOptions] = useState<{ value: string, name: string, hasData?: boolean }[]>([
         { value: "1", name: "ภาคการศึกษาที่ 1", hasData: false },
         { value: "2", name: "ภาคการศึกษาที่ 2", hasData: false },
         { value: "3", name: "ภาคฤดูร้อน", hasData: false }
     ]);
 
-    const isUserSelected = useRef(false); // ตรวจสอบว่าผู้ใช้เลือกเองหรือไม่
+    const isUserSelected = useRef(false);
 
     useEffect(() => {
         if (userClo?.data && yearValue) {
@@ -94,18 +137,15 @@ export default function Page() {
                 item.year === yearValue
             );
 
-            // เก็บภาคการศึกษาที่มีข้อมูลอยู่
             const existingSemesters = new Set(
                 yearFilteredData.map((item: IUserClo) => item.semester?.toString())
             );
 
-            // คำนวณภาคที่มีข้อมูลล่าสุด (ค่ามากสุด)
             const latestSemester = Math.max(
                 ...yearFilteredData.map((item) => Number(item.semester || "0")),
                 0
             ).toString();
 
-            // สร้างตัวเลือกสำหรับทั้ง 3 ภาคการศึกษาเสมอ
             const allSemesters = [
                 { value: "1", name: "ภาคการศึกษาที่ 1", hasData: existingSemesters.has("1") },
                 { value: "2", name: "ภาคการศึกษาที่ 2", hasData: existingSemesters.has("2") },
@@ -114,14 +154,12 @@ export default function Page() {
 
             setSemesterOptions(allSemesters);
 
-            // ถ้าไม่มีข้อมูล หรือยังไม่เคยเลือกภาค ให้ใช้ภาคล่าสุด
             if (!isUserSelected.current) {
                 if (latestSemester !== "0") {
                     setSemesterValue(latestSemester);
                 }
             }
         } else {
-            // กรณีไม่มีข้อมูลปี ให้แสดงทั้ง 3 ภาคเป็นค่าเริ่มต้น
             setSemesterOptions([
                 { value: "1", name: "ภาคการศึกษาที่ 1", hasData: false },
                 { value: "2", name: "ภาคการศึกษาที่ 2", hasData: false },
@@ -148,7 +186,6 @@ export default function Page() {
 
             setYearOptions(options);
 
-            // ตรวจสอบว่า yearValue ยังอยู่ใน options หรือไม่
             const isYearStillValid = options.some(option => option.value === yearValue);
 
             if (options.length > 0 && !isYearStillValid) {
@@ -180,7 +217,14 @@ export default function Page() {
         }
     }, [isOpenAlertForm, rows]);
 
+    const handleConfirmDelete = async (data: IUserClo[]) => {
+        setRowsSelected(data);
+        setAnchorEl(null);
+        setIsOpenConfirmModalAlert(true);
+    }
+
     const handleDelete = async (data: IUserClo[]) => {
+        setIsOpenConfirmModalAlert(false);
         try {
             const ids = data.map((row: IUserClo) => row.id).join(',');
             const res = await deleteUserClo({ ids });
@@ -190,14 +234,14 @@ export default function Page() {
                 setRowsSelected([]);
                 setKey(key + 1);
 
-                setTextAlertBox("Delete success");
+                setTextAlertBox("ลบข้อมูลสําเร็จ");
                 setTypeAlertBox("success");
                 setIsOpenAlertBox(true);
                 setTimeout(() => {
                     setIsOpenAlertBox(false);
                 }, 1500);
             } else {
-                setTextAlertBox("Fail to delete");
+                setTextAlertBox("ได้เกิดข้อผิดพลาดในการลบข้อมูล");
                 setTypeAlertBox("error");
                 setIsOpenAlertBox(true);
                 setTimeout(() => {
@@ -209,15 +253,13 @@ export default function Page() {
         }
     }
 
-    // ฟังก์ชันสำหรับการเปลี่ยนแปลง PLO ใน Modal
     const handleModalPloChange = (row: IUserClo, ploName: string) => {
         if (!row.plo) return;
 
-        // อัพเดตเฉพาะใน modalRows
         setModalRows(prevRows => {
             return prevRows.map(r => {
                 if (r.id === row.id) {
-                    // ค้นหา PLO ที่ต้องการเปลี่ยน
+
                     const updatedPlos = r.plo?.map(plo => {
                         if (plo.ploName === ploName && plo.cloId === row.id) {
                             return { ...plo, selected: !plo.selected };
@@ -234,12 +276,10 @@ export default function Page() {
             });
         });
 
-        // เก็บข้อมูลที่เปลี่ยนแปลงใน pendingChanges
         setPendingChanges((prev) => {
-            // ตรวจสอบว่ามีข้อมูลของ row นี้อยู่แล้วหรือไม่
+
             const existingIndex = prev.findIndex((item) => item.cloId === row.id);
 
-            // หา plo ที่จะอัพเดต
             const updatedPlos = row.plo?.map(plo => {
                 if (plo.ploName === ploName && plo.cloId === row.id) {
                     return { ...plo, selected: !plo.selected };
@@ -248,7 +288,7 @@ export default function Page() {
             }) || [];
 
             if (existingIndex >= 0) {
-                // ถ้ามีอยู่แล้ว ให้อัพเดต plos ในรายการนั้น
+
                 const newChanges = [...prev];
                 newChanges[existingIndex] = {
                     cloId: row.id,
@@ -256,7 +296,6 @@ export default function Page() {
                 };
                 return newChanges;
             } else {
-                // ถ้ายังไม่มี ให้เพิ่มเข้าไปใหม่
                 return [...prev, {
                     cloId: row.id,
                     plos: updatedPlos
@@ -278,7 +317,6 @@ export default function Page() {
         }
 
         try {
-            // บันทึกทีละรายการ
             const results = await Promise.all(
                 pendingChanges.map(change =>
                     updatePloChecked({
@@ -288,16 +326,11 @@ export default function Page() {
                 )
             );
 
-            // ตรวจสอบผลลัพธ์
             const allSuccess = results.every(res => res.success);
 
             if (allSuccess) {
-                // อัพเดท rows หลักด้วยข้อมูลจาก modalRows เมื่อบันทึกสำเร็จ
                 setRows(modalRows);
-
-                // ล้าง pendingChanges เมื่อบันทึกสำเร็จทั้งหมด
                 setPendingChanges([]);
-
                 setTextAlertBox("บันทึกข้อมูลทั้งหมดสำเร็จ");
                 setTypeAlertBox("success");
             } else {
@@ -353,9 +386,11 @@ export default function Page() {
             renderCell(params) {
                 const cloNames = params.row?.clo?.map((item: IClo) => item.cloName + " " + item.cloDesc).map((item: string) => item);
                 return (
-                    <span>
-                        {cloNames}
-                    </span>
+                    <Tooltip title={cloNames || "-"} arrow>
+                        <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                            {cloNames}
+                        </span>
+                    </Tooltip>
                 );
             },
         }),
@@ -399,7 +434,7 @@ export default function Page() {
     }));
 
     const mergeColumnEdit = [...column, ...columnPlosForModal];
-    const mergeColumnShow = [...column, ...columnPlosForMainTable];
+    const mergeColumnShow: GridColDef[] = [...column, ...columnPlosForMainTable];
 
     const ExSearch = columnPlosForMainTable.map((item) => item.field);
 
@@ -533,6 +568,21 @@ export default function Page() {
         setSearchType("cloName");
     }, [searchParams]);
 
+    if (isCheckingAccess || isLoadingUserData) {
+        return <div>
+            <Backdrop
+                sx={(theme) => ({ color: '#fff', zIndex: theme.zIndex.drawer + 1 })}
+                open={true}
+            >
+                <CircularProgress color="inherit" />
+            </Backdrop>
+        </div>;
+    }
+
+    if (!hasAccess) {
+        return <AccessDeniedPage />;
+    }
+
     return (
         <>
             <PageContentLayout
@@ -556,7 +606,7 @@ export default function Page() {
                                 "& .MuiMenu-list": { paddingY: '0px', backgroundColor: "#FFF" },
                             }}
                         >
-                            <MenuItem sx={{ width: '150px', backgroundColor: "#FFF" }} onClick={() => handleDelete(filteredRows)}>ลบข้อมูลทั้งหมด</MenuItem>
+                            <MenuItem sx={{ width: '150px', backgroundColor: "#FFF" }} onClick={() => handleConfirmDelete(filteredRows)}>ลบข้อมูลทั้งหมด</MenuItem>
                             <MenuItem sx={{ width: '150px', backgroundColor: "#FFF" }} onClick={handleNavigationEditPush}>แก้ไข PLO</MenuItem>
                             <MenuItem sx={{ width: '150px', backgroundColor: "#FFF" }} onClick={() => handleUpdateNewClo(filteredRows)}>อัพเดต CLO</MenuItem>
                         </Menu>
@@ -571,6 +621,7 @@ export default function Page() {
                             title="Checked"
                             icon={<AddIcon />}
                             onClick={() => setIsOpenAlertForm(true)}
+                            disabled={filteredRows.length === 0}
                         />
                         <ActionBtn
                             title="สร้าง PLO"
@@ -583,7 +634,7 @@ export default function Page() {
                 <TableWithSearchNoCheck
                     idKey='id'
                     key={key}
-                    columns={mergeColumnShow as GridColDef[]}
+                    columns={mergeColumnShow}
                     rows={filteredRows}
                     onViewRow={(rowSelected) => handleNavigationEditPush()}
                     searchType={searchType as string}
@@ -604,13 +655,6 @@ export default function Page() {
                     pageSizeOptions={[10, 20]}
                     initialPageSize={10}
                     isMultiSelectRow
-                />
-
-                <Alert
-                    text={textAlertBox}
-                    type={typeAlertBox}
-                    isOpen={isOpenAlertBox}
-                    setIsOpen={setIsOpenAlertBox}
                 />
 
                 <ModalForm
@@ -634,6 +678,20 @@ export default function Page() {
                     />
                 </ModalForm>
 
+                <Alert
+                    text={textAlertBox}
+                    type={typeAlertBox}
+                    isOpen={isOpenAlertBox}
+                    setIsOpen={setIsOpenAlertBox}
+                />
+
+                <AlertConfirm
+                    isOpen={isOpenConfirmModalAlert}
+                    setIsOpen={setIsOpenConfirmModalAlert}
+                    onConfirm={() => handleDelete(rowsSelected.length > 0 ? rowsSelected : filteredRows)}
+                    description="ลบข้อมูลทั้งหมด"
+                    title="คุณแน่ใจหรือไม่?"
+                />
             </PageContentLayout>
         </>
     )

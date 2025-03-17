@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { IResponse } from "#/types/IResponse/IResponse";
-import { getAllSubjects, deleteSubjects } from "./queries/QuriesKey";
+import { getAllSubjects, deleteSubjects, getAllUsers } from "./queries/QuriesKey";
 import { deleteSubjectsApi } from "#/app/api/userApi";
 import { ISubjects } from "#/types/LTS/ILts";
 
@@ -11,6 +11,7 @@ export default function useDeleteSubjects() {
 
             onSuccess: () => {
                 queryClient.invalidateQueries([getAllSubjects]);
+                queryClient.invalidateQueries([getAllUsers]);
             }
         }
     )

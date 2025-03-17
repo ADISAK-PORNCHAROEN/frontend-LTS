@@ -1,24 +1,24 @@
 "use client";
-import Image from 'next/image'
-import { SetStateAction, use, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { IUser } from '#/types/IResponse/IResponse';
-import { Button, Grid, Menu, MenuItem, Stack, Typography } from '@mui/material';
+import { Grid } from '@mui/material';
 import PageContentLayout from '#/components/layout/PageContentLayout';
 import Alert from '#/components/modal/Alert';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import BookIcon from '@mui/icons-material/Book';
 import PeopleIcon from '@mui/icons-material/People';
 import PendingIcon from '@mui/icons-material/Pending';
-import CardBox from '#/components/CardBox';
 import useGetAllSubjects from '#/hooks/useGetAllSubjects';
 import CardBoxDashboard from '#/components/CardBoxDashboard';
+import useGetAllUsers from '#/hooks/useGetAllUsers';
+import { useSession } from 'next-auth/react';
 
 export default function Home() {
     const [rows, setRows] = useState<IUser[]>([]);
-    const [countSubjectActive, setCountSubjectActive] = useState<number>(0);
-    const [countSubjectInactive, setCountSubjectInactive] = useState<number>(0);
-    const { data: subjectsData, isLoading: isLoadingSubjectsData } = useGetAllSubjects();
-    console.log("subject", subjectsData?.data)
+    const { data: session } = useSession();
+    const user = session?.user
+    const [subjectsCount, setSubjectsCount] = useState(0);
+    const { data: userData, isLoading: isLoadinguserData } = useGetAllUsers();
 
     // modal
     const [textAlertBox, setTextAlertBox] = useState("");
@@ -32,17 +32,24 @@ export default function Home() {
     }
 
     useEffect(() => {
-        if (subjectsData?.data) {
-            const transformedData = subjectsData?.data.map((data) => ({
-                ...data,
-                subStatus: data.subStatus === status.isActive,
-                subStatusIn: data.subStatus === status.isInactive 
-            }));
+        if (!userData || !Array.isArray(userData.data) || !user?.id) return;
 
-            setCountSubjectActive(transformedData.filter(item => item.subStatus).length || 0);
-            setCountSubjectInactive(transformedData.filter(item => item.subStatusIn).length);
+        const currentUser = userData.data.find(u => u.id === user?.id);
+
+        if (!currentUser || !currentUser.subjects || !Array.isArray(currentUser.subjects)) {
+            setSubjectsCount(0);
+            return;
         }
-    }, [status.isActive, status.isInactive, subjectsData?.data])
+
+        let totalSubjects = 0;
+        currentUser.subjects.forEach(subjectEntry => {
+            if (subjectEntry.subjects && Array.isArray(subjectEntry.subjects)) {
+                totalSubjects += subjectEntry.subjects.length;
+            }
+        });
+
+        setSubjectsCount(totalSubjects);
+    }, [userData, user?.id]);
 
     return (
         <>
@@ -59,9 +66,9 @@ export default function Home() {
                 <Grid container spacing={2}>
                     <Grid item xs={12} md={6} lg={3}>
                         <CardBoxDashboard
-                            title='วิชาที่มีอยู่ในระบบ'
-                            value={subjectsData?.data?.length || 0}
-                            subtitle="รายวิชาทั้งหมดในระบบ"
+                            title='วิชาที่รับผิดชอบ'
+                            value={subjectsCount || "0"}
+                            subtitle="จํานวนวิชาที่รับผิดชอบ"
                             colorVariant='info'
                             icon={<DashboardIcon />}
                         />
@@ -69,7 +76,7 @@ export default function Home() {
                     <Grid item xs={12} md={6} lg={3}>
                         <CardBoxDashboard
                             title='วิชาที่เปิดสอน'
-                            value={countSubjectActive}
+                            value={"0"}
                             subtitle="รายวิชาที่เปิดในเทอมปัจจุบัน"
                             colorVariant='success'
                             icon={<BookIcon />}

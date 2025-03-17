@@ -1,8 +1,7 @@
 "use client";
 import { useEffect, useState } from 'react'
-import { Box, Alert, Checkbox, Fade, FormControl, FormControlLabel, FormGroup, FormHelperText, Grid, InputLabel, Menu, MenuItem, Paper, Select, Stack, TextField, Typography } from '@mui/material';
-import { Controller, set, SubmitHandler, useForm } from 'react-hook-form';
-import CloseIcon from '@mui/icons-material/Close';
+import { Box, Alert, Checkbox, FormControl, FormControlLabel, FormGroup, FormHelperText, Grid, InputLabel, Menu, MenuItem, Paper, Select, Stack, TextField, Typography } from '@mui/material';
+import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 import AddIcon from '@mui/icons-material/Add';
 import ActionBtn from '#/components/button/ActionBtn';
 import PageContentLayout from '#/components/layout/PageContentLayout';
@@ -10,8 +9,7 @@ import Alert1 from '#/components/modal/Alert';
 import AccountBoxIcon from '@mui/icons-material/AccountBox';
 import CardBox from '#/components/CardBox';
 import { ISubjects, IUserClo, IUserPlo } from '#/types/LTS/ILts';
-import { useParams, usePathname, useRouter, useSearchParams } from 'next/navigation';
-import useUpdateSubjects from '#/hooks/useUpdateSubjects';
+import { useRouter, useSearchParams } from 'next/navigation';
 import useGetAllSubjects from '#/hooks/useGetAllSubjects';
 import { useSession } from 'next-auth/react';
 import { useUrlSafeBase64 } from '#/hooks/useUrlSafeBase64';
@@ -23,12 +21,7 @@ import SchoolIcon from '@mui/icons-material/School';
 import StarIcon from '@mui/icons-material/Star';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { motion, AnimatePresence } from 'framer-motion';
-import useUpdateUserPlo from '#/hooks/useUpdateUserPlo';
-import useCreateClo from '#/hooks/useCreateClo';
-import useCreateUserClo from '#/hooks/useCreateUserClo';
-import useCreateUserCloWithPlo from '#/hooks/useCreateUserCloWithPlo';
 import useGetAllUserClo from '#/hooks/useGetAllUserClo';
-import { IPlo } from '#/types/LTS/IPlo';
 import useUpdateUserPloMany from '#/hooks/useUpdateUserPloMany';
 import useUpdateUserClo from '#/hooks/useUpdateUserClo';
 import useGetAllCloList from '#/hooks/useGetAllCloList';
@@ -77,7 +70,6 @@ export default function Page() {
         }
     }, [paramsCurId, paramsSemId, paramsSubId, paramsYearId, userClo?.data]);
 
-    // Add this useEffect to populate form fields and checkboxes based on existing userClo data
     useEffect(() => {
         if (userClo?.data) {
             const existingUserClo = userClo.data.find((item: IUserClo) =>
@@ -99,26 +91,20 @@ export default function Page() {
                 setValue('semester', 1);
                 setValue('year', dayjs(new Date()).format('YYYY'));
                 setSelectedPlos([]);
-
-                console.log('No existing user CLO data found for this subject and curriculum');
             }
         }
     }, [userClo?.data, paramsSubId, paramsCurId, setValue, paramsSemId, paramsYearId]);
 
-    // Update the checkExistingField function to handle arrays
     const checkExistingField = (data: IUserClo | IUserClo[]) => {
         const errors: string[] = [];
         if (!userClo?.data) return errors;
-        
-        // แปลงข้อมูลให้อยู่ในรูปแบบ array เสมอ
+
         const dataArray = Array.isArray(data) ? data : [data];
         if (dataArray.length === 0) return errors;
         
         const firstItem = dataArray[0];
         const editingIds = dataArray.map(item => item.id).filter(Boolean);
         
-        // ตรวจสอบว่ามี record อื่นที่มีปี, subject, curriculum เดียวกัน
-        // แต่ไม่ใช่ record ที่กำลังแก้ไข
         const hasDuplicate = userClo.data.some((clo: IUserClo) =>
             clo.semester === firstItem.semester &&
             clo.year === firstItem.year &&
@@ -135,13 +121,11 @@ export default function Page() {
     };
 
     const handleSubmitSubject: SubmitHandler<IUserClo> = async (data: IUserClo | IUserPlo) => {
-        console.log("data", data);
         try {
 
             const updatedPloIds: { [key: string]: number[] } = {};
             const updatedCloIds: number[] = [];
 
-            // For each CLO in rows, assign the current selectedPlos
             rows.forEach(clo => {
                 if (clo.id) {
                     updatedPloIds[clo.id] = [...selectedPlos];
@@ -151,14 +135,13 @@ export default function Page() {
 
             const result: any = updatedCloIds.map((id, index) => ({
                 ...data,
-                id: id, // ใช้ id ที่มาจาก updatedCloIds
+                id: id,
                 userId: user?.id,
                 curriculumId: paramsCurId,
                 subId: paramsSubId,
                 updatedBy: user?.name,
                 updatedDate: new Date(),
             }));
-            console.log("result", result);
 
             const validationErrors = checkExistingField(result);
 
@@ -212,37 +195,32 @@ export default function Page() {
     const handlePloSelection = (ploId: number) => {
         setSelectedPlos(prev => {
             const newSelected = prev.includes(ploId)
-                ? prev.filter(id => id !== ploId) // ถอดออกถ้ามีอยู่
-                : [...prev, ploId]; // เพิ่มเข้าไปถ้าไม่มี
+                ? prev.filter(id => id !== ploId)
+                : [...prev, ploId];
             return newSelected;
         });
     };
 
-    // Render method for PLO selection
     const renderPloSelection = () => {
-        // Group PLOs by their main PLO category
         const groupedPlos = ploData?.data?.filter(plo => plo.curriculum?.id === paramsCurId).reduce((acc, plo) => {
             const mainPloMatch = plo?.ploName?.match(/^(PLOs?\d+)/)?.[1];
             const subPloMatch = plo?.ploName?.match(/^(Sub PLO (\d+\.\d+))/);
 
-            // Handle main PLOs first
             if (mainPloMatch) {
                 if (!acc[mainPloMatch]) acc[mainPloMatch] = [];
 
-                // Only add main PLO if no sub PLOs exist yet
                 const subPlosExist = acc[mainPloMatch].some(p => p.ploName.startsWith('Sub PLO'));
                 if (!subPlosExist) {
                     acc[mainPloMatch].push(plo);
                 }
             }
 
-            // Handle Sub PLOs
             if (subPloMatch) {
                 const subPloNumber = subPloMatch[2].split('.')[0];
                 const correspondingMainPlo = `PLOs${subPloNumber}`;
 
                 if (acc[correspondingMainPlo]) {
-                    // Remove main PLO if Sub PLO is added
+
                     acc[correspondingMainPlo] = acc[correspondingMainPlo].filter(
                         p => !p.ploName.startsWith(`PLOs${subPloNumber}`)
                     );

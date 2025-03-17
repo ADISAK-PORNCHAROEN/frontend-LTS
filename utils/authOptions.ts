@@ -33,7 +33,7 @@ export const authOptions: NextAuthOptions = {
                         name: user.fname + ' ' + user.lname,
                         email: user.email,
                         role: user.role,
-                        image: user.image
+                        curriculumId: user.curriculumId
                     }
                 } else {
                     throw new Error('Invalid email or password')
@@ -133,7 +133,7 @@ export const authOptions: NextAuthOptions = {
                 token.fname = user.fname
                 token.lname = user.lname
                 token.role = user.role
-                token.image = user.image
+                token.curriculumId = user.curriculumId
             }
             return token
         },
@@ -143,7 +143,7 @@ export const authOptions: NextAuthOptions = {
                 session.user.fname = token.fname
                 session.user.lname = token.lname
                 session.user.role = token.role
-                session.user.image = token.image
+                session.user.curriculumId = token.curriculumId
             }
             return session
         }

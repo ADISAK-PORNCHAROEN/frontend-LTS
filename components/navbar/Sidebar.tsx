@@ -134,9 +134,11 @@ const menuItemsIsProfessor = [
 export default function SidebarLayout({ children }: Props) {
     const [open, setOpen] = useState(false);
     const [subjectOpen, setSubjectOpen] = useState(false);
+    const [trackingOpen, setTrackingOpen] = useState(false);
     const [plosOpen, setPlosOpen] = useState(false);
     const [closOpen, setClosOpen] = useState(false);
     const { data: session } = useSession();
+    const user = session?.user
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const router = useRouter();
     const pathname = usePathname();
@@ -163,6 +165,7 @@ export default function SidebarLayout({ children }: Props) {
     const [expandedCurriculums, setExpandedCurriculums] = useState<{ [key: string]: boolean }>({});
     // เพิ่ม state นี้ในส่วนของ hooks ของ component
     const [expandedSubjectEvals, setExpandedSubjectEvals] = useState<Record<string, boolean>>({});
+    const [expandedTrackingEvals, setExpandedTrackingEvals] = useState<Record<string, boolean>>({});
 
     const status = {
         isActive: "Active",
@@ -217,6 +220,7 @@ export default function SidebarLayout({ children }: Props) {
     const handleDrawerOpen = () => setOpen(true);
     const handleDrawerClose = () => setOpen(false);
     const handleSubjectClick = () => setSubjectOpen(!subjectOpen);
+    const handleTrackingClick = () => setTrackingOpen(!trackingOpen);
     const handlePlosClick = () => setPlosOpen(!plosOpen);
     const handleClosClick = () => setClosOpen(!closOpen);
 
@@ -247,6 +251,12 @@ export default function SidebarLayout({ children }: Props) {
                 }
                 if (path === 'evaluation') {
                     targetPath = `${currentPath}/teaching/evaluation?sub=${subId}&cur=${curriculumId}`;
+                }
+                if (path === 'tracking') {
+                    targetPath = `${currentPath}/${path}?sub=${subId}&cur=${curriculumId}`;
+                }
+                if (path === 'eval') {
+                    targetPath = `${currentPath}/tracking/eval?sub=${subId}&cur=${curriculumId}`;
                 }
             } else if ("degreeShortEn" in data && data.degreeShortEn) {
                 const encodedId = encode((data?.id ?? '').toString());
@@ -622,6 +632,146 @@ export default function SidebarLayout({ children }: Props) {
                                 </ListItem>
                             ))
                         )}
+
+                        {(session?.user?.role === Role.isCoordinator) && (
+                            <ListItem disablePadding>
+                                <ListItemButton
+                                    onClick={handleTrackingClick}
+                                    sx={{
+                                        minHeight: 48,
+                                        justifyContent: open ? 'initial' : 'center',
+                                        px: 2.5,
+                                        ...(pathname.includes(`/tracking`) && {
+                                            backgroundColor: 'rgba(0, 0, 0, 0.08)',
+                                        })
+                                    }}
+                                >
+                                    <ListItemIcon
+                                        sx={{
+                                            minWidth: 0,
+                                            mr: open ? 3 : 'auto',
+                                            justifyContent: 'center',
+                                        }}
+                                    >
+                                        <ClassIcon />
+                                    </ListItemIcon>
+                                    <ListItemText
+                                        primary="ติดตามดูผลลัพธ์รายวิชา"
+                                        sx={{ opacity: open ? 1 : 0 }}
+                                    />
+                                    {open && subjectList.length > 0 && (trackingOpen ? <ExpandLess /> : <ExpandMore />)}
+                                </ListItemButton>
+                            </ListItem>
+                        )}
+
+                        <Collapse in={open && trackingOpen} timeout="auto" unmountOnExit>
+                            <List component="div" disablePadding>
+                                {subjectList.filter((subject: ISubjects) => subject.curriculum?.id === user?.curriculumId).map((subject: ISubjects) => {
+                                    // Add a new state to track each subject's evaluation collapse state
+                                    const isTrackingEvalExpanded = expandedTrackingEvals[subject.id!];
+                                    const isActive = pathname.includes("/tracking") && paramsSUBId === subject.id;
+                                    const isActiveEval = pathname.includes("/eval") && paramsSUBId === subject.id;
+
+                                    return (
+                                        <React.Fragment key={subject.id}>
+                                            <ListItemButton
+                                                sx={{
+                                                    pl: 4,
+                                                    minHeight: 40,
+                                                    backgroundColor: isActive ? "rgba(0, 0, 0, 0.08)" : "transparent",
+                                                    '&:hover': {
+                                                        backgroundColor: 'rgba(0, 0, 0, 0.08)',
+                                                    },
+                                                }}
+                                                onClick={() => handleNavigate('tracking', subject)}
+                                            >
+                                                <ListItemIcon sx={{ minWidth: 40 }}>
+                                                    <MenuBookIcon fontSize="small" />
+                                                </ListItemIcon>
+                                                <ListItemText
+                                                    primary={subject.subNameTh}
+                                                    secondary={subject.subNameEn}
+                                                    primaryTypographyProps={{
+                                                        fontSize: '0.9rem',
+                                                        sx: {
+                                                            whiteSpace: 'nowrap',
+                                                            overflow: 'hidden',
+                                                            textOverflow: 'ellipsis',
+                                                            maxWidth: '150px',
+                                                        },
+                                                    }}
+                                                    secondaryTypographyProps={{
+                                                        fontSize: '0.8rem',
+                                                        sx: {
+                                                            whiteSpace: 'nowrap',
+                                                            overflow: 'hidden',
+                                                            textOverflow: 'ellipsis',
+                                                            maxWidth: '150px',
+                                                        },
+                                                    }}
+                                                />
+                                                {/* Add expand toggle button that stops propagation to prevent navigation */}
+                                                <IconButton
+                                                    size="small"
+                                                    onClick={(event) => {
+                                                        event.stopPropagation();
+                                                        setExpandedTrackingEvals(prev => ({
+                                                            ...prev,
+                                                            [subject.id!]: !prev[subject.id!]
+                                                        }));
+                                                    }}
+                                                >
+                                                    {isTrackingEvalExpanded ? <ExpandLess fontSize="small" /> : <ExpandMore fontSize="small" />}
+                                                </IconButton>
+                                            </ListItemButton>
+
+                                            {/* Nested Collapse for evaluations under this subject */}
+                                            <Collapse in={isTrackingEvalExpanded} timeout="auto" unmountOnExit>
+                                                <List component="div" disablePadding>
+                                                    <ListItemButton
+                                                        sx={{
+                                                            pl: 6,
+                                                            minHeight: 10,
+                                                            backgroundColor: isActiveEval ? "rgba(0, 0, 0, 0.08)" : "transparent",
+                                                            '&:hover': {
+                                                                backgroundColor: 'rgba(0, 0, 0, 0.08)',
+                                                            },
+                                                        }}
+                                                        onClick={() => handleNavigate('eval', subject)}
+                                                    >
+                                                        <ListItemIcon sx={{ minWidth: 40 }}>
+                                                            <AssessmentIcon fontSize="small" />
+                                                        </ListItemIcon>
+                                                        <ListItemText
+                                                            primary="ประเมินรายวิชา"
+                                                            secondary="Course Evaluation"
+                                                            primaryTypographyProps={{
+                                                                fontSize: '0.9rem',
+                                                                sx: {
+                                                                    whiteSpace: 'nowrap',
+                                                                    overflow: 'hidden',
+                                                                    textOverflow: 'ellipsis',
+                                                                    maxWidth: '150px',
+                                                                },
+                                                            }}
+                                                            secondaryTypographyProps={{
+                                                                fontSize: '0.8rem',
+                                                                sx: {
+                                                                    whiteSpace: 'nowrap',
+                                                                    overflow: 'hidden',
+                                                                    textOverflow: 'ellipsis',
+                                                                    maxWidth: '150px',
+                                                                },
+                                                            }}
+                                                        />
+                                                    </ListItemButton>
+                                                </List>
+                                            </Collapse>
+                                        </React.Fragment>
+                                    );
+                                })}
+                            </List>
+                        </Collapse>
 
                         <ListItem disablePadding>
                             <ListItemButton

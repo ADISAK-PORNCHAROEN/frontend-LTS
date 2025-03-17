@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from 'react'
 import { GridColDef } from '@mui/x-data-grid';
-import { Menu, MenuItem, Checkbox, TextField } from '@mui/material';
+import { Backdrop, CircularProgress, Menu, MenuItem, TextField } from '@mui/material';
 import Table, { createColumn } from '#/components/table/Table';
 import TableWithSearch from '#/components/table/TableWithSearch';
 import ActionBtn from '#/components/button/ActionBtn';
@@ -9,23 +9,14 @@ import PageContentLayout from '#/components/layout/PageContentLayout';
 import Alert from '#/components/modal/Alert';
 import useGetAllSubjects from '#/hooks/useGetAllSubjects';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { IExcel, ISubjects, IUserClo, IUserCloList, IUserExcel, IUserPlo } from '#/types/LTS/ILts';
+import { IExcel, ISubjects, IUserCloList, IUserExcel } from '#/types/LTS/ILts';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
 import { useUrlSafeBase64 } from '#/hooks/useUrlSafeBase64';
-import useGetAllUserClo from '#/hooks/useGetAllUserClo';
-import useUpdatePloChecked from '#/hooks/useUpdatePloChecked';
-import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import FileUploadIcon from '@mui/icons-material/FileUpload';
-import useDeleteUserClo from '#/hooks/useDeleteUserClo';
-import useGetExcel from '#/hooks/useGetExcel';
 import { useSession } from 'next-auth/react';
-import useUpdateNewUserClo from '#/hooks/useUpdateNewUserClo';
-import useGetAllCloList from '#/hooks/useGetAllCloList';
-import useCreateUserCloWithPloUpdate from '#/hooks/useCreateUserCloWithPloUpdate';
 import useGetAllUserCloList from '#/hooks/useGetAllUserCloList';
 import useGetAllUserExcel from '#/hooks/useGetAllUserExcel';
-import useCreateExcel from '#/hooks/useUplodaExcel';
 import useDeleteUserExcel from '#/hooks/useDeleteUserExcel';
 import AlertConfirm from '#/components/modal/AlertConfirm';
 import useUplodaExcel from '#/hooks/useUplodaExcel';
@@ -34,6 +25,8 @@ import Table2 from '#/components/table/Table2';
 import useUpdateExcelScore from '#/hooks/useUpdateExcelScore';
 import { IResponse } from "#/types/IResponse/IResponse";
 import useUpdateExcelName from '#/hooks/useUpdateExcelName';
+import useGetAllUsers from '#/hooks/useGetAllUsers';
+import AccessDeniedPage from '#/components/AccessDeniedPage';
 
 export default function Page() {
     const [rows, setRows] = useState<IUserExcel[]>([]);
@@ -57,6 +50,9 @@ export default function Page() {
     const { mutateAsync: deleteUserExcel, isLoading: isLoadingDeleteUserExcel } = useDeleteUserExcel();
     const { data: colListClo, isLoading: isLoadingColListClo } = useGetAllUserCloList();
     const { data: excelData, isLoading: isLoadingExcelData } = useGetAllUserExcel();
+    const { data: userData, isLoading: isLoadingUserData } = useGetAllUsers();
+    const [hasAccess, setHasAccess] = useState<boolean | null>(null);
+    const [isCheckingAccess, setIsCheckingAccess] = useState(true);
     const isUserSelected = useRef(false);
     const session = useSession();
     const user = session.data?.user;
@@ -75,6 +71,44 @@ export default function Page() {
     const [isOpenAlertBox, setIsOpenAlertBox] = useState(false);
     const [isOpenAlertForm, setIsOpenAlertForm] = useState(false);
     const [isOpenConfirmModalAlert, setIsOpenConfirmModalAlert] = useState(false);
+
+    const Role = {
+        isAdmin: "admin",
+        isCoordinator: "program_coordinator",
+        isInstructor: "instructor"
+    }
+
+    useEffect(() => {
+        const checkAccess = async () => {
+            if (!userData?.data || !user || !paramsSubId || !paramsCurId) {
+                return;
+            }
+
+            let hasPermission = false;
+
+            if (user.role === Role.isAdmin) {
+                hasPermission = true;
+            } else {
+                const currentUser = userData.data.find((u: any) => u.id === user.id);
+
+                if (currentUser) {
+                    const hasSubject = currentUser.subjects?.some((subject: any) => {
+                        return subject.subjects?.some((sub: any) =>
+                            sub.id === paramsSubId &&
+                            sub.curriculum?.id === paramsCurId
+                        );
+                    });
+
+                    hasPermission = !!hasSubject;
+                }
+            }
+
+            setHasAccess(hasPermission);
+            setIsCheckingAccess(false);
+        };
+
+        checkAccess();
+    }, [userData, user, paramsSubId, paramsCurId, Role.isAdmin, Role.isCoordinator]);
 
     // เปลี่ยนนิยาม state
     const [semesterOptions, setSemesterOptions] = useState<{ value: string, name: string, hasData?: boolean }[]>([
@@ -220,6 +254,7 @@ export default function Page() {
                 const payload: IExcel = {
                     year: yearValue,
                     semester: Number(semesterValue),
+                    curriculumId: paramsCurId,
                     subId: paramsSubId,
                     createdBy: user?.name,
                     createdDate: new Date(),
@@ -349,15 +384,17 @@ export default function Page() {
             headerAlign: "center",
             align: "left",
             renderCell(params) {
-                const fullName = params.formattedValue
+                const fullName = params.row.fullName
                 return (
                     <TextField
                         fullWidth
                         size="small"
                         defaultValue={fullName}
                         onChange={(e) => handleNameChange(params.row.id, e.target.value)}
-                        inputProps={{
-                            min: "0"
+                        onKeyDown={(e) => {
+                            if (e.key === " ") {
+                                e.stopPropagation(); // ป้องกัน DataGrid บล็อก Spacebar
+                            }
                         }}
                     />
                 )
@@ -381,9 +418,7 @@ export default function Page() {
                         item.userCloId === currentCloId
                     );
 
-                    // ตรวจสอบว่าอยู่ใน Modal หรือไม่
                     if (isOpenAlertForm) {
-                        // ถ้าอยู่ใน Modal จะแสดงเป็น TextField สำหรับแก้ไข
                         return (
                             <TextField
                                 type="number"
@@ -403,7 +438,6 @@ export default function Page() {
                         );
                     }
 
-                    // ถ้าไม่ได้อยู่ใน Modal แสดงเป็นตัวเลขปกติ
                     return matchingItem ? matchingItem.score : 0;
                 }
             })
@@ -416,8 +450,25 @@ export default function Page() {
     const filteredRows = rows.filter((row) => {
         if (!searchText) return true;
 
-        const value = row[searchType as keyof typeof row];
-        return value?.toString().toLowerCase().includes(searchText.toLowerCase());
+        if (["fullName"].includes(searchType)) {
+            const value = row[searchType as keyof typeof row];
+            return value?.toString().toLowerCase().includes(searchText.toLowerCase());
+        }
+
+        if (searchType.startsWith("CLO")) {
+            const cloId = cols.find(col => col.cloName === searchType)?.id;
+
+            if (!cloId || !row.excel) return false;
+
+            const matchingItem = row.excel.find(item => item.userCloId === cloId);
+
+            if (matchingItem) {
+                return matchingItem?.score?.toString().includes(searchText);
+            }
+            return false;
+        }
+
+        return false;
     });
 
     const findSubName = subjectsData?.data?.find((item: ISubjects) => item.id === paramsSubId)?.subNameTh;
@@ -432,13 +483,11 @@ export default function Page() {
         setIsOpenAlertForm(false);
 
         try {
-            // Create arrays to store all update promises
             const scoreUpdatePromises: Promise<IResponse<IExcel>>[] = [];
             const nameUpdatePromises: Promise<IResponse<IUserExcel>>[] = [];
 
-            // Loop through each selected row for score updates
             rowsSelectedModal.forEach((row) => {
-                // Check if the row has excel data for score updates
+
                 if (row.excel && Array.isArray(row.excel)) {
                     row.excel.forEach((excelItem) => {
                         const updatedScore = excelItem.score;
@@ -451,7 +500,6 @@ export default function Page() {
                     });
                 }
 
-                // Check if name has been changed
                 if (nameChanges[row.id!]) {
                     nameUpdatePromises.push(
                         uploadExcelName({
@@ -464,25 +512,23 @@ export default function Page() {
                 }
             });
 
-            // Execute all update promises
             const scoreResults = await Promise.all(scoreUpdatePromises);
             const nameResults = await Promise.all(nameUpdatePromises);
 
-            // Check if all updates were successful
             const allScoreUpdatesSuccessful = scoreResults.every((result) => result.success === true);
             const allNameUpdatesSuccessful = nameResults.every((result) => result.success === true);
 
             if (allScoreUpdatesSuccessful && allNameUpdatesSuccessful) {
-                // Update the main rows data
+
                 const updatedRows = rows.map((row) => {
-                    // Find the matching selected row by ID
+
                     const updatedRow = rowsSelectedModal.find(selectedRow => selectedRow.id === row.id);
 
                     if (updatedRow) {
                         return {
                             ...row,
-                            fullName: updatedRow.fullName, // Update the name
-                            excel: updatedRow.excel ? updatedRow.excel : row.excel // Update excel data if it exists
+                            fullName: updatedRow.fullName,
+                            excel: updatedRow.excel ? updatedRow.excel : row.excel
                         };
                     }
                     return row;
@@ -490,7 +536,7 @@ export default function Page() {
 
                 setRows(updatedRows);
                 setRowsSelectedModal([]);
-                setNameChanges({}); // Reset name changes
+                setNameChanges({});
                 setKey(key + 1);
 
                 setTextAlertBox("อัพเดทข้อมูลสําเร็จ");
@@ -515,6 +561,21 @@ export default function Page() {
                 setIsOpenAlertBox(false);
             }, 1500);
         }
+    }
+
+    if (isCheckingAccess || isLoadingUserData) {
+        return <div>
+            <Backdrop
+                sx={(theme) => ({ color: '#fff', zIndex: theme.zIndex.drawer + 1 })}
+                open={true}
+            >
+                <CircularProgress color="inherit" />
+            </Backdrop>
+        </div>;
+    }
+
+    if (!hasAccess) {
+        return <AccessDeniedPage />;
     }
 
     return (

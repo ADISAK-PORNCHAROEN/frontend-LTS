@@ -1,7 +1,7 @@
 "use client";
-import { useEffect, useState, ChangeEvent, KeyboardEvent } from 'react'
+import { useEffect, useState } from 'react'
 import { FormControl, FormControlLabel, FormLabel, Grid, Radio, RadioGroup, TextField, Typography } from '@mui/material';
-import { Controller, set, SubmitHandler, useForm } from 'react-hook-form';
+import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 import CloseIcon from '@mui/icons-material/Close';
 import AddIcon from '@mui/icons-material/Add';
 import ActionBtn from '#/components/button/ActionBtn';
@@ -63,8 +63,6 @@ export default function Page() {
             originalData.degreeShortTh !== data.degreeShortTh ||
             originalData.degreeFullEn !== data.degreeFullEn ||
             originalData.degreeShortEn !== data.degreeShortEn;
-
-        // console.log("hasDataChanged", hasDataChanged);
 
         if (!hasDataChanged) {
             return errors;

@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from 'react'
-import { Autocomplete, Button, Card, Chip, CircularProgress, FormControl, Grid, Menu, MenuItem, Stack, TextField, Typography } from '@mui/material';
-import { Controller, set, SubmitHandler, useForm } from 'react-hook-form';
+import { Autocomplete, Card, Chip, FormControl, Grid, Stack, TextField, Typography } from '@mui/material';
+import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 import CloseIcon from '@mui/icons-material/Close';
 import AddIcon from '@mui/icons-material/Add';
 import ActionBtn from '#/components/button/ActionBtn';
@@ -18,6 +18,7 @@ import useUpdateUserSubject from '#/hooks/useUpdateUserSubject';
 import { useSession } from 'next-auth/react';
 import useGetAllUsers from '#/hooks/useGetAllUsers';
 import { useUrlSafeBase64 } from '#/hooks/useUrlSafeBase64';
+import useGetAllCurriculum from '#/hooks/useGetAllCurriculum';
 
 export default function Page() {
     const router = useRouter();
@@ -30,10 +31,11 @@ export default function Page() {
     const { mutateAsync: updateUser, isLoading: isLoadingUpdateUser } = useUpdateUser();
     const { data: subjectsData, isLoading: isLoadingSubjectsData } = useGetAllSubjects();
     const { data: userData, isLoading: isLoadinguserData } = useGetAllUsers();
-    // console.log("subjectsData", subjectsData);
+    const { data: curriculumData, isLoading: isLoadingCurriculumData } = useGetAllCurriculum();
     const session = useSession();
     const user = session.data?.user;
     const selectedSubjects = watch('subjects') || [];
+    const selectedCurriculum = watch('curriculumId');
     const { encode, decode } = useUrlSafeBase64();
     const searchParams = useSearchParams();
     const encodedId = searchParams.get("id");
@@ -71,7 +73,7 @@ export default function Page() {
 
     const roles = [
         { value: Role.isAdmin, label: "ผู้ดูแลระบบ" },
-        { value: Role.isCoordinator, label: "อาจารย์ผู้รับผิดชอบหลักสูตร" },
+        { value: Role.isCoordinator, label: "อาจารย์ผู้รับผิดชอบรายวิชา" },
         { value: Role.isInstructor, label: "อาจารย์ผู้สอน" }
     ];
 
@@ -81,6 +83,7 @@ export default function Page() {
 
             const result = {
                 ...data,
+                curriculumId: data.role === Role.isCoordinator ? data.curriculumId : null,
                 updatedDate: new Date(),
             }
 
@@ -260,6 +263,47 @@ export default function Page() {
                                 />
                             </Grid>
 
+                            {watch('role') === Role.isCoordinator && (
+                                <Grid item xs={12}>
+                                    <Controller
+                                        control={control}
+                                        name="curriculumId"
+                                        defaultValue={null}
+                                        rules={{
+                                            required: watch('role') === Role.isCoordinator ? "กรุณาเลือกหลักสูตรที่รับผิดชอบ" : false
+                                        }}
+                                        render={({ field: { onChange, value } }) => (
+                                            <Autocomplete
+                                                disablePortal
+                                                fullWidth
+                                                autoHighlight
+                                                size='small'
+                                                options={curriculumData?.data || []}
+                                                value={curriculumData?.data?.find(item => item.id === value) || null}
+                                                onChange={(_, newValue) => {
+                                                    onChange(newValue ? newValue.id : null);
+                                                }}
+                                                getOptionLabel={(option) =>
+                                                    option?.degreeFullTh || ""
+                                                }
+                                                isOptionEqualToValue={(option, value) =>
+                                                    option.id === value?.id
+                                                }
+                                                renderInput={(params) => (
+                                                    <TextField
+                                                        {...params}
+                                                        label="หลักสูตรที่รับผิดชอบ"
+                                                        error={!!errors.curriculumId}
+                                                        helperText={errors.curriculumId?.message?.toString()}
+                                                        required={watch('role') === Role.isCoordinator}
+                                                    />
+                                                )}
+                                            />
+                                        )}
+                                    />
+                                </Grid>
+                            )}
+
                             <Grid item xs={12}>
                                 <Controller
                                     control={control}
@@ -279,13 +323,13 @@ export default function Page() {
                                                     if (item.subjects?.[0]) {
                                                         return {
                                                             id: item.id,
-                                                            userId: 31,
+                                                            userId: user?.id,
                                                             subjects: item.subjects
                                                         };
                                                     }
                                                     return {
                                                         id: item.id,
-                                                        userId: 31,
+                                                        userId: user?.id,
                                                         subjects: [{
                                                             id: item.id,
                                                             subId: item.subId,

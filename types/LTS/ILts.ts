@@ -4,6 +4,7 @@ import { IClo, IPlo } from "./IPlo";
 export interface IExcel {
     subName?: string | null;
     userId?: number | null;
+    curriculumId?: number | null;
     subId?: number | null;
     semester?: number | null;
     year?: string | null;
