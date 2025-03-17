@@ -30,5 +30,13 @@ export const PathUrls = {
     editCurriculum: "admin/curriculum/[degreeFullEn]",
     editPlo: "admin/plos/[ploName]",
     editClo: "admin/clos/[cloName]",
+
+    coorTeaching: "/coordinator/teaching",
+    coorCreateTeaching: "/coordinator/teaching/createTeaching",
+    coorEditTeaching: "/coordinator/teaching/editTeaching",
+    
+    instructorTeaching: "/instructor/teaching",
+    instructorCreateTeaching: "/instructor/teaching/createTeaching",
+    instructorEditTeaching: "/instructor/teaching/editTeaching",
   },
 };

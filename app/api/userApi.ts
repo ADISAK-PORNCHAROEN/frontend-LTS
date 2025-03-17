@@ -490,26 +490,6 @@ export const getAllUserCloListApi = async (): Promise<IResponse<IUserCloList[]>>
   }
 };
 
-export const createUserCloApi = async (payload: IUserClo) => {
-  try {
-
-    const response = await axiosApi.post<IResponse<IUserClo>>('/user-clo/createUserClo', payload);
-
-    if (response?.data === undefined) {
-      throw new Error("Undefined response data");
-    }
-
-    return response.data;
-  } catch (error) {
-    if (isAxiosError(error)) {
-      console.error('Error details:', error.response?.data);
-    } else {
-      console.error('Unexpected error:', error);
-    }
-    throw error;
-  }
-};
-
 export const createUserCloWithCloApi = async (payload: IUserClo) => {
   try {
     const { userId, ...newPayload } = payload; // create a new variable newPayload without userId
@@ -574,26 +554,6 @@ export const updateNewUserCloApi = async (payload: IUserClo) => {
   // console.log("payload", payload);
   try {
     const response = await axiosApi.put<IResponse<IUserClo>>(`user-clo/updateNewUserClo`, payload);
-
-    if (response?.data === undefined) {
-      throw new Error("Undefined response data");
-    }
-
-    return response.data;
-  } catch (error) {
-    if (isAxiosError(error)) {
-      console.error('Error details:', error.response?.data);
-    } else {
-      console.error('Unexpected error:', error);
-    }
-    throw error;
-  }
-};
-
-export const updateUserPloApi = async (payload: IUserPlo) => {
-  // console.log("payload", payload);
-  try {
-    const response = await axiosApi.put<IResponse<IUserPlo>>(`user-plo/${payload.userId}/updateUserPlo?curriculumId=${payload.curriculumId}&cloId=${payload.cloId}`, payload.plo);
 
     if (response?.data === undefined) {
       throw new Error("Undefined response data");
@@ -886,6 +846,7 @@ export const uploadExcelApi = async (payload: IExcel, file: File) => {
         params: {  // ส่ง params แยกต่างหาก
           year: payload.year,
           semester: payload.semester,
+          curriculumId: payload.curriculumId,
           subId: payload.subId,
           createdBy: payload.createdBy,
           createdDate: payload.createdDate

@@ -10,12 +10,19 @@ import PeopleIcon from '@mui/icons-material/People';
 import PendingIcon from '@mui/icons-material/Pending';
 import useGetAllSubjects from '#/hooks/useGetAllSubjects';
 import CardBoxDashboard from '#/components/CardBoxDashboard';
+import useGetAllCurriculum from '#/hooks/useGetAllCurriculum';
+import useGetAllUsers from '#/hooks/useGetAllUsers';
+import useGetAllPlo from '#/hooks/useGetAllPlo';
 
 export default function Home() {
     const [rows, setRows] = useState<IUser[]>([]);
     const [countSubjectActive, setCountSubjectActive] = useState<number>(0);
-    const [countSubjectInactive, setCountSubjectInactive] = useState<number>(0);
+    const [countUserSubjects, setCountUserSubjects] = useState<number>(0);
+    const [countCurriculum, setCountCurriculum] = useState<number>(0);
+    const { data: ploData, isLoading: isLoadingPloData } = useGetAllPlo();
+    const { data: userData, isLoading: isLoadinguserData } = useGetAllUsers();
     const { data: subjectsData, isLoading: isLoadingSubjectsData } = useGetAllSubjects();
+    const { data: curriculumData, isLoading: isLoadingCurriculumData } = useGetAllCurriculum();
 
     // modal
     const [textAlertBox, setTextAlertBox] = useState("");
@@ -37,20 +44,37 @@ export default function Home() {
             }));
 
             setCountSubjectActive(transformedData.filter(item => item.subStatus).length || 0);
-            setCountSubjectInactive(transformedData.filter(item => item.subStatusIn).length);
         }
-    }, [status.isActive, status.isInactive, subjectsData?.data])
+
+        if (curriculumData?.data) {
+            const transformedData = curriculumData?.data.length || 0;
+            setCountCurriculum(transformedData);
+        }
+
+        if (userData && Array.isArray(userData?.data)) {
+            const transformedData = userData?.data.map((data) => ({
+                ...data,
+            }));
+            setCountUserSubjects(transformedData.filter(item => item.subjects === null).length || 0);
+        }
+
+        if (ploData?.data) {
+            const transformedData = ploData?.data.map((item) => ({
+                id: item.id,
+                ...item
+            }))
+            setRows(transformedData);
+        }
+        
+    }, [status.isActive, status.isInactive, subjectsData?.data, userData?.data, curriculumData?.data]);
+
+    console.log("rows", rows);
 
     return (
         <>
             <PageContentLayout
                 title="Dashboard"
                 icon={<DashboardIcon />}
-                actions={
-                    <>
-
-                    </>
-                }
             >
 
                 <Grid container spacing={2}>
@@ -74,18 +98,18 @@ export default function Home() {
                     </Grid>
                     <Grid item xs={12} md={6} lg={3}>
                         <CardBoxDashboard
-                            title='นักศึกษาทั้งหมด'
-                            value="245"
-                            subtitle="จำนวนนักศึกษาที่ลงทะเบียน"
+                            title='หลักสูตรที่มีอยู่ในระบบ'
+                            value={countCurriculum || "0"}
+                            subtitle="หลักสูตรทั้งหมดในระบบ"
                             colorVariant='warning'
                             icon={<PeopleIcon />}
                         />
                     </Grid>
                     <Grid item xs={12} md={6} lg={3}>
                         <CardBoxDashboard
-                            title='รายวิชารอดำเนินการ'
-                            value="3"
-                            subtitle="รายวิชาที่ต้องได้รับการอนุมัติ"
+                            title='อาจารย์ที่ไม่มีวิชาที่รับผิดชอบ'
+                            value={countUserSubjects || "0"}
+                            subtitle="อาจารย์ที่ไม่มีวิชาที่รับผิดชอบ"
                             colorVariant='error'
                             icon={<PendingIcon />}
                         />

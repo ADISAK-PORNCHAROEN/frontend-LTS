@@ -1,8 +1,7 @@
 "use client";
-import { useEffect, useState } from 'react'
-import { Box, Alert, Checkbox, Fade, FormControl, FormControlLabel, FormGroup, FormHelperText, Grid, InputLabel, Menu, MenuItem, Paper, Select, Stack, TextField, Typography } from '@mui/material';
-import { Controller, set, SubmitHandler, useForm } from 'react-hook-form';
-import CloseIcon from '@mui/icons-material/Close';
+import { useState } from 'react'
+import { Box, Alert, Checkbox, FormControl, FormControlLabel, FormGroup, FormHelperText, Grid, InputLabel, Menu, MenuItem, Paper, Select, Stack, TextField, Typography } from '@mui/material';
+import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 import AddIcon from '@mui/icons-material/Add';
 import ActionBtn from '#/components/button/ActionBtn';
 import PageContentLayout from '#/components/layout/PageContentLayout';
@@ -10,8 +9,7 @@ import Alert1 from '#/components/modal/Alert';
 import AccountBoxIcon from '@mui/icons-material/AccountBox';
 import CardBox from '#/components/CardBox';
 import { ISubjects, IUserClo, IUserPlo } from '#/types/LTS/ILts';
-import { useParams, usePathname, useRouter, useSearchParams } from 'next/navigation';
-import useUpdateSubjects from '#/hooks/useUpdateSubjects';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import useGetAllSubjects from '#/hooks/useGetAllSubjects';
 import { useSession } from 'next-auth/react';
 import { useUrlSafeBase64 } from '#/hooks/useUrlSafeBase64';
@@ -23,9 +21,6 @@ import SchoolIcon from '@mui/icons-material/School';
 import StarIcon from '@mui/icons-material/Star';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { motion, AnimatePresence } from 'framer-motion';
-import useUpdateUserPlo from '#/hooks/useUpdateUserPlo';
-import useCreateClo from '#/hooks/useCreateClo';
-import useCreateUserClo from '#/hooks/useCreateUserClo';
 import useCreateUserCloWithPlo from '#/hooks/useCreateUserCloWithPlo';
 import useGetAllUserClo from '#/hooks/useGetAllUserClo';
 
@@ -36,8 +31,6 @@ export default function Page() {
     const session = useSession();
     const user = session.data?.user;
     const { control, handleSubmit, formState: { errors }, setValue } = useForm<IUserClo>();
-    const { mutateAsync: updateUserPlo, isLoading: isLoadingUpdateUserPlo } = useUpdateUserPlo();
-    const { mutateAsync: createUserClo, isLoading: isLoadingCreateUserClo } = useCreateUserClo();
     const { mutateAsync: createUserCloWithPlo, isLoading: isLoadingCreateUserCloWithPlo } = useCreateUserCloWithPlo();
     const { data: subjectsData, isLoading: isLoadingSubjectsData } = useGetAllSubjects();
     const { data: ploData, isLoading: isLoadingPloData } = useGetAllPlo();
@@ -82,7 +75,6 @@ export default function Page() {
                 createdDate: new Date(),
                 createdBy: user?.name
             };
-            // console.log("result", result);
 
             const validationErrors = checkExistingField(result);
 
@@ -133,31 +125,25 @@ export default function Page() {
         );
     };
 
-    // Render method for PLO selection
     const renderPloSelection = () => {
-        // Group PLOs by their main PLO category
         const groupedPlos = ploData?.data?.filter(plo => plo.curriculum?.id === paramsCurId).reduce((acc, plo) => {
             const mainPloMatch = plo?.ploName?.match(/^(PLOs?\d+)/)?.[1];
             const subPloMatch = plo?.ploName?.match(/^(Sub PLO (\d+\.\d+))/);
 
-            // Handle main PLOs first
             if (mainPloMatch) {
                 if (!acc[mainPloMatch]) acc[mainPloMatch] = [];
 
-                // Only add main PLO if no sub PLOs exist yet
                 const subPlosExist = acc[mainPloMatch].some(p => p.ploName.startsWith('Sub PLO'));
                 if (!subPlosExist) {
                     acc[mainPloMatch].push(plo);
                 }
             }
 
-            // Handle Sub PLOs
             if (subPloMatch) {
                 const subPloNumber = subPloMatch[2].split('.')[0];
                 const correspondingMainPlo = `PLOs${subPloNumber}`;
 
                 if (acc[correspondingMainPlo]) {
-                    // Remove main PLO if Sub PLO is added
                     acc[correspondingMainPlo] = acc[correspondingMainPlo].filter(
                         p => !p.ploName.startsWith(`PLOs${subPloNumber}`)
                     );

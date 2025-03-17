@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { IResponse } from "#/types/IResponse/IResponse";
-import { getAllCurriculum, deleteCurriculum } from "./queries/QuriesKey";
+import { getAllCurriculum, deleteCurriculum, getAllUsers } from "./queries/QuriesKey";
 import { deleteCurriculumApi } from "#/app/api/userApi";
 import { ICurriculum } from "#/types/LTS/ILts";
 
@@ -11,6 +11,7 @@ export default function useDeleteCurruculum() {
 
             onSuccess: () => {
                 queryClient.invalidateQueries([getAllCurriculum]);
+                queryClient.invalidateQueries([getAllUsers]);
             }
         }
     )

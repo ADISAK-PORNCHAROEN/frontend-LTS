@@ -11,13 +11,13 @@ import Alert from '#/components/modal/Alert';
 import { useRouter, useSearchParams } from 'next/navigation';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
-import useDeletePlo from '#/hooks/useDeletePlo';
 import { useUrlSafeBase64 } from '#/hooks/useUrlSafeBase64';
 import { IClo } from '#/types/LTS/IPlo';
 import useGetAllClo from '#/hooks/useGetAllClo';
 import useGetAllSubjects from '#/hooks/useGetAllSubjects';
 import { ISubjects } from '#/types/LTS/ILts';
 import useDeleteClo from '#/hooks/useDeleteClo';
+import AlertConfirm from '#/components/modal/AlertConfirm';
 
 export default function Home() {
     const [rows, setRows] = useState<IClo[]>([]);
@@ -41,6 +41,7 @@ export default function Home() {
     const [textAlertBox, setTextAlertBox] = useState("");
     const [typeAlertBox, setTypeAlertBox] = useState<"success" | "warning" | "error">("success");
     const [isOpenAlertBox, setIsOpenAlertBox] = useState(false);
+    const [isOpenConfirmModalAlert, setIsOpenConfirmModalAlert] = useState(false);
 
     useEffect(() => {
         if (cloData?.data) {
@@ -51,7 +52,13 @@ export default function Home() {
         }
     }, [paramsSubId, cloData, paramsCurId])
 
+    const handleConfirmDelete = () => {
+        setAnchorEl(null);
+        setIsOpenConfirmModalAlert(true);
+    }
+
     const handleDelete = async (rowsSelected: IClo[]) => {
+        setIsOpenConfirmModalAlert(false);
         try {
             const ids = rowsSelected.map((row: IClo) => row.id).join(',');
             const res = await deleteClo({ ids });
@@ -61,14 +68,14 @@ export default function Home() {
                 setRowsSelected([]);
                 setKey(key + 1);
 
-                setTextAlertBox("Delete success");
+                setTextAlertBox("ลบข้อมูลสําเร็จ");
                 setTypeAlertBox("success");
                 setIsOpenAlertBox(true);
                 setTimeout(() => {
                     setIsOpenAlertBox(false);
                 }, 1500);
             } else {
-                setTextAlertBox("Fail to delete");
+                setTextAlertBox("ได้เกิดข้อผิดพลาดในการลบข้อมูล");
                 setTypeAlertBox("error");
                 setIsOpenAlertBox(true);
                 setTimeout(() => {
@@ -87,7 +94,6 @@ export default function Home() {
     };
 
     const handleNavigationEdit = (data: IClo) => {
-        // console.log("data", data);
         const pathname = encodeURIComponent(data?.cloName ?? '');
         const encodeCloId = encode((data.id ?? '').toString());
         const encodeSubId = encode((data.subjects?.id ?? '').toString());
@@ -108,14 +114,12 @@ export default function Home() {
     ]
 
     const filteredRows = rows.filter((row) => {
-        // Filter by main search field
         let mainSearchMatch = true;
         if (searchText) {
             const value = row[searchType as keyof typeof row];
             mainSearchMatch = value?.toString().toLowerCase().includes(searchText.toLowerCase()) ?? false;
         }
 
-        // Both filters must match
         return mainSearchMatch;
     });
 
@@ -154,7 +158,7 @@ export default function Home() {
                                 "& .MuiMenu-list": { paddingY: '0px', backgroundColor: "#FFF" },
                             }}
                         >
-                            <MenuItem sx={{ width: '100px', backgroundColor: "#FFF" }} onClick={() => handleDelete(rowsSelected)}>ลบข้อมูล</MenuItem>
+                            <MenuItem sx={{ width: '100px', backgroundColor: "#FFF" }} onClick={handleConfirmDelete}>ลบข้อมูล</MenuItem>
                         </Menu>
                         <ActionBtn
                             title="สร้าง CLOs"
@@ -188,6 +192,14 @@ export default function Home() {
                     type={typeAlertBox}
                     isOpen={isOpenAlertBox}
                     setIsOpen={setIsOpenAlertBox}
+                />
+
+                <AlertConfirm
+                    isOpen={isOpenConfirmModalAlert}
+                    setIsOpen={setIsOpenConfirmModalAlert}
+                    onConfirm={() => handleDelete(rowsSelected)}
+                    description="ข้อมูลที่เกี่ยวข้องจะถูกลบด้วย"
+                    title="คุณแน่ใจหรือไม่?"
                 />
             </PageContentLayout>
         </>

@@ -44,7 +44,7 @@ export default function Home() {
 
     const roles = [
         { value: Role.isAdmin, label: "ผู้ดูแลระบบ" },
-        { value: Role.isCoordinator, label: "อาจารย์ผู้รับผิดชอบหลักสูตร" },
+        { value: Role.isCoordinator, label: "อาจารย์ผู้รับผิดชอบรายวิชา" },
         { value: Role.isInstructor, label: "อาจารย์ผู้สอน" }
     ];
 
@@ -209,8 +209,8 @@ export default function Home() {
                     isOpen={isOpenConfirmModalAlert}
                     setIsOpen={setIsOpenConfirmModalAlert}
                     onConfirm={() => handleDelete(rowsSelected)}
-                    description="Delete this account."
-                    title="Are you sure?"
+                    description="ที่จะลบบัญชีผู้ใช้นี้"
+                    title="คุณแน่ใจหรือไม่?"
                 />
 
             </PageContentLayout>

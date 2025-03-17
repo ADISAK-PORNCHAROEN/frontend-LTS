@@ -125,7 +125,6 @@ export default function ApplicantTracking() {
     // },
     {
       url: Paths.lts.accounts, tracks: [
-        // { level: 1, name: "LTS", linkTo: Paths.lts.root },
         { level: 1, name: "บัญชีผู้ใช้", linkTo: Paths.lts.accounts },
       ]
     },
@@ -137,6 +136,16 @@ export default function ApplicantTracking() {
     {
       url: Paths.lts.teaching, tracks: [
         { level: 1, name: `${subjectTh}`, linkTo: Paths.lts.teaching },
+      ]
+    },
+    {
+      url: Paths.lts.coorTeaching, tracks: [
+        { level: 1, name: `${subjectTh}`, linkTo: Paths.lts.coorTeaching },
+      ]
+    },
+    {
+      url: Paths.lts.instructorTeaching, tracks: [
+        { level: 1, name: `${subjectTh}`, linkTo: Paths.lts.instructorTeaching },
       ]
     },
     {
@@ -185,6 +194,18 @@ export default function ApplicantTracking() {
       ]
     },
     {
+      url: Paths.lts.coorCreateTeaching, tracks: [
+        { level: 1, name: `${subjectTh}`, linkTo: `${Paths.lts.coorTeaching}?sub=${sub2Id}&cur=${curriculumId}` },
+        { level: 2, name: "สร้างรายงานการประเมิน", linkTo: Paths.lts.coorCreateTeaching },
+      ]
+    },
+    {
+      url: Paths.lts.instructorCreateTeaching, tracks: [
+        { level: 1, name: `${subjectTh}`, linkTo: `${Paths.lts.instructorTeaching}?sub=${sub2Id}&cur=${curriculumId}` },
+        { level: 2, name: "สร้างรายงานการประเมิน", linkTo: Paths.lts.instructorCreateTeaching },
+      ]
+    },
+    {
       url: Paths.lts.editSubjects, tracks: [
         { level: 1, name: "รายวิชา", linkTo: Paths.lts.subjects },
         { level: 2, name: "แก้ไขรายวิชา", linkTo: Paths.lts.editSubjects },
@@ -200,6 +221,18 @@ export default function ApplicantTracking() {
       url: Paths.lts.editTeaching, tracks: [
         { level: 1, name: `${subjectTh}`, linkTo: `${Paths.lts.teaching}?sub=${sub2Id}&cur=${curriculumId}` },
         { level: 2, name: "แก้ไขรายงานการประเมิน", linkTo: Paths.lts.editTeaching },
+      ]
+    },
+    {
+      url: Paths.lts.coorEditTeaching, tracks: [
+        { level: 1, name: `${subjectTh}`, linkTo: `${Paths.lts.coorTeaching}?sub=${sub2Id}&cur=${curriculumId}` },
+        { level: 2, name: "แก้ไขรายงานการประเมิน", linkTo: Paths.lts.coorEditTeaching },
+      ]
+    },
+    {
+      url: Paths.lts.instructorEditTeaching, tracks: [
+        { level: 1, name: `${subjectTh}`, linkTo: `${Paths.lts.instructorTeaching}?sub=${sub2Id}&cur=${curriculumId}` },
+        { level: 2, name: "แก้ไขรายงานการประเมิน", linkTo: Paths.lts.instructorEditTeaching },
       ]
     },
     {

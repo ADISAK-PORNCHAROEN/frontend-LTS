@@ -15,7 +15,7 @@ import useDeleteSubjects from '#/hooks/useDeleteSubjects';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
 import { useUrlSafeBase64 } from '#/hooks/useUrlSafeBase64';
-import { stat } from 'node:fs/promises';
+import AlertConfirm from '#/components/modal/AlertConfirm';
 
 export default function Home() {
     const [rows, setRows] = useState<ISubjects[]>([]);
@@ -26,10 +26,6 @@ export default function Home() {
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const { data: subjectsData, isLoading: isLoadingSubjectsData } = useGetAllSubjects();
     const { mutateAsync: deleteSubjects, isLoading: isLoadingDeleteSubjects } = useDeleteSubjects();
-    const [alertOpen, setAlertOpen] = useState(false);
-    const [addValueOpen, setAddValueOpen] = useState(false);
-    const [editValueOpen, setEditValueOpen] = useState(false);
-    const [detailPloOpen, setDetailPloOpen] = useState(false);
     const router = useRouter();
     const [key, setKey] = useState(0);
     const { encode, decode } = useUrlSafeBase64();
@@ -38,13 +34,20 @@ export default function Home() {
     const [textAlertBox, setTextAlertBox] = useState("");
     const [typeAlertBox, setTypeAlertBox] = useState<"success" | "warning" | "error">("success");
     const [isOpenAlertBox, setIsOpenAlertBox] = useState(false);
+    const [isOpenConfirmModalAlert, setIsOpenConfirmModalAlert] = useState(false);
 
     const status = {
         isActive: "Active",
         isInactive: "Inactive"
     }
 
+    const handleConfirmDelete = () => {
+        setAnchorEl(null);
+        setIsOpenConfirmModalAlert(true);
+    }
+
     const handleDelete = async (rowsSelected: ISubjects[]) => {
+        setIsOpenConfirmModalAlert(false);
         try {
             const ids = rowsSelected.map((row: ISubjects) => row.id).join(',');
             const res = await deleteSubjects({ ids });
@@ -54,14 +57,14 @@ export default function Home() {
                 setRowsSelected([]);
                 setKey(key + 1);
 
-                setTextAlertBox("Delete success");
+                setTextAlertBox("ลบข้อมูลสําเร็จ");
                 setTypeAlertBox("success");
                 setIsOpenAlertBox(true);
                 setTimeout(() => {
                     setIsOpenAlertBox(false);
                 }, 1500);
             } else {
-                setTextAlertBox("Fail to delete");
+                setTextAlertBox("ได้เกิดข้อผิดพลาดในการลบข้อมูล");
                 setTypeAlertBox("error");
                 setIsOpenAlertBox(true);
                 setTimeout(() => {
@@ -123,7 +126,6 @@ export default function Home() {
         }),
     ]
 
-    // Add new curriculum state
     const [curriculumValue, setCurriculumValue] = useState<string>('');
     const [curriculumOptions, setCurriculumOptions] = useState<{ value: string, name: string }[]>([]);
 
@@ -135,7 +137,6 @@ export default function Home() {
             }))
             setRows(transformedData)
 
-            // Extract unique curriculum options
             const curriculums = new Set<string>();
             const options: { value: string, name: string }[] = [];
 
@@ -153,7 +154,6 @@ export default function Home() {
                 }
             });
 
-            // Add an option for items with no curriculum
             options.unshift({
                 value: '',
                 name: 'ทั้งหมด'
@@ -164,28 +164,23 @@ export default function Home() {
     }, [subjectsData])
 
     const filteredRows = rows.filter((row) => {
-        // กรณีพิเศษสำหรับการค้นหา Active/Inactive
         if (searchType === "subStatus" && searchText) {
             const searchLower = searchText.toLowerCase();
 
-            // ถ้าค้นหาด้วย "active"
             if (searchLower.includes("active") && !searchLower.includes("inactive")) {
                 return row.subStatus === status.isActive;
             }
 
-            // ถ้าค้นหาด้วย "inactive"
             if (searchLower.includes("inactive")) {
                 return row.subStatus === status.isInactive;
             }
         }
 
-        // โลจิกการค้นหาปกติสำหรับกรณีอื่นๆ
         if (searchText) {
             const value = row[searchType as keyof typeof row];
             return value?.toString().toLowerCase().includes(searchText.toLowerCase()) ?? false;
         }
 
-        // กรองตามหลักสูตร
         let curriculumMatch = true;
         if (curriculumValue) {
             if (!row.curriculum) {
@@ -243,7 +238,7 @@ export default function Home() {
                                 "& .MuiMenu-list": { paddingY: '0px', backgroundColor: "#FFF" },
                             }}
                         >
-                            <MenuItem sx={{ width: '100px', backgroundColor: "#FFF" }} onClick={() => handleDelete(rowsSelected)}>ลบข้อมูล</MenuItem>
+                            <MenuItem sx={{ width: '100px', backgroundColor: "#FFF" }} onClick={handleConfirmDelete}>ลบข้อมูล</MenuItem>
                         </Menu>
                         <ActionBtn
                             title="สร้างรายวิชา"
@@ -281,6 +276,14 @@ export default function Home() {
                     type={typeAlertBox}
                     isOpen={isOpenAlertBox}
                     setIsOpen={setIsOpenAlertBox}
+                />
+
+                <AlertConfirm
+                    isOpen={isOpenConfirmModalAlert}
+                    setIsOpen={setIsOpenConfirmModalAlert}
+                    onConfirm={() => handleDelete(rowsSelected)}
+                    description="ข้อมูลที่เกี่ยวข้องจะถูกลบด้วย"
+                    title="คุณแน่ใจหรือไม่?"
                 />
             </PageContentLayout>
         </>

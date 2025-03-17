@@ -1,7 +1,7 @@
 "use client";
-import { SetStateAction, use, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import CloseIcon from '@mui/icons-material/Close';
-import { Button, FormControl, FormControlLabel, FormHelperText, FormLabel, Grid, InputLabel, Menu, MenuItem, Radio, RadioGroup, Select, Stack, TextField, Typography } from '@mui/material';
+import { FormControl, FormControlLabel, FormLabel, Grid, Radio, RadioGroup, TextField, Typography } from '@mui/material';
 import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 import AddIcon from '@mui/icons-material/Add';
 import ActionBtn from '#/components/button/ActionBtn';
@@ -90,7 +90,6 @@ export default function Home() {
                 createdDate: new Date(),
                 createdBy: user?.name,
             }
-            // console.log("result", result)
 
             const validationErrors = checkExistingField(result);
 

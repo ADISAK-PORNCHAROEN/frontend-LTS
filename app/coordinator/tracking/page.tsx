@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from 'react'
 import { GridColDef } from '@mui/x-data-grid';
-import { Menu, MenuItem, Checkbox, Backdrop, CircularProgress, Tooltip } from '@mui/material';
+import { Menu, MenuItem, Checkbox, Backdrop, CircularProgress } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import Table, { createColumn } from '#/components/table/Table';
 import ActionBtn from '#/components/button/ActionBtn';
@@ -81,38 +81,6 @@ export default function Page() {
         isCoordinator: "program_coordinator",
         isInstructor: "instructor"
     }
-
-    useEffect(() => {
-        const checkAccess = async () => {
-            if (!userData?.data || !user || !paramsSubId || !paramsCurId) {
-                return;
-            }
-
-            let hasPermission = false;
-
-            if (user.role === Role.isAdmin) {
-                hasPermission = true;
-            } else {
-                const currentUser = userData.data.find((u: any) => u.id === user.id);
-
-                if (currentUser) {
-                    const hasSubject = currentUser.subjects?.some((subject: any) => {
-                        return subject.subjects?.some((sub: any) =>
-                            sub.id === paramsSubId &&
-                            sub.curriculum?.id === paramsCurId
-                        );
-                    });
-
-                    hasPermission = !!hasSubject;
-                }
-            }
-
-            setHasAccess(hasPermission);
-            setIsCheckingAccess(false);
-        };
-
-        checkAccess();
-    }, [userData, user, paramsSubId, paramsCurId, Role.isAdmin, Role.isCoordinator]);
 
     let currentPath = "/instructor";
     if (pathname.startsWith("/admin")) {
@@ -386,11 +354,9 @@ export default function Page() {
             renderCell(params) {
                 const cloNames = params.row?.clo?.map((item: IClo) => item.cloName + " " + item.cloDesc).map((item: string) => item);
                 return (
-                    <Tooltip title={cloNames || "-"} arrow>
-                        <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                            {cloNames}
-                        </span>
-                    </Tooltip>
+                    <span>
+                        {cloNames}
+                    </span>
                 );
             },
         }),
@@ -434,7 +400,7 @@ export default function Page() {
     }));
 
     const mergeColumnEdit = [...column, ...columnPlosForModal];
-    const mergeColumnShow: GridColDef[] = [...column, ...columnPlosForMainTable];
+    const mergeColumnShow = [...column, ...columnPlosForMainTable];
 
     const ExSearch = columnPlosForMainTable.map((item) => item.field);
 
@@ -568,73 +534,58 @@ export default function Page() {
         setSearchType("cloName");
     }, [searchParams]);
 
-    if (isCheckingAccess || isLoadingUserData) {
-        return <div>
-            <Backdrop
-                sx={(theme) => ({ color: '#fff', zIndex: theme.zIndex.drawer + 1 })}
-                open={true}
-            >
-                <CircularProgress color="inherit" />
-            </Backdrop>
-        </div>;
-    }
-
-    if (!hasAccess) {
-        return <AccessDeniedPage />;
-    }
-
     return (
         <>
             <PageContentLayout
                 title={titleSubName}
                 icon={<MenuBookIcon />}
-                actions={
-                    <>
-                        <ActionBtn
-                            title="Action"
-                            icon={<ExpandMoreIcon />}
-                            onClick={(e) => setAnchorEl(e.currentTarget)}
-                            disabled={filteredRows.length === 0}
-                        />
-                        <Menu
-                            anchorEl={anchorEl}
-                            open={Boolean(anchorEl)}
-                            onClose={() => setAnchorEl(null)}
-                            className='this-menu'
-                            disableAutoFocus
-                            sx={{
-                                "& .MuiMenu-list": { paddingY: '0px', backgroundColor: "#FFF" },
-                            }}
-                        >
-                            <MenuItem sx={{ width: '150px', backgroundColor: "#FFF" }} onClick={() => handleConfirmDelete(filteredRows)}>ลบข้อมูลทั้งหมด</MenuItem>
-                            <MenuItem sx={{ width: '150px', backgroundColor: "#FFF" }} onClick={handleNavigationEditPush}>แก้ไข PLO</MenuItem>
-                            <MenuItem sx={{ width: '150px', backgroundColor: "#FFF" }} onClick={() => handleUpdateNewClo(filteredRows)}>อัพเดต CLO</MenuItem>
-                        </Menu>
-                        <ActionBtn
-                            title="Export Excel"
-                            icon={<FileDownloadIcon />}
-                            color='#3FA26E'
-                            onClick={() => handleExportExcel(filteredRows)}
-                            disabled={filteredRows.length === 0}
-                        />
-                        <ActionBtn
-                            title="Checked"
-                            icon={<AddIcon />}
-                            onClick={() => setIsOpenAlertForm(true)}
-                            disabled={filteredRows.length === 0}
-                        />
-                        <ActionBtn
-                            title="สร้าง PLO"
-                            icon={<AddIcon />}
-                            onClick={handleNavigationCreate}
-                        />
-                    </>
-                }
+                // actions={
+                //     <>
+                //         <ActionBtn
+                //             title="Action"
+                //             icon={<ExpandMoreIcon />}
+                //             onClick={(e) => setAnchorEl(e.currentTarget)}
+                //             disabled={filteredRows.length === 0}
+                //         />
+                //         <Menu
+                //             anchorEl={anchorEl}
+                //             open={Boolean(anchorEl)}
+                //             onClose={() => setAnchorEl(null)}
+                //             className='this-menu'
+                //             disableAutoFocus
+                //             sx={{
+                //                 "& .MuiMenu-list": { paddingY: '0px', backgroundColor: "#FFF" },
+                //             }}
+                //         >
+                //             <MenuItem sx={{ width: '150px', backgroundColor: "#FFF" }} onClick={() => handleConfirmDelete(filteredRows)}>ลบข้อมูลทั้งหมด</MenuItem>
+                //             <MenuItem sx={{ width: '150px', backgroundColor: "#FFF" }} onClick={handleNavigationEditPush}>แก้ไข PLO</MenuItem>
+                //             <MenuItem sx={{ width: '150px', backgroundColor: "#FFF" }} onClick={() => handleUpdateNewClo(filteredRows)}>อัพเดต CLO</MenuItem>
+                //         </Menu>
+                //         <ActionBtn
+                //             title="Export Excel"
+                //             icon={<FileDownloadIcon />}
+                //             color='#3FA26E'
+                //             onClick={() => handleExportExcel(filteredRows)}
+                //             disabled={filteredRows.length === 0}
+                //         />
+                //         <ActionBtn
+                //             title="Checked"
+                //             icon={<AddIcon />}
+                //             onClick={() => setIsOpenAlertForm(true)}
+                //             disabled={filteredRows.length === 0}
+                //         />
+                //         <ActionBtn
+                //             title="สร้าง PLO"
+                //             icon={<AddIcon />}
+                //             onClick={handleNavigationCreate}
+                //         />
+                //     </>
+                // }
             >
                 <TableWithSearchNoCheck
                     idKey='id'
                     key={key}
-                    columns={mergeColumnShow}
+                    columns={mergeColumnShow as GridColDef[]}
                     rows={filteredRows}
                     onViewRow={(rowSelected) => handleNavigationEditPush()}
                     searchType={searchType as string}

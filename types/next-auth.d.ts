@@ -12,7 +12,7 @@ declare module "next-auth" {
       fname: string
       lname: string
       role: string
-      image: string
+      curriculumId: number
     } & DefaultSession["user"]
   }
 }

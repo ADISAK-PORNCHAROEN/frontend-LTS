@@ -61,8 +61,6 @@ export default function Page() {
             originalData.ploName !== data.ploName ||
             originalData.ploDesc !== data.ploDesc;
 
-        // console.log("hasDataChanged", hasDataChanged);
-
         if (!hasDataChanged) {
             return errors;
         }

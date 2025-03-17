@@ -22,7 +22,6 @@ import useGetAllSubjects from '#/hooks/useGetAllSubjects';
 export default function Page() {
     const router = useRouter();
     const [cloNames, setCloNames] = useState<string | null>(null);
-    // const [subjectNameTh, setSubjectNameTh] = useState<string>("");
     const { cloName } = useParams();
     const pathname = decodeURIComponent(cloName as string);
     const session = useSession();
@@ -48,7 +47,6 @@ export default function Page() {
 
     useEffect(() => {
         const parsedData = cloData?.data?.find((item: IClo) => item.id === paramsId && item.subjects?.id === paramsSubId && item.curriculum?.id === paramsCurId);
-        // console.log("parsedData", parsedData);
         if (parsedData) {
             if (parsedData.cloName === pathname) {
                 setCloNames(parsedData.cloName);
@@ -66,8 +64,6 @@ export default function Page() {
         const hasDataChanged = !originalData ||
             originalData.cloName !== data.cloName ||
             originalData.cloDesc !== data.cloDesc;
-
-        // console.log("hasDataChanged", hasDataChanged);
 
         if (!hasDataChanged) {
             return errors;
@@ -104,7 +100,6 @@ export default function Page() {
                 updatedDate: new Date(),
                 updatedBy: user?.name
             };
-            // console.log("result", result);
 
             const validationErrors = checkExistingField(result, parsedOriginalData);
 

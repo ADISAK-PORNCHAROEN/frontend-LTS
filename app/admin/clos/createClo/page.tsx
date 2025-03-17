@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from 'react'
-import { Autocomplete, Button, FormControl, Grid, TextField, Typography } from '@mui/material';
+import { Autocomplete, FormControl, Grid, TextField, Typography } from '@mui/material';
 import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 import CloseIcon from '@mui/icons-material/Close';
 import AddIcon from '@mui/icons-material/Add';
@@ -14,8 +14,6 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import useGetAllCurriculum from '#/hooks/useGetAllCurriculum';
 import { IClo } from '#/types/LTS/IPlo';
-import useGetAllPlo from '#/hooks/useGetAllPlo';
-import useCreatePlo from '#/hooks/useCreatePlo';
 import { useUrlSafeBase64 } from '#/hooks/useUrlSafeBase64';
 import useCreateClo from '#/hooks/useCreateClo';
 import useGetAllSubjects from '#/hooks/useGetAllSubjects';
@@ -96,7 +94,6 @@ export default function Home() {
                 createdDate: new Date(),
                 createdBy: user?.name,
             }
-            // console.log("result", result)
 
             const validationErrors = checkExistingField(result);
 

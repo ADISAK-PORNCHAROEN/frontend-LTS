@@ -27,6 +27,7 @@ import { IResponse } from "#/types/IResponse/IResponse";
 import useUpdateExcelName from '#/hooks/useUpdateExcelName';
 import useGetAllUsers from '#/hooks/useGetAllUsers';
 import AccessDeniedPage from '#/components/AccessDeniedPage';
+import TableWithSearchNoCheck from '#/components/table/TableWithSearchNoCheck';
 
 export default function Page() {
     const [rows, setRows] = useState<IUserExcel[]>([]);
@@ -71,44 +72,6 @@ export default function Page() {
     const [isOpenAlertBox, setIsOpenAlertBox] = useState(false);
     const [isOpenAlertForm, setIsOpenAlertForm] = useState(false);
     const [isOpenConfirmModalAlert, setIsOpenConfirmModalAlert] = useState(false);
-
-    const Role = {
-        isAdmin: "admin",
-        isCoordinator: "program_coordinator",
-        isInstructor: "instructor"
-    }
-
-    useEffect(() => {
-        const checkAccess = async () => {
-            if (!userData?.data || !user || !paramsSubId || !paramsCurId) {
-                return;
-            }
-
-            let hasPermission = false;
-
-            if (user.role === Role.isAdmin) {
-                hasPermission = true;
-            } else {
-                const currentUser = userData.data.find((u: any) => u.id === user.id);
-
-                if (currentUser) {
-                    const hasSubject = currentUser.subjects?.some((subject: any) => {
-                        return subject.subjects?.some((sub: any) =>
-                            sub.id === paramsSubId &&
-                            sub.curriculum?.id === paramsCurId
-                        );
-                    });
-
-                    hasPermission = !!hasSubject;
-                }
-            }
-
-            setHasAccess(hasPermission);
-            setIsCheckingAccess(false);
-        };
-
-        checkAccess();
-    }, [userData, user, paramsSubId, paramsCurId, Role.isAdmin, Role.isCoordinator]);
 
     // เปลี่ยนนิยาม state
     const [semesterOptions, setSemesterOptions] = useState<{ value: string, name: string, hasData?: boolean }[]>([
@@ -418,7 +381,9 @@ export default function Page() {
                         item.userCloId === currentCloId
                     );
 
+                    // ตรวจสอบว่าอยู่ใน Modal หรือไม่
                     if (isOpenAlertForm) {
+                        // ถ้าอยู่ใน Modal จะแสดงเป็น TextField สำหรับแก้ไข
                         return (
                             <TextField
                                 type="number"
@@ -450,25 +415,8 @@ export default function Page() {
     const filteredRows = rows.filter((row) => {
         if (!searchText) return true;
 
-        if (["fullName"].includes(searchType)) {
-            const value = row[searchType as keyof typeof row];
-            return value?.toString().toLowerCase().includes(searchText.toLowerCase());
-        }
-
-        if (searchType.startsWith("CLO")) {
-            const cloId = cols.find(col => col.cloName === searchType)?.id;
-
-            if (!cloId || !row.excel) return false;
-
-            const matchingItem = row.excel.find(item => item.userCloId === cloId);
-
-            if (matchingItem) {
-                return matchingItem?.score?.toString().includes(searchText);
-            }
-            return false;
-        }
-
-        return false;
+        const value = row[searchType as keyof typeof row];
+        return value?.toString().toLowerCase().includes(searchText.toLowerCase());
     });
 
     const findSubName = subjectsData?.data?.find((item: ISubjects) => item.id === paramsSubId)?.subNameTh;
@@ -563,56 +511,41 @@ export default function Page() {
         }
     }
 
-    if (isCheckingAccess || isLoadingUserData) {
-        return <div>
-            <Backdrop
-                sx={(theme) => ({ color: '#fff', zIndex: theme.zIndex.drawer + 1 })}
-                open={true}
-            >
-                <CircularProgress color="inherit" />
-            </Backdrop>
-        </div>;
-    }
-
-    if (!hasAccess) {
-        return <AccessDeniedPage />;
-    }
-
     return (
         <>
             <PageContentLayout
                 title={`ประเมินรายวิชา ${titleSubName}`}
                 icon={<MenuBookIcon />}
-                actions={
-                    <>
-                        <ActionBtn
-                            title="Action"
-                            icon={<ExpandMoreIcon />}
-                            onClick={(e) => setAnchorEl(e.currentTarget)}
-                            disabled={filteredRows.length === 0}
-                        />
-                        <Menu
-                            anchorEl={anchorEl}
-                            open={Boolean(anchorEl)}
-                            onClose={() => setAnchorEl(null)}
-                            className='this-menu'
-                            disableAutoFocus
-                            sx={{
-                                "& .MuiMenu-list": { paddingY: '0px', backgroundColor: "#FFF" },
-                            }}
-                        >
-                            <MenuItem sx={{ width: '150px', backgroundColor: "#FFF" }} onClick={handleConfirmDelete}>ลบข้อมูล</MenuItem>
-                        </Menu>
-                        <ActionBtn
-                            title="Upload Excel"
-                            icon={<FileUploadIcon />}
-                            color='#3FA26E'
-                            onClick={() => handleUploadExcel()}
-                        />
-                    </>
-                }
+                // actions={
+                //     <>
+                //         <ActionBtn
+                //             title="Action"
+                //             icon={<ExpandMoreIcon />}
+                //             onClick={(e) => setAnchorEl(e.currentTarget)}
+                //             disabled={filteredRows.length === 0}
+                //         />
+                //         <Menu
+                //             anchorEl={anchorEl}
+                //             open={Boolean(anchorEl)}
+                //             onClose={() => setAnchorEl(null)}
+                //             className='this-menu'
+                //             disableAutoFocus
+                //             sx={{
+                //                 "& .MuiMenu-list": { paddingY: '0px', backgroundColor: "#FFF" },
+                //             }}
+                //         >
+                //             <MenuItem sx={{ width: '150px', backgroundColor: "#FFF" }} onClick={handleConfirmDelete}>ลบข้อมูล</MenuItem>
+                //         </Menu>
+                //         <ActionBtn
+                //             title="Upload Excel"
+                //             icon={<FileUploadIcon />}
+                //             color='#3FA26E'
+                //             onClick={() => handleUploadExcel()}
+                //         />
+                //     </>
+                // }
             >
-                <TableWithSearch
+                <TableWithSearchNoCheck
                     idKey='id'
                     key={key}
                     columns={mergeColumnClo as GridColDef[]}
@@ -633,6 +566,8 @@ export default function Page() {
                     pageSizeOptions={[10, 20]}
                     initialPageSize={10}
                     isOrganize={false}
+                    showViewButton={false}
+                    showCheckboxColumn={false}
                     isMultiSelectRow
                 />
 
