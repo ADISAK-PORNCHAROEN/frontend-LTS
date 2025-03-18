@@ -766,6 +766,26 @@ export const updateExcelNameApi = async (payload: IUserExcel) => {
   }
 };
 
+export const updateExcelSemeNYearApi = async (payload: IUserExcel) => {
+  try {
+    const response = await axiosApi.put<IResponse<IUserExcel>>(`/lts-user-excel/updateLtsUserExcelSemeNYear`, payload);
+    // // console.log('Response:', response.data);
+
+    if (response?.data === undefined) {
+      throw new Error("Undefined response data");
+    }
+
+    return response.data;
+  } catch (error) {
+    if (isAxiosError(error)) {
+      console.error('Error details:', error.response?.data);
+    } else {
+      console.error('Unexpected error:', error);
+    }
+    throw error;
+  }
+};
+
 export const updateExcelScoreApi = async (payload: IExcel) => {
   try {
     const response = await axiosApi.put<IResponse<IExcel>>(`/lts-user-excel-relation/updateLtsUserExcelRelation`, payload);

@@ -49,6 +49,7 @@ const createCurriculum = "CREATE_CURRICULUM"
 const getAllUserExcel = "GET_ALL_USER_EXCEL"
 const deleteUserExcel = "DELETE_USER_EXCEL"
 const updateExcelName = "UPDATE_EXCEL_NAME"
+const updateExcelSemeNYear = "UPDATE_EXCEL_SEME_N_YEAR"
 const updateExcelScore = "UPDATE_EXCEL_SCORE"
 export {
     getAllUsers,
@@ -91,5 +92,6 @@ export {
     getAllUserExcel,
     deleteUserExcel,
     updateExcelName,
+    updateExcelSemeNYear,
     updateExcelScore,
 }

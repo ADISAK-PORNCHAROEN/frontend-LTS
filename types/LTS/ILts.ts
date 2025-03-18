@@ -142,3 +142,66 @@ export interface IUserExcel {
     updatedDate?: Date | null;
     updatedBy?: string | null;
 }
+
+export interface IExcelScore {
+    id: number;
+    userCloId: number;
+    excelId: number;
+    score: number;
+}
+
+export interface IExcelItem {
+    id: number;
+    subId: number;
+    semester: number;
+    year: string;
+    fullName: string;
+    excel: IExcelScore[];
+}
+
+export interface IExcelResponse {
+    success: boolean;
+    message: string;
+    data: IExcelItem[];
+}
+
+export interface ComprehensiveChartData {
+    labels: string[];
+    data: number[];
+}
+
+export interface ICloListItem {
+    id: number;
+    userId: number;
+    curriculumId: number;
+    subId: number;
+    cloId: number;
+    cloName: string;
+    cloDesc: string;
+    semester: number;
+    year: string;
+}
+
+export interface ICloListResponse {
+    success: boolean;
+    message: string;
+    data: ICloListItem[];
+}
+
+export interface ISubject {
+    id: number;
+    subNameTh: string;
+}
+
+export interface ChartDataItem {
+    label: string;
+    value: number;
+}
+
+export interface StudentEnrollmentChartProps {
+    excelData: IExcelResponse; // Remove the | undefined
+    isLoadingCloList: boolean;
+    isLoadingExcelData: boolean;
+    subjects: ISubject[]; // Make required by removing the ?
+    [key: string]: any;
+}

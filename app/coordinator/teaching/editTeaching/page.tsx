@@ -8,7 +8,7 @@ import PageContentLayout from '#/components/layout/PageContentLayout';
 import Alert1 from '#/components/modal/Alert';
 import AccountBoxIcon from '@mui/icons-material/AccountBox';
 import CardBox from '#/components/CardBox';
-import { ISubjects, IUserClo, IUserPlo } from '#/types/LTS/ILts';
+import { ISubjects, IUserClo, IUserExcel, IUserPlo } from '#/types/LTS/ILts';
 import { useRouter, useSearchParams } from 'next/navigation';
 import useGetAllSubjects from '#/hooks/useGetAllSubjects';
 import { useSession } from 'next-auth/react';
@@ -25,9 +25,14 @@ import useGetAllUserClo from '#/hooks/useGetAllUserClo';
 import useUpdateUserPloMany from '#/hooks/useUpdateUserPloMany';
 import useUpdateUserClo from '#/hooks/useUpdateUserClo';
 import useGetAllCloList from '#/hooks/useGetAllCloList';
+import useUpdateExcelName from '#/hooks/useUpdateExcelName';
+import { IResponse } from '#/types/IResponse/IResponse';
+import useGetAllUserExcel from '#/hooks/useGetAllUserExcel';
+import useUpdateExcelSemeNYear from '#/hooks/useUpdateExcelSemeNYear';
 
 export default function Page() {
     const [rows, setRows] = useState<IUserClo[]>([]);
+    const [rowsExcel, setRowsExcel] = useState<IUserExcel[]>([]);
     const router = useRouter();
     const session = useSession();
     const user = session.data?.user;
@@ -38,6 +43,9 @@ export default function Page() {
     const { data: ploData, isLoading: isLoadingPloData } = useGetAllPlo();
     const { data: userClo, isLoading: isLoadingUserClo } = useGetAllUserClo();
     const { data: userCloList, isLoading: isLoadingUserCloList } = useGetAllCloList();
+    const { mutateAsync: uploadExcelName, isLoading: isLoadingUploadName } = useUpdateExcelName();
+    const { mutateAsync: uploadExcelSemeNYear, isLoading: isLoadingUploadSemeNYear } = useUpdateExcelSemeNYear();
+    const { data: excelData, isLoading: isLoadingExcelData } = useGetAllUserExcel();
     const { encode, decode } = useUrlSafeBase64();
     const searchParams = useSearchParams();
     const subId = searchParams.get("sub");
@@ -54,6 +62,18 @@ export default function Page() {
     const [textAlertBox, setTextAlertBox] = useState("");
     const [typeAlertBox, setTypeAlertBox] = useState<"success" | "warning" | "error">("success");
     const [isOpenAlertBox, setIsOpenAlertBox] = useState(false);
+
+    useEffect(() => {
+        if (excelData?.data && paramsYearId) {
+            const parsedData = excelData?.data?.filter((item: IUserExcel) =>
+                item.subId === paramsSubId &&
+                item.year === paramsYearId &&
+                item.semester === paramsSemId
+            );
+
+            setRowsExcel(parsedData);
+        }
+    }, [paramsCurId, paramsSubId, paramsYearId, paramsSemId, excelData?.data]);
 
     useEffect(() => {
         if (userClo?.data) {
@@ -101,10 +121,10 @@ export default function Page() {
 
         const dataArray = Array.isArray(data) ? data : [data];
         if (dataArray.length === 0) return errors;
-        
+
         const firstItem = dataArray[0];
         const editingIds = dataArray.map(item => item.id).filter(Boolean);
-        
+
         const hasDuplicate = userClo.data.some((clo: IUserClo) =>
             clo.semester === firstItem.semester &&
             clo.year === firstItem.year &&
@@ -112,17 +132,16 @@ export default function Page() {
             clo.curriculumId === firstItem.curriculumId &&
             !editingIds.includes(clo.id)
         );
-        
+
         if (hasDuplicate) {
             errors.push("ปีการศึกษานี้มีอยู่ในระบบแล้ว กรุณาตรวจสอบอีกครั้ง");
         }
-        
+
         return errors;
     };
 
     const handleSubmitSubject: SubmitHandler<IUserClo> = async (data: IUserClo | IUserPlo) => {
         try {
-
             const updatedPloIds: { [key: string]: number[] } = {};
             const updatedCloIds: number[] = [];
 
@@ -164,6 +183,25 @@ export default function Page() {
             };
 
             await updateUserPloMany(resUserPlo);
+
+            const semester = (data as IUserClo).semester;
+            const year = (data as IUserClo).year;
+
+            if (semester && year && rowsExcel.length > 0) {
+                const excelIds: any = rowsExcel
+                    .filter(row => row.id !== undefined)
+                    .map(row => row.id!);
+
+                if (excelIds.length > 0) {
+                    await uploadExcelSemeNYear({
+                        ids: excelIds,
+                        semester: semester,
+                        year: year,
+                        updatedBy: user?.name || '',
+                        updatedDate: new Date()
+                    });
+                }
+            }
 
             setTypeAlertBox("success");
             setTextAlertBox("แก้ไขข้อมูลสำเร็จ");
