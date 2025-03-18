@@ -27,7 +27,6 @@ import { IResponse } from "#/types/IResponse/IResponse";
 import useUpdateExcelName from '#/hooks/useUpdateExcelName';
 import useGetAllUsers from '#/hooks/useGetAllUsers';
 import AccessDeniedPage from '#/components/AccessDeniedPage';
-import TableWithSearchNoCheck from '#/components/table/TableWithSearchNoCheck';
 
 export default function Page() {
     const [rows, setRows] = useState<IUserExcel[]>([]);
@@ -42,6 +41,7 @@ export default function Page() {
     const [yearValue, setYearValue] = useState<string>("");
     const [yearOptions, setYearOptions] = useState<{ value: string, name: string }[]>([]);
     const [semesterValue, setSemesterValue] = useState<string>("1");
+    const [secValue, setSecValue] = useState<string>("ทั้งหมด");
     const [pagination, setPagination] = useState({ pageSize: 10, page: 0 });
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const { data: subjectsData, isLoading: isLoadingSubjectsData } = useGetAllSubjects();
@@ -73,13 +73,35 @@ export default function Page() {
     const [isOpenAlertForm, setIsOpenAlertForm] = useState(false);
     const [isOpenConfirmModalAlert, setIsOpenConfirmModalAlert] = useState(false);
 
-    // เปลี่ยนนิยาม state
     const [semesterOptions, setSemesterOptions] = useState<{ value: string, name: string, hasData?: boolean }[]>([
         { value: "1", name: "ภาคการศึกษาที่ 1", hasData: false },
         { value: "2", name: "ภาคการศึกษาที่ 2", hasData: false },
         { value: "3", name: "ภาคฤดูร้อน", hasData: false }
     ]);
 
+    const [secOptions, setSecOptions] = useState<{ value: string, name: string, hasData?: boolean }[]>([
+        { value: "ทั้งหมด", name: "ทั้งหมด", hasData: false },
+    ]);
+
+    useEffect(() => {
+        if (rows.length > 0) {
+            const existingSecs = new Set(rows.map((row) => row.sec?.toString().trim()));
+            const secOptionsData = Array.from(existingSecs)
+                .filter((sec): sec is string => Boolean(sec))
+                .map((sec) => ({
+                    value: sec,
+                    name: `ห้อง ${sec}`,
+                    hasData: true,
+                }));
+
+            setSecOptions([
+                { value: "ทั้งหมด", name: "ทั้งหมด", hasData: true },
+                ...secOptionsData,
+            ]);
+        } else {
+            setSecOptions([{ value: "ทั้งหมด", name: "ทั้งหมด", hasData: false }]);
+        }
+    }, [rows]);
 
     useEffect(() => {
         if (colListClo?.data && yearValue) {
@@ -317,7 +339,11 @@ export default function Page() {
         createColumn("fullName", "STRING", "รายชื่อนักศึกษา", 400, {
             headerAlign: "center",
             align: "left",
-        })
+        }),
+        createColumn("sec", "STRING", "sec", 100, {
+            headerAlign: "center",
+            align: "center",
+        }),
     ]
 
     const colClo = cols.map((item: IUserCloList) => item.cloName).map(
@@ -381,9 +407,7 @@ export default function Page() {
                         item.userCloId === currentCloId
                     );
 
-                    // ตรวจสอบว่าอยู่ใน Modal หรือไม่
                     if (isOpenAlertForm) {
-                        // ถ้าอยู่ใน Modal จะแสดงเป็น TextField สำหรับแก้ไข
                         return (
                             <TextField
                                 type="number"
@@ -413,10 +437,31 @@ export default function Page() {
     const mergeColumnEdit = [...columnEdit, ...colCloEdit];
 
     const filteredRows = rows.filter((row) => {
+        if (secValue !== "ทั้งหมด" && row.sec?.toString() !== secValue) {
+            return false;
+        }
+
         if (!searchText) return true;
 
-        const value = row[searchType as keyof typeof row];
-        return value?.toString().toLowerCase().includes(searchText.toLowerCase());
+        if (["fullName"].includes(searchType)) {
+            const value = row[searchType as keyof typeof row];
+            return value?.toString().toLowerCase().includes(searchText.toLowerCase());
+        }
+
+        if (searchType.startsWith("CLO")) {
+            const cloId = cols.find(col => col.cloName === searchType)?.id;
+
+            if (!cloId || !row.excel) return false;
+
+            const matchingItem = row.excel.find(item => item.userCloId === cloId);
+
+            if (matchingItem) {
+                return matchingItem?.score?.toString().includes(searchText);
+            }
+            return false;
+        }
+
+        return false;
     });
 
     const findSubName = subjectsData?.data?.find((item: ISubjects) => item.id === paramsSubId)?.subNameTh;
@@ -453,6 +498,8 @@ export default function Page() {
                         uploadExcelName({
                             id: row.id,
                             fullName: nameChanges[row.id!],
+                            semester: row.semester,
+                            year: row.year,
                             updatedDate: new Date(),
                             updatedBy: user?.name
                         })
@@ -516,36 +563,8 @@ export default function Page() {
             <PageContentLayout
                 title={`ประเมินรายวิชา ${titleSubName}`}
                 icon={<MenuBookIcon />}
-                // actions={
-                //     <>
-                //         <ActionBtn
-                //             title="Action"
-                //             icon={<ExpandMoreIcon />}
-                //             onClick={(e) => setAnchorEl(e.currentTarget)}
-                //             disabled={filteredRows.length === 0}
-                //         />
-                //         <Menu
-                //             anchorEl={anchorEl}
-                //             open={Boolean(anchorEl)}
-                //             onClose={() => setAnchorEl(null)}
-                //             className='this-menu'
-                //             disableAutoFocus
-                //             sx={{
-                //                 "& .MuiMenu-list": { paddingY: '0px', backgroundColor: "#FFF" },
-                //             }}
-                //         >
-                //             <MenuItem sx={{ width: '150px', backgroundColor: "#FFF" }} onClick={handleConfirmDelete}>ลบข้อมูล</MenuItem>
-                //         </Menu>
-                //         <ActionBtn
-                //             title="Upload Excel"
-                //             icon={<FileUploadIcon />}
-                //             color='#3FA26E'
-                //             onClick={() => handleUploadExcel()}
-                //         />
-                //     </>
-                // }
             >
-                <TableWithSearchNoCheck
+                <TableWithSearch
                     idKey='id'
                     key={key}
                     columns={mergeColumnClo as GridColDef[]}
@@ -563,11 +582,12 @@ export default function Page() {
                     semesterValue={semesterValue}
                     onSemesterChange={(newSemester) => setSemesterValue(newSemester)}
                     semesterOptions={semesterOptions}
+                    secValue={secValue}
+                    onSecChange={(newSec) => setSecValue(newSec)}
+                    secOptions={secOptions}
                     pageSizeOptions={[10, 20]}
                     initialPageSize={10}
                     isOrganize={false}
-                    showViewButton={false}
-                    showCheckboxColumn={false}
                     isMultiSelectRow
                 />
 

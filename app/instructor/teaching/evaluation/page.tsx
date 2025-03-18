@@ -41,6 +41,7 @@ export default function Page() {
     const [yearValue, setYearValue] = useState<string>("");
     const [yearOptions, setYearOptions] = useState<{ value: string, name: string }[]>([]);
     const [semesterValue, setSemesterValue] = useState<string>("1");
+    const [secValue, setSecValue] = useState<string>("ทั้งหมด");
     const [pagination, setPagination] = useState({ pageSize: 10, page: 0 });
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const { data: subjectsData, isLoading: isLoadingSubjectsData } = useGetAllSubjects();
@@ -117,6 +118,29 @@ export default function Page() {
         { value: "3", name: "ภาคฤดูร้อน", hasData: false }
     ]);
 
+    const [secOptions, setSecOptions] = useState<{ value: string, name: string, hasData?: boolean }[]>([
+        { value: "ทั้งหมด", name: "ทั้งหมด", hasData: false },
+    ]);
+
+    useEffect(() => {
+        if (rows.length > 0) {
+            const existingSecs = new Set(rows.map((row) => row.sec?.toString().trim()));
+            const secOptionsData = Array.from(existingSecs)
+                .filter((sec): sec is string => Boolean(sec))
+                .map((sec) => ({
+                    value: sec,
+                    name: `ห้อง ${sec}`,
+                    hasData: true,
+                }));
+
+            setSecOptions([
+                { value: "ทั้งหมด", name: "ทั้งหมด", hasData: true },
+                ...secOptionsData,
+            ]);
+        } else {
+            setSecOptions([{ value: "ทั้งหมด", name: "ทั้งหมด", hasData: false }]);
+        }
+    }, [rows]);
 
     useEffect(() => {
         if (colListClo?.data && yearValue) {
@@ -354,7 +378,11 @@ export default function Page() {
         createColumn("fullName", "STRING", "รายชื่อนักศึกษา", 400, {
             headerAlign: "center",
             align: "left",
-        })
+        }),
+        createColumn("sec", "STRING", "sec", 100, {
+            headerAlign: "center",
+            align: "center",
+        }),
     ]
 
     const colClo = cols.map((item: IUserCloList) => item.cloName).map(
@@ -448,6 +476,10 @@ export default function Page() {
     const mergeColumnEdit = [...columnEdit, ...colCloEdit];
 
     const filteredRows = rows.filter((row) => {
+        if (secValue !== "ทั้งหมด" && row.sec?.toString() !== secValue) {
+            return false;
+        }
+
         if (!searchText) return true;
 
         if (["fullName"].includes(searchType)) {
@@ -632,6 +664,9 @@ export default function Page() {
                     semesterValue={semesterValue}
                     onSemesterChange={(newSemester) => setSemesterValue(newSemester)}
                     semesterOptions={semesterOptions}
+                    secValue={secValue}
+                    onSecChange={(newSec) => setSecValue(newSec)}
+                    secOptions={secOptions}
                     pageSizeOptions={[10, 20]}
                     initialPageSize={10}
                     isOrganize={false}

@@ -483,18 +483,33 @@ export default function Page() {
 
     const filteredPastClo = nowClo?.filter(
         (cloItem) => filteredRows.some((row) =>
-            row.clo?.every((filteredClo: any) => filteredClo.cloId !== cloItem.id)
+            row.clo?.some((filteredClo: any) => filteredClo.cloId === cloItem.id)
         )
     );
-
+    
     const missingRows = filteredRows.filter(row =>
-        row.clo?.some((filteredClo: IPlo) =>
+        row.clo?.every((filteredClo: IPlo) =>
             !filteredPastClo?.some(cloItem => cloItem.id === filteredClo.cloId)
         )
     );
 
     const handleUpdateNewClo = async (data: IUserClo[]) => {
         try {
+            if (filteredNowClo && filteredNowClo.length > 0) {
+                const resCreate = {
+                    ploIds: filteredNowPloIds,
+                    cloIds: filteredNowClo?.map((plo) => plo.id),
+                    userId: user?.id,
+                    subId: paramsSubId,
+                    curriculumId: paramsCurId,
+                    semester: data[0].semester,
+                    year: data[0].year,
+                    createdDate: new Date(),
+                    createdBy: user?.name
+                }
+    
+                await createUserCloWithPloUpdate(resCreate);
+            }
 
             const updatedCloIds: number[] = [];
 
@@ -516,20 +531,6 @@ export default function Page() {
             }));
 
             await updateNewUserClo(resUpdate);
-
-            const resCreate = {
-                ploIds: filteredNowPloIds,
-                cloIds: filteredNowClo?.map((plo) => plo.id),
-                userId: user?.id,
-                subId: paramsSubId,
-                curriculumId: paramsCurId,
-                semester: data[0].semester,
-                year: data[0].year,
-                createdDate: new Date(),
-                createdBy: user?.name
-            }
-
-            await createUserCloWithPloUpdate(resCreate);
 
             if (missingRows?.length > 0) {
                 const ids = missingRows?.map((data) => data.id).join(',');

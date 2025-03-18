@@ -133,6 +133,7 @@ export interface IUserExcel {
     semester?: number | null;
     year?: string | null;
     fullName?: string | null;
+    sec?: string | null;
     // clos?: IUserCloList[] | null;
     excel?: IExcel[] | null;
     ids?: string | null;

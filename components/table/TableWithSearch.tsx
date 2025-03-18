@@ -26,6 +26,9 @@ export type TableWithSearchProps<R extends GridValidRowModel> = {
   semesterValue?: string;
   onSemesterChange?: (newValue: string) => void;
   semesterOptions?: { value: string, name: string }[];
+  secValue?: string;
+  onSecChange?: (newValue: string) => void;
+  secOptions?: { value: string, name: string }[];
   // End of new props
   extraSearchConfig?: { field: keyof R, option: { value: string, name: string }[], dateFormat?: { input: string; output: string; views?: DateView[] | undefined } }[]
   slotOppositeSearch?: ReactNode;
@@ -51,6 +54,9 @@ export default function TableWithSearch<R extends GridValidRowModel>({
   semesterValue = '',
   onSemesterChange,
   semesterOptions = [],
+  secValue = '',
+  onSecChange,  
+  secOptions = [],
   // End of new props
   extraSearchConfig,
   slotOppositeSearch,
@@ -107,6 +113,12 @@ export default function TableWithSearch<R extends GridValidRowModel>({
     }
   }
 
+  const handleSecChange = (value: string) => {
+    if (onSecChange) {
+      onSecChange(value);
+    }
+  }
+
   return (
     <>
       <Box className="flex items-center justify-between mb-4">
@@ -114,6 +126,19 @@ export default function TableWithSearch<R extends GridValidRowModel>({
           {slotOppositeSearch && <>{slotOppositeSearch}</>}
         </Box>
         <Box className="flex items-center justify-end gap-4">
+          {/* Sec search dropdown */}
+          {secOptions.length > 0 && (
+            <Autocomplete
+              className="w-56"
+              size='small'
+              options={secOptions}
+              getOptionLabel={(option) => option.name}
+              renderInput={(params) => (<TextField {...params} label="ห้อง" />)}
+              onChange={(_, newValue) => handleSecChange(newValue ? newValue.value : '')}
+              value={secOptions.find(option => option.value === secValue) || null}
+              disabled={isOpenAdvanceSearch}
+            />
+          )}
 
           {/* Semester search dropdown */}
           {semesterOptions.length > 0 && (
