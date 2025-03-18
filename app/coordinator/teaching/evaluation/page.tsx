@@ -505,6 +505,8 @@ export default function Page() {
                         uploadExcelName({
                             id: row.id,
                             fullName: nameChanges[row.id!],
+                            semester: row.semester,
+                            year: row.year,
                             updatedDate: new Date(),
                             updatedBy: user?.name
                         })

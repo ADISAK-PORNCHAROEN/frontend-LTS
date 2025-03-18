@@ -12,27 +12,30 @@ import useGetAllSubjects from '#/hooks/useGetAllSubjects';
 import CardBoxDashboard from '#/components/CardBoxDashboard';
 import useGetAllUsers from '#/hooks/useGetAllUsers';
 import { useSession } from 'next-auth/react';
+import useGetAllUserCloList from '#/hooks/useGetAllUserCloList';
+import useGetAllUserExcel from '#/hooks/useGetAllUserExcel';
+import { IExcelResponse, ISubject } from '#/types/LTS/ILts';
+import { StudentEnrollmentChart } from '#/components/StudentEnrollmentChart';
+import CardBox from '#/components/CardBox';
 
 export default function Home() {
-    const [rows, setRows] = useState<IUser[]>([]);
     const { data: session } = useSession();
-    const user = session?.user
+    const user = session?.user;
     const [subjectsCount, setSubjectsCount] = useState(0);
     const [countSubjectCur, setCountSubjectCur] = useState<number>(0);
-    const [countSubjectInactive, setCountSubjectInactive] = useState<number>(0);
-    const { data: userData, isLoading: isLoadinguserData } = useGetAllUsers();
-    const { data: subjectsData, isLoading: isLoadingSubjectsData } = useGetAllSubjects();
+    const [userSubjects, setUserSubjects] = useState<ISubject[]>([]);
 
-    // modal
+    // API hooks
+    const { data: userData, isLoading: isLoadingUserData } = useGetAllUsers();
+    const { data: subjectsData, isLoading: isLoadingSubjectsData } = useGetAllSubjects();
+    const { data: colListClo, isLoading: isLoadingColListClo } = useGetAllUserCloList();
+    const { data: excelData, isLoading: isLoadingExcelData } = useGetAllUserExcel();
+
+    // Modal state
     const [textAlertBox, setTextAlertBox] = useState("");
     const [typeAlertBox, setTypeAlertBox] = useState<"success" | "warning" | "error">("success");
     const [typeCardBox, setTypeCardBox] = useState<"default" | "success" | "warning" | "error" | "info">("default");
     const [isOpenAlertBox, setIsOpenAlertBox] = useState(false);
-
-    const status = {
-        isActive: "Active",
-        isInactive: "Inactive"
-    }
 
     useEffect(() => {
         if (!userData || !Array.isArray(userData.data) || !user?.id) return;
@@ -41,76 +44,71 @@ export default function Home() {
 
         if (!currentUser || !currentUser.subjects || !Array.isArray(currentUser.subjects)) {
             setSubjectsCount(0);
+            setUserSubjects([]);
             return;
         }
 
         let totalSubjects = 0;
+        const allUserSubjects: ISubject[] = [];
+
         currentUser.subjects.forEach(subjectEntry => {
             if (subjectEntry.subjects && Array.isArray(subjectEntry.subjects)) {
                 totalSubjects += subjectEntry.subjects.length;
+                subjectEntry.subjects.forEach(subject => allUserSubjects.push(subject as any));
             }
         });
 
         setSubjectsCount(totalSubjects);
+        setUserSubjects(allUserSubjects);
     }, [userData, user?.id]);
 
     useEffect(() => {
-        if (subjectsData?.data) {
-            const filteredData = subjectsData.data.filter(item => item.curriculum?.id === user?.curriculumId);
+        if (subjectsData?.data && user?.curriculumId) {
+            const filteredData = subjectsData.data.filter(item =>
+                item.curriculum?.id === user.curriculumId
+            );
             setCountSubjectCur(filteredData.length);
         }
     }, [subjectsData?.data, user?.curriculumId]);
 
+
     return (
         <>
             <PageContentLayout
-                title="Dashboard"
+                title="แดชบอร์ด"
                 icon={<DashboardIcon />}
-                actions={
-                    <>
-
-                    </>
-                }
             >
-                <Grid container spacing={2}>
-                    <Grid item xs={12} md={6} lg={3}>
-                        <CardBoxDashboard
-                            title='วิชาทั้งหมดในหลักสูตร'
-                            value={countSubjectCur || "0"}
-                            subtitle="รายวิชาในหลักสูตร"
-                            colorVariant='info'
-                            icon={<BookIcon />}
-                        />
+                <CardBox>
+                    <Grid container spacing={2}>
+                        <Grid item xs={12} md={6} lg={6}>
+                            <CardBoxDashboard
+                                title='วิชาทั้งหมดในหลักสูตร'
+                                value={countSubjectCur || "0"}
+                                subtitle="รายวิชาในหลักสูตร"
+                                colorVariant='info'
+                                icon={<BookIcon />}
+                            />
+                        </Grid>
+                        <Grid item xs={12} md={6} lg={6}>
+                            <CardBoxDashboard
+                                title='วิชาที่รับผิดชอบ'
+                                value={subjectsCount || "0"}
+                                subtitle="จํานวนวิชาที่รับผิดชอบ"
+                                colorVariant='success'
+                                icon={<BookIcon />}
+                            />
+                        </Grid>
                     </Grid>
-                    <Grid item xs={12} md={6} lg={3}>
-                        <CardBoxDashboard
-                            title='วิชาที่รับผิดชอบ'
-                            value={subjectsCount || "0"}
-                            subtitle="จํานวนวิชาที่รับผิดชอบ"
-                            colorVariant='success'
-                            icon={<BookIcon />}
-                        />
-                    </Grid>
-                    <Grid item xs={12} md={6} lg={3}>
-                        <CardBoxDashboard
-                            title='นักศึกษาทั้งหมด'
-                            value="245"
-                            subtitle="จำนวนนักศึกษาที่ลงทะเบียน"
-                            colorVariant='warning'
-                            icon={<PeopleIcon />}
-                        />
-                    </Grid>
-                    <Grid item xs={12} md={6} lg={3}>
-                        <CardBoxDashboard
-                            title='รายวิชารอดำเนินการ'
-                            value="3"
-                            subtitle="รายวิชาที่ต้องได้รับการอนุมัติ"
-                            colorVariant='error'
-                            icon={<PendingIcon />}
-                        />
-                    </Grid>
-                </Grid>
 
+                    <StudentEnrollmentChart
+                        excelData={excelData as IExcelResponse}
+                        isLoadingCloList={isLoadingColListClo}
+                        isLoadingExcelData={isLoadingExcelData}
+                        subjects={userSubjects as ISubject[]}
+                    />
+                </CardBox>
+
+                {/* Alert Modal */}
                 <Alert
                     text={textAlertBox}
                     type={typeAlertBox}
@@ -119,5 +117,5 @@ export default function Home() {
                 />
             </PageContentLayout>
         </>
-    )
+    );
 }
