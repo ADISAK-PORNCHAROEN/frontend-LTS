@@ -32,6 +32,8 @@ export type TableWithSearchProps<R extends GridValidRowModel> = {
   slotAboveTable?: ReactNode;
   searchFilters?: IAdvancedSearchPayload<R>[];
   onAdvanceSearch?: (search: IAdvancedSearchPayload<R>[]) => void;
+  slotHeader?: ReactNode; // Add this to accept CustomHeader
+  slotFooter?: ReactNode; // Add this to accept CustomFooter
 };
 
 export default function TableWithSearch<R extends GridValidRowModel>({
@@ -57,6 +59,8 @@ export default function TableWithSearch<R extends GridValidRowModel>({
   slotAboveTable,
   searchFilters,
   onAdvanceSearch,
+  slotHeader,
+  slotFooter,
   ...tableProps
 }: TableWithSearchProps<R> & TableProps<R>) {
   ("*****************")
@@ -213,7 +217,16 @@ export default function TableWithSearch<R extends GridValidRowModel>({
 
       {slotAboveTable && <>{slotAboveTable}</>}
 
+      {/* Render header slot if provided */}
+      {slotHeader && <>{slotHeader}</>}
+
+      {/* Existing components */}
+      {slotAboveTable && <>{slotAboveTable}</>}
+
       <Table {...tableProps} onHideColumn={setHiddenColumns} />
+
+      {/* Render footer slot if provided */}
+      {slotFooter && <>{slotFooter}</>}
 
     </>
   )

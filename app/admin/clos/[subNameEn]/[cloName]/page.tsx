@@ -10,7 +10,7 @@ import Alert from '#/components/modal/Alert';
 import AccountBoxIcon from '@mui/icons-material/AccountBox';
 import CardBox from '#/components/CardBox';
 import { ICurriculum, ISubjects } from '#/types/LTS/ILts';
-import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { useParams, usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import useGetAllCurriculum from '#/hooks/useGetAllCurriculum';
 import { IClo } from '#/types/LTS/IPlo';
@@ -32,13 +32,17 @@ export default function Page() {
     const { data: curriculumData, isLoading: isLoadingCurriculumData } = useGetAllCurriculum();
     const { data: subjectsData, isLoading: isLoadingSubjectsData } = useGetAllSubjects();
     const searchParams = useSearchParams();
-    const encodedId = searchParams.get("id");
-    const subId = searchParams.get("sub1");
+    const encodedId = searchParams.get("clo");
+    const subId = searchParams.get("sub");
     const curriculumId = searchParams.get("cur");
     const { encode, decode } = useUrlSafeBase64();
-    const paramsId = Number(encodedId ? decode(encodedId) : null);
+    const paramsCloId = Number(encodedId ? decode(encodedId) : null);
     const paramsSubId = Number(subId ? decode(subId) : null);
     const paramsCurId = Number(curriculumId ? decode(curriculumId) : null);
+    const pathName = usePathname();
+    const pathSegments = pathName.split('/');
+    const lastButOneSegment = pathSegments[pathSegments.length - 2];
+
 
     // modal
     const [textAlertBox, setTextAlertBox] = useState("");
@@ -46,7 +50,7 @@ export default function Page() {
     const [isOpenAlertBox, setIsOpenAlertBox] = useState(false);
 
     useEffect(() => {
-        const parsedData = cloData?.data?.find((item: IClo) => item.id === paramsId && item.subjects?.id === paramsSubId && item.curriculum?.id === paramsCurId);
+        const parsedData = cloData?.data?.find((item: IClo) => item.id === paramsCloId && item.subjects?.id === paramsSubId && item.curriculum?.id === paramsCurId);
         if (parsedData) {
             if (parsedData.cloName === pathname) {
                 setCloNames(parsedData.cloName);
@@ -56,7 +60,7 @@ export default function Page() {
             }
         }
 
-    }, [setValue, pathname, cloData?.data, paramsSubId, paramsCurId, paramsId]);
+    }, [setValue, pathname, cloData?.data, paramsSubId, paramsCurId, paramsCloId]);
 
     const checkExistingField = (data: IClo, originalData?: IClo) => {
         const errors: string[] = [];
@@ -126,7 +130,7 @@ export default function Page() {
                 }, 1500);
             });
 
-            await router.push(`../clos?id=${subId}&cur=${curriculumId}`);
+            await router.push(`../${lastButOneSegment}?sub=${subId}&cur=${curriculumId}`);
 
         } catch (error) {
             setTypeAlertBox("warning");
@@ -138,8 +142,8 @@ export default function Page() {
         }
     };
 
-    const subjectName = cloData?.data?.find((item: IClo) => item.subjects?.id === paramsSubId && item.curriculum?.id === paramsCurId && item.id === paramsId)?.cloName ?
-        `${cloData?.data?.find((item: IClo) => item.subjects?.id === paramsSubId && item.curriculum?.id === paramsCurId && item.id === paramsId)?.cloName}`
+    const subjectName = cloData?.data?.find((item: IClo) => item.subjects?.id === paramsSubId && item.curriculum?.id === paramsCurId && item.id === paramsCloId)?.cloName ?
+        `${cloData?.data?.find((item: IClo) => item.subjects?.id === paramsSubId && item.curriculum?.id === paramsCurId && item.id === paramsCloId)?.cloName}`
         : "404 Not Found";
 
     return (
@@ -153,7 +157,7 @@ export default function Page() {
                             title="ยกเลิก"
                             icon={<CloseIcon />}
                             color='#db3131'
-                            onClick={() => router.push(`../clos?id=${subId}&cur=${curriculumId}`)}
+                            onClick={() => router.push(`../${lastButOneSegment}?sub=${subId}&cur=${curriculumId}`)}
                         />
 
                         <ActionBtn

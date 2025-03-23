@@ -100,7 +100,7 @@ function ModalForm({
 
                 <Divider />
 
-                <DialogActions sx={{ px: 3, py: 2, justifyContent: 'flex-end' }}>
+                <DialogActions sx={{ px: 3, py: 2, justifyContent: 'flex-end', position: 'sticky', bottom: 0, backgroundColor: theme.palette.background.paper, zIndex: 10, boxShadow: '0 -2px 4px rgba(0, 0, 0, 0.1)' }}>
                     <Button
                         onClick={() => setIsOpen && setIsOpen(false)}
                         color="inherit"

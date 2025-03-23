@@ -8,7 +8,7 @@ import PageContentLayout from '#/components/layout/PageContentLayout';
 import Alert1 from '#/components/modal/Alert';
 import AccountBoxIcon from '@mui/icons-material/AccountBox';
 import CardBox from '#/components/CardBox';
-import { ISubjects, IUserClo, IUserPlo } from '#/types/LTS/ILts';
+import { ISubjects, IUserClo, IUserCloScore, IUserPlo } from '#/types/LTS/ILts';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import useGetAllSubjects from '#/hooks/useGetAllSubjects';
 import { useSession } from 'next-auth/react';
@@ -23,6 +23,7 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { motion, AnimatePresence } from 'framer-motion';
 import useCreateUserCloWithPlo from '#/hooks/useCreateUserCloWithPlo';
 import useGetAllUserClo from '#/hooks/useGetAllUserClo';
+import useCreateUserCloScore from '#/hooks/useGetAllUserCloScore';
 
 export default function Page() {
     const router = useRouter();
