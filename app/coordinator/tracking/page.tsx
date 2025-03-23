@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from 'react'
 import { GridColDef } from '@mui/x-data-grid';
-import { Menu, MenuItem, Checkbox, Backdrop, CircularProgress } from '@mui/material';
+import { Menu, MenuItem, Checkbox, Backdrop, CircularProgress, Tooltip } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import Table, { createColumn } from '#/components/table/Table';
 import ActionBtn from '#/components/button/ActionBtn';
@@ -30,6 +30,7 @@ import CheckIcon from '@mui/icons-material/Check';
 import AlertConfirm from '#/components/modal/AlertConfirm';
 import useGetAllUsers from '#/hooks/useGetAllUsers';
 import AccessDeniedPage from '#/components/AccessDeniedPage';
+import useGetAllUserCloScore from '#/hooks/useGetAllUserCloScore';
 
 export default function Page() {
     const [rows, setRows] = useState<IUserClo[]>([]);
@@ -51,6 +52,7 @@ export default function Page() {
     const { mutateAsync: updateNewUserClo, isLoading: isLoadingUpdateNewUserClo } = useUpdateNewUserClo();
     const { data: userCloList, isLoading: isLoadingUserCloList } = useGetAllCloList();
     const { data: userData, isLoading: isLoadingUserData } = useGetAllUsers();
+    const { data: userCloScoreData, isLoading: isLoadingUserloScoreData, refetch } = useGetAllUserCloScore();
     const [pendingChanges, setPendingChanges] = useState<{
         cloId: string | number | null | undefined;
         plos: IUserPlo[];
@@ -81,6 +83,38 @@ export default function Page() {
         isCoordinator: "program_coordinator",
         isInstructor: "instructor"
     }
+
+    useEffect(() => {
+        const checkAccess = async () => {
+            if (!userData?.data || !user || !paramsSubId || !paramsCurId) {
+                return;
+            }
+
+            let hasPermission = false;
+
+            if (user.role === Role.isAdmin) {
+                hasPermission = true;
+            } else {
+                const currentUser = userData.data.find((u: any) => u.id === user.id);
+
+                if (currentUser) {
+                    const hasSubject = currentUser.subjects?.some((subject: any) => {
+                        return subject.subjects?.some((sub: any) =>
+                            sub.id === paramsSubId &&
+                            sub.curriculum?.id === paramsCurId
+                        );
+                    });
+
+                    hasPermission = !!hasSubject;
+                }
+            }
+
+            setHasAccess(hasPermission);
+            setIsCheckingAccess(false);
+        };
+
+        checkAccess();
+    }, [userData, user, paramsSubId, paramsCurId, Role.isAdmin, Role.isCoordinator]);
 
     let currentPath = "/instructor";
     if (pathname.startsWith("/admin")) {
@@ -354,9 +388,11 @@ export default function Page() {
             renderCell(params) {
                 const cloNames = params.row?.clo?.map((item: IClo) => item.cloName + " " + item.cloDesc).map((item: string) => item);
                 return (
-                    <span>
-                        {cloNames}
-                    </span>
+                    <Tooltip title={cloNames || "-"} arrow>
+                        <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                            {cloNames}
+                        </span>
+                    </Tooltip>
                 );
             },
         }),
@@ -400,7 +436,7 @@ export default function Page() {
     }));
 
     const mergeColumnEdit = [...column, ...columnPlosForModal];
-    const mergeColumnShow = [...column, ...columnPlosForMainTable];
+    const mergeColumnShow: GridColDef[] = [...column, ...columnPlosForMainTable];
 
     const ExSearch = columnPlosForMainTable.map((item) => item.field);
 
@@ -449,18 +485,33 @@ export default function Page() {
 
     const filteredPastClo = nowClo?.filter(
         (cloItem) => filteredRows.some((row) =>
-            row.clo?.every((filteredClo: any) => filteredClo.cloId !== cloItem.id)
+            row.clo?.some((filteredClo: any) => filteredClo.cloId === cloItem.id)
         )
     );
 
     const missingRows = filteredRows.filter(row =>
-        row.clo?.some((filteredClo: IPlo) =>
+        row.clo?.every((filteredClo: IPlo) =>
             !filteredPastClo?.some(cloItem => cloItem.id === filteredClo.cloId)
         )
     );
 
     const handleUpdateNewClo = async (data: IUserClo[]) => {
         try {
+            if (filteredNowClo && filteredNowClo.length > 0) {
+                const resCreate = {
+                    ploIds: filteredNowPloIds,
+                    cloIds: filteredNowClo?.map((plo) => plo.id),
+                    userId: user?.id,
+                    subId: paramsSubId,
+                    curriculumId: paramsCurId,
+                    semester: data[0].semester,
+                    year: data[0].year,
+                    createdDate: new Date(),
+                    createdBy: user?.name
+                }
+
+                await createUserCloWithPloUpdate(resCreate);
+            }
 
             const updatedCloIds: number[] = [];
 
@@ -482,20 +533,6 @@ export default function Page() {
             }));
 
             await updateNewUserClo(resUpdate);
-
-            const resCreate = {
-                ploIds: filteredNowPloIds,
-                cloIds: filteredNowClo?.map((plo) => plo.id),
-                userId: user?.id,
-                subId: paramsSubId,
-                curriculumId: paramsCurId,
-                semester: data[0].semester,
-                year: data[0].year,
-                createdDate: new Date(),
-                createdBy: user?.name
-            }
-
-            await createUserCloWithPloUpdate(resCreate);
 
             if (missingRows?.length > 0) {
                 const ids = missingRows?.map((data) => data.id).join(',');
@@ -534,58 +571,73 @@ export default function Page() {
         setSearchType("cloName");
     }, [searchParams]);
 
+    if (isCheckingAccess || isLoadingUserData) {
+        return <div>
+            <Backdrop
+                sx={(theme) => ({ color: '#fff', zIndex: theme.zIndex.drawer + 1 })}
+                open={true}
+            >
+                <CircularProgress color="inherit" />
+            </Backdrop>
+        </div>;
+    }
+
+    if (!hasAccess) {
+        return <AccessDeniedPage />;
+    }
+
     return (
         <>
             <PageContentLayout
                 title={titleSubName}
                 icon={<MenuBookIcon />}
-                // actions={
-                //     <>
-                //         <ActionBtn
-                //             title="Action"
-                //             icon={<ExpandMoreIcon />}
-                //             onClick={(e) => setAnchorEl(e.currentTarget)}
-                //             disabled={filteredRows.length === 0}
-                //         />
-                //         <Menu
-                //             anchorEl={anchorEl}
-                //             open={Boolean(anchorEl)}
-                //             onClose={() => setAnchorEl(null)}
-                //             className='this-menu'
-                //             disableAutoFocus
-                //             sx={{
-                //                 "& .MuiMenu-list": { paddingY: '0px', backgroundColor: "#FFF" },
-                //             }}
-                //         >
-                //             <MenuItem sx={{ width: '150px', backgroundColor: "#FFF" }} onClick={() => handleConfirmDelete(filteredRows)}>ลบข้อมูลทั้งหมด</MenuItem>
-                //             <MenuItem sx={{ width: '150px', backgroundColor: "#FFF" }} onClick={handleNavigationEditPush}>แก้ไข PLO</MenuItem>
-                //             <MenuItem sx={{ width: '150px', backgroundColor: "#FFF" }} onClick={() => handleUpdateNewClo(filteredRows)}>อัพเดต CLO</MenuItem>
-                //         </Menu>
-                //         <ActionBtn
-                //             title="Export Excel"
-                //             icon={<FileDownloadIcon />}
-                //             color='#3FA26E'
-                //             onClick={() => handleExportExcel(filteredRows)}
-                //             disabled={filteredRows.length === 0}
-                //         />
-                //         <ActionBtn
-                //             title="Checked"
-                //             icon={<AddIcon />}
-                //             onClick={() => setIsOpenAlertForm(true)}
-                //             disabled={filteredRows.length === 0}
-                //         />
-                //         <ActionBtn
-                //             title="สร้าง PLO"
-                //             icon={<AddIcon />}
-                //             onClick={handleNavigationCreate}
-                //         />
-                //     </>
-                // }
+                actions={
+                    <>
+                        {/* <ActionBtn
+                            title="Action"
+                            icon={<ExpandMoreIcon />}
+                            onClick={(e) => setAnchorEl(e.currentTarget)}
+                            disabled={filteredRows.length === 0}
+                        />
+                        <Menu
+                            anchorEl={anchorEl}
+                            open={Boolean(anchorEl)}
+                            onClose={() => setAnchorEl(null)}
+                            className='this-menu'
+                            disableAutoFocus
+                            sx={{
+                                "& .MuiMenu-list": { paddingY: '0px', backgroundColor: "#FFF" },
+                            }}
+                        >
+                            <MenuItem sx={{ width: '150px', backgroundColor: "#FFF" }} onClick={() => handleConfirmDelete(filteredRows)}>ลบข้อมูลทั้งหมด</MenuItem>
+                            <MenuItem sx={{ width: '150px', backgroundColor: "#FFF" }} onClick={handleNavigationEditPush}>แก้ไข PLO</MenuItem>
+                            <MenuItem sx={{ width: '150px', backgroundColor: "#FFF" }} onClick={() => handleUpdateNewClo(filteredRows)}>อัพเดต CLO</MenuItem>
+                        </Menu>
+                        <ActionBtn
+                            title="Export Excel"
+                            icon={<FileDownloadIcon />}
+                            color='#3FA26E'
+                            onClick={() => handleExportExcel(filteredRows)}
+                            disabled={filteredRows.length === 0}
+                        />
+                        <ActionBtn
+                            title="Checked"
+                            icon={<AddIcon />}
+                            onClick={() => setIsOpenAlertForm(true)}
+                            disabled={filteredRows.length === 0}
+                        />
+                        <ActionBtn
+                            title="สร้าง PLO"
+                            icon={<AddIcon />}
+                            onClick={handleNavigationCreate}
+                        /> */}
+                    </>
+                }
             >
                 <TableWithSearchNoCheck
                     idKey='id'
                     key={key}
-                    columns={mergeColumnShow as GridColDef[]}
+                    columns={mergeColumnShow}
                     rows={filteredRows}
                     onViewRow={(rowSelected) => handleNavigationEditPush()}
                     searchType={searchType as string}

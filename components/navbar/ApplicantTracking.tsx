@@ -254,6 +254,18 @@ export default function ApplicantTracking() {
         { level: 2, name: `ประเมินรายวิชา ${subjectTh}`, linkTo: Paths.lts.evaluation },
       ]
     },
+    {
+      url: Paths.lts.coorEvaluation, tracks: [
+        { level: 1, name: `${subjectTh}`, linkTo: `${Paths.lts.coorTeaching}?sub=${sub2Id}&cur=${curriculumId}` },
+        { level: 2, name: `ประเมินรายวิชา ${subjectTh}`, linkTo: Paths.lts.coorEvaluation },
+      ]
+    },
+    {
+      url: Paths.lts.instructorEvaluation, tracks: [
+        { level: 1, name: `${subjectTh}`, linkTo: `${Paths.lts.instructorTeaching}?sub=${sub2Id}&cur=${curriculumId}` },
+        { level: 2, name: `ประเมินรายวิชา ${subjectTh}`, linkTo: Paths.lts.instructorEvaluation },
+      ]
+    },
   ];
 
   if (checkCreateSubject || checkEditAccount || checkTeachingPage || checkCurriculumPage || checkPloPage || checkCloPage || checkCloSubPage) {

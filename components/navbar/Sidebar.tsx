@@ -36,6 +36,7 @@ import { useUrlSafeBase64 } from '#/hooks/useUrlSafeBase64';
 import useGetAllSubjects from '#/hooks/useGetAllSubjects';
 import ArticleIcon from '@mui/icons-material/Article';
 import { IUser } from '#/types/IResponse/IResponse';
+import Footer from './Footer';
 
 const drawerWidth = 280;
 
@@ -114,6 +115,20 @@ const Drawer = styled(MuiDrawer)(({ theme, open }) => ({
     }),
 }));
 
+// Style for main content area
+const MainContent = styled(Box)(({ theme }) => ({
+    flexGrow: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    minHeight: '100vh',  // Set minimum height to viewport height
+}));
+
+// Style for the content area (between header and footer)
+const ContentArea = styled(Box)(({ theme }) => ({
+    flexGrow: 1,
+    padding: theme.spacing(3),
+}));
+
 interface Props {
     children?: React.ReactNode;
 }
@@ -160,10 +175,7 @@ export default function SidebarLayout({ children }: Props) {
     const paramsSUBId = Number(subId ? decode(subId) : null);
     const paramsSubEditId = Number(sub1Id ? decode(sub1Id) : null);
     const paramsCurId = Number(curId ? decode(curId) : null);
-    // console.log("paramsSubId", paramsSubId, "paramsSubEditId", paramsSubEditId, "paramsCurId", paramsCurId);
-    // เพิ่ม state สำหรับเก็บสถานะการแสดงผลของแต่ละ curriculum
     const [expandedCurriculums, setExpandedCurriculums] = useState<{ [key: string]: boolean }>({});
-    // เพิ่ม state นี้ในส่วนของ hooks ของ component
     const [expandedSubjectEvals, setExpandedSubjectEvals] = useState<Record<string, boolean>>({});
     const [expandedTrackingEvals, setExpandedTrackingEvals] = useState<Record<string, boolean>>({});
 
@@ -203,20 +215,6 @@ export default function SidebarLayout({ children }: Props) {
 
     }, [userData, session?.user.email, curriculumData, subjectsData?.data, userData?.data]);
 
-    useEffect(() => {
-        // if (!curriculumData?.data) return;
-        // setCurriculumList(curriculumData.data);
-
-        // if (!subjectsData?.data) return;
-        // setSubjectList(subjectsData.data);
-
-        // const expandedCurriculums: { [key: string]: boolean } = {};
-        // curriculumData.data.forEach((curriculum: ICurriculum) => {
-        //     expandedCurriculums[curriculum.id!] = false;
-        // });
-        // setExpandedCurriculums(expandedCurriculums);
-    }, [curriculumData, subjectsData?.data]);
-
     const handleDrawerOpen = () => setOpen(true);
     const handleDrawerClose = () => setOpen(false);
     const handleSubjectClick = () => setSubjectOpen(!subjectOpen);
@@ -225,7 +223,7 @@ export default function SidebarLayout({ children }: Props) {
     const handleClosClick = () => setClosOpen(!closOpen);
 
     const handleNavigate = (path: string, data?: ISubjects | ICurriculum) => {
-        console.log("data", data);
+        // console.log("data", data);
         // console.log("path", path);
 
         let currentPath = "/instructor";
@@ -736,7 +734,6 @@ export default function SidebarLayout({ children }: Props) {
                         <Collapse in={open && subjectOpen} timeout="auto" unmountOnExit>
                             <List component="div" disablePadding>
                                 {userSubjects.map((subject: ISubjects) => {
-                                    // Add a new state to track each subject's evaluation collapse state
                                     const isSubjectEvalExpanded = expandedSubjectEvals[subject.id!];
                                     const isActive = pathname.includes("/teaching") && paramsSUBId === subject.id;
                                     const isActiveEval = pathname.includes("/evaluation") && paramsSUBId === subject.id;
@@ -779,7 +776,6 @@ export default function SidebarLayout({ children }: Props) {
                                                         },
                                                     }}
                                                 />
-                                                {/* Add expand toggle button that stops propagation to prevent navigation */}
                                                 <IconButton
                                                     size="small"
                                                     onClick={(event) => {
@@ -794,7 +790,6 @@ export default function SidebarLayout({ children }: Props) {
                                                 </IconButton>
                                             </ListItemButton>
 
-                                            {/* Nested Collapse for evaluations under this subject */}
                                             <Collapse in={isSubjectEvalExpanded} timeout="auto" unmountOnExit>
                                                 <List component="div" disablePadding>
                                                     <ListItemButton
@@ -841,16 +836,11 @@ export default function SidebarLayout({ children }: Props) {
                                 })}
                             </List>
                         </Collapse>
-
                     </List>
-
                 )}
-            </Drawer >
 
-            {/* <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
-                <DrawerHeader />
-                {children}
-            </Box> */}
+                <Divider />
+            </Drawer >
         </Box >
     );
 }
