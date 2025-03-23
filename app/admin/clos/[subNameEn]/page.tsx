@@ -8,35 +8,37 @@ import TableWithSearch from '#/components/table/TableWithSearch';
 import ActionBtn from '#/components/button/ActionBtn';
 import PageContentLayout from '#/components/layout/PageContentLayout';
 import Alert from '#/components/modal/Alert';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { ICurriculum } from '#/types/LTS/ILts';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
-import useGetAllPlo from '#/hooks/useGetAllPlo';
-import { IPlo } from '#/types/LTS/IPlo';
-import useDeletePlo from '#/hooks/useDeletePlo';
 import { useUrlSafeBase64 } from '#/hooks/useUrlSafeBase64';
-import useGetAllCurriculum from '#/hooks/useGetAllCurriculum';
+import { IClo } from '#/types/LTS/IPlo';
+import useGetAllClo from '#/hooks/useGetAllClo';
+import useGetAllSubjects from '#/hooks/useGetAllSubjects';
+import { ISubjects } from '#/types/LTS/ILts';
+import useDeleteClo from '#/hooks/useDeleteClo';
 import AlertConfirm from '#/components/modal/AlertConfirm';
+import useGetAllCurriculum from '#/hooks/useGetAllCurriculum';
 
 export default function Home() {
-    const [rows, setRows] = useState<IPlo[]>([]);
-    const [rowsSelected, setRowsSelected] = useState<IPlo[]>([]);
+    const [rows, setRows] = useState<IClo[]>([]);
+    const [rowsSelected, setRowsSelected] = useState<IClo[]>([]);
     const [searchText, setSearchText] = useState<string>('');
-    const [searchType, setSearchType] = useState<string>("ploName");
-    const [pagination, setPagination] = useState({ pageSize: 10, page: 0 });
+    const [searchType, setSearchType] = useState<string>("cloName");
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-    const { data: ploData, isLoading: isLoadingPloData } = useGetAllPlo();
-    const { data: curriculumData, isLoading: isLoadingCurriculumData } = useGetAllCurriculum();
-    const { mutateAsync: deletePlo, isLoading: isLoadingDeletePlo } = useDeletePlo();
+    const { data: cloData, isLoading: isLoadingPloData } = useGetAllClo();
+    const { data: subjectsData, isLoading: isLoadingSubjectsData } = useGetAllSubjects();
+    const { mutateAsync: deleteClo, isLoading: isLoadingDeleteClo } = useDeleteClo();
     const router = useRouter();
     const [key, setKey] = useState(0);
-    const [curriculumValue, setCurriculumValue] = useState<string>('');
-    const [curriculumOptions, setCurriculumOptions] = useState<{ value: string, name: string }[]>([]);
     const searchParams = useSearchParams();
-    const encodedId = searchParams.get("cur");
+    const subId = searchParams.get("sub");
+    const curriculumId = searchParams.get("cur");
     const { encode, decode } = useUrlSafeBase64();
-    const paramsId = encodedId ? decode(encodedId) : null;
+    const paramsSubId = Number(subId ? decode(subId) : null);
+    const paramsCurId = Number(curriculumId ? decode(curriculumId) : null);
+    const pathname = usePathname();
+    const lastPathSegment = pathname.split('/').pop();
 
     // modal
     const [textAlertBox, setTextAlertBox] = useState("");
@@ -44,16 +46,25 @@ export default function Home() {
     const [isOpenAlertBox, setIsOpenAlertBox] = useState(false);
     const [isOpenConfirmModalAlert, setIsOpenConfirmModalAlert] = useState(false);
 
+    useEffect(() => {
+        if (cloData?.data) {
+            const transformedData = cloData?.data.map((item) => ({
+                ...item
+            }))
+            setRows(transformedData.filter(item => item.subjects?.id === paramsSubId));
+        }
+    }, [paramsCurId, paramsSubId, cloData])
+
     const handleConfirmDelete = () => {
         setAnchorEl(null);
         setIsOpenConfirmModalAlert(true);
     }
 
-    const handleDelete = async (rowsSelected: IPlo[]) => {
+    const handleDelete = async (rowsSelected: IClo[]) => {
         setIsOpenConfirmModalAlert(false);
         try {
-            const ids = rowsSelected.map((row: IPlo) => row.id).join(',');
-            const res = await deletePlo({ ids });
+            const ids = rowsSelected.map((row: IClo) => row.id).join(',');
+            const res = await deleteClo({ ids });
 
             if (res.success === true) {
                 setAnchorEl(null);
@@ -80,62 +91,30 @@ export default function Home() {
     }
 
     const handleNavigationCreate = () => {
-        const encodedId = encode((paramsId ?? '').toString());
-        router.push(`/admin/plos/createPlo?cur=${encodedId}`);
+        const subId = encode((paramsSubId ?? '').toString());
+        const curriculumId = encode((paramsCurId ?? '').toString());
+        router.push(`/admin/clos/${lastPathSegment}/createClo?sub=${subId}&cur=${curriculumId}`);
     };
 
-    const handleNavigationEdit = (data: IPlo) => {
-        const pathname = encodeURIComponent(data?.ploName!)
-        const encodedId = encode((paramsId ?? '').toString());
-        const encodedPloId = encode((data.id ?? '').toString());
-        router.push(`/admin/plos/${pathname}?cur=${encodedId}&plo=${encodedPloId}`);
+    const handleNavigationEdit = (data: IClo) => {
+        const pathname = encodeURIComponent(data?.cloName ?? '');
+        const encodeCloId = encode((data.id ?? '').toString());
+        const encodeSubId = encode((data.subjects?.id ?? '').toString());
+        const encodeCurId = encode((data.curriculum?.id ?? '').toString());
+        router.push(`/admin/clos/${lastPathSegment}/${pathname}?sub=${encodeSubId}&cur=${encodeCurId}&clo=${encodeCloId}`);
     }
 
     const column: GridColDef[] = [
-        createColumn("ploName", "STRING", "PLOs", 350, {
+        createColumn("cloName", "STRING", "CLO", 150, {
             headerAlign: "center",
             align: "center",
             sortable: true
         }),
-        createColumn("ploDesc", "STRING", "คําอธิบาย PLO", 350, {
+        createColumn("cloDesc", "STRING", "คำอธิบาย CLO", 350, {
             headerAlign: "center",
             align: "center",
         }),
     ]
-
-    useEffect(() => {
-        if (ploData?.data) {
-            const transformedData = ploData?.data.map((item) => ({
-                id: item.id,
-                ...item
-            }))
-            setRows(transformedData.filter(item => item.curriculum?.id == paramsId));
-
-            const curriculums = new Set<string>();
-            const options: { value: string, name: string }[] = [];
-
-            transformedData.filter(item => item.curriculum?.id == paramsId).forEach(item => {
-                if (item.curriculum && item.curriculum.degreeShortTh) {
-                    const currName = item.curriculum.degreeShortTh;
-                    const currId = item.curriculum?.id?.toString() ?? '';
-                    if (!curriculums.has(currId)) {
-                        curriculums.add(currId);
-                        options.push({
-                            value: currId,
-                            name: currName
-                        });
-                    }
-                }
-            });
-
-            options.unshift({
-                value: '',
-                name: 'ทั้งหมด'
-            });
-
-            setCurriculumOptions(options);
-        }
-    }, [paramsId, ploData])
 
     const filteredRows = rows.filter((row) => {
         let mainSearchMatch = true;
@@ -144,19 +123,10 @@ export default function Home() {
             mainSearchMatch = value?.toString().toLowerCase().includes(searchText.toLowerCase()) ?? false;
         }
 
-        let curriculumMatch = true;
-        if (curriculumValue) {
-            if (!row.curriculum) {
-                curriculumMatch = false;
-            } else {
-                curriculumMatch = row.curriculum?.id?.toString() === curriculumValue;
-            }
-        }
-
-        return mainSearchMatch && curriculumMatch;
+        return mainSearchMatch;
     });
 
-    const handleSelectRows = (rowSelected: IPlo[]) => {
+    const handleSelectRows = (rowSelected: IClo[]) => {
         setRowsSelected(rowSelected);
     };
 
@@ -164,14 +134,14 @@ export default function Home() {
         setSearchText('');
     };
 
-    const handleCurriculumChange = (value: string) => {
-        setCurriculumValue(value);
-    };
+    const subjectName = subjectsData?.data?.find((item: ISubjects) => item.id === paramsSubId && item.curriculum?.id === paramsCurId)?.subNameTh ?
+        `CLOs ${subjectsData?.data?.find((item: ISubjects) => item.id === paramsSubId && item.curriculum?.id === paramsCurId)?.subNameTh}`
+        : "404 not found";
 
     return (
         <>
             <PageContentLayout
-                title={`${curriculumData?.data?.find((item: ICurriculum) => item.id === Number(paramsId))?.degreeShortTh}`}
+                title={`${subjectName}`}
                 icon={<MenuBookIcon />}
                 actions={
                     <>
@@ -194,9 +164,9 @@ export default function Home() {
                             <MenuItem sx={{ width: '100px', backgroundColor: "#FFF" }} onClick={handleConfirmDelete}>ลบข้อมูล</MenuItem>
                         </Menu>
                         <ActionBtn
-                            title="สร้างรายวิชา"
                             icon={<AddIcon />}
-                            onClick={handleNavigationCreate}
+                            title="เพิ่ม CLO"
+                            onClick={() => handleNavigationCreate()}
                         />
                     </>
                 }
@@ -212,13 +182,9 @@ export default function Home() {
                     searchText={searchText}
                     onSearchTextChange={(newSearchText) => setSearchText(newSearchText)}
                     onSearchTextClear={handleSearchTextClear}
-                    // กรองตามหลักสูตร
-                    // curriculumValue={curriculumValue}
-                    // onCurriculumChange={handleCurriculumChange}
-                    // curriculumOptions={curriculumOptions}
                     onSelectRows={(rowsSelected) => handleSelectRows(rowsSelected)}
-                    pagination={pagination}
-                    setPagination={setPagination}
+                    // pagination={pagination}
+                    // setPagination={setPagination}
                     pageSizeOptions={[10, 20]}
                     initialPageSize={10}
                     isMultiSelectRow

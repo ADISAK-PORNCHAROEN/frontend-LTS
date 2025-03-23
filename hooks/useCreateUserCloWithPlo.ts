@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { IResponse } from "#/types/IResponse/IResponse";
-import { getAllUserClo, createUserCloWithPlo } from "./queries/QuriesKey";
+import { getAllUserClo, createUserCloWithPlo, getAllUserCloScore } from "./queries/QuriesKey";
 import { createUserCloWithCloApi } from "#/app/api/userApi";
 import { ISubjects, IUserClo } from "#/types/LTS/ILts";
 
@@ -13,6 +13,7 @@ export default function useCreateUserCloWithPlo() {
         {
             onSuccess: () => {
                 queryClient.invalidateQueries([getAllUserClo]);
+                queryClient.invalidateQueries([getAllUserCloScore]);
             }
         }
     );

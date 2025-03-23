@@ -15,26 +15,26 @@ import { useUrlSafeBase64 } from '#/hooks/useUrlSafeBase64';
 import { IClo } from '#/types/LTS/IPlo';
 import useGetAllClo from '#/hooks/useGetAllClo';
 import useGetAllSubjects from '#/hooks/useGetAllSubjects';
-import { ISubjects } from '#/types/LTS/ILts';
+import { ICurriculum, ISubjects } from '#/types/LTS/ILts';
 import useDeleteClo from '#/hooks/useDeleteClo';
 import AlertConfirm from '#/components/modal/AlertConfirm';
+import useGetAllCurriculum from '#/hooks/useGetAllCurriculum';
 
 export default function Home() {
-    const [rows, setRows] = useState<IClo[]>([]);
+    const [rows, setRows] = useState<ISubjects[]>([]);
     const [rowsSelected, setRowsSelected] = useState<IClo[]>([]);
     const [searchText, setSearchText] = useState<string>('');
-    const [searchType, setSearchType] = useState<string>("cloName");
+    const [searchType, setSearchType] = useState<string>("subId");
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const { data: cloData, isLoading: isLoadingPloData } = useGetAllClo();
     const { data: subjectsData, isLoading: isLoadingSubjectsData } = useGetAllSubjects();
     const { mutateAsync: deleteClo, isLoading: isLoadingDeleteClo } = useDeleteClo();
+    const { data: curriculumData, isLoading: isLoadingCurriculumData } = useGetAllCurriculum();
     const router = useRouter();
     const [key, setKey] = useState(0);
     const searchParams = useSearchParams();
-    const encodedId = searchParams.get("id");
     const curriculumId = searchParams.get("cur");
     const { encode, decode } = useUrlSafeBase64();
-    const paramsSubId = Number(encodedId ? decode(encodedId) : null);
     const paramsCurId = Number(curriculumId ? decode(curriculumId) : null);
 
     // modal
@@ -44,18 +44,13 @@ export default function Home() {
     const [isOpenConfirmModalAlert, setIsOpenConfirmModalAlert] = useState(false);
 
     useEffect(() => {
-        if (cloData?.data) {
-            const transformedData = cloData?.data.map((item) => ({
+        if (subjectsData?.data) {
+            const transformedData = subjectsData?.data.map((item) => ({
                 ...item
             }))
-            setRows(transformedData.filter(item => item.subjects?.id === paramsSubId && item.curriculum?.id === paramsCurId));
+            setRows(transformedData.filter(item => item.curriculum?.id === paramsCurId));
         }
-    }, [paramsSubId, cloData, paramsCurId])
-
-    const handleConfirmDelete = () => {
-        setAnchorEl(null);
-        setIsOpenConfirmModalAlert(true);
-    }
+    }, [paramsCurId, subjectsData])
 
     const handleDelete = async (rowsSelected: IClo[]) => {
         setIsOpenConfirmModalAlert(false);
@@ -87,29 +82,34 @@ export default function Home() {
         }
     }
 
-    const handleNavigationCreate = () => {
-        const encodedId = encode((paramsSubId ?? '').toString());
-        const curriculumId = encode((paramsCurId ?? '').toString());
-        router.push(`/admin/clos/createClo?id=${encodedId}&cur=${curriculumId}`);
-    };
+    // const handleNavigationCreate = () => {
+    //     const encodedId = encode((paramsSubId ?? '').toString());
+    //     const curriculumId = encode((paramsCurId ?? '').toString());
+    //     router.push(`/admin/clos/createClo?id=${encodedId}&cur=${curriculumId}`);
+    // };
 
-    const handleNavigationEdit = (data: IClo) => {
-        const pathname = encodeURIComponent(data?.cloName ?? '');
-        const encodeCloId = encode((data.id ?? '').toString());
-        const encodeSubId = encode((data.subjects?.id ?? '').toString());
+    const handleNavigation = (data: ISubjects) => {
+        const pathname = encodeURIComponent(data?.subNameEn ?? '');
+        const encodeSubId = encode((data.id ?? '').toString());
         const encodeCurId = encode((data.curriculum?.id ?? '').toString());
-        router.push(`/admin/clos/${pathname}?id=${encodeCloId}&sub1=${encodeSubId}&cur=${encodeCurId}`);
+        router.push(`/admin/clos/${pathname}?sub=${encodeSubId}&cur=${encodeCurId}`);
     }
 
     const column: GridColDef[] = [
-        createColumn("cloName", "STRING", "CLOs", 350, {
+        createColumn("subId", "STRING", "รหัสวิชา", 150, {
             headerAlign: "center",
             align: "center",
             sortable: true
         }),
-        createColumn("cloDesc", "STRING", "คําอธิบาย CLO", 350, {
+        createColumn("subNameTh", "STRING", "ชื่อวิชา (ภาษาไทย)", 350, {
             headerAlign: "center",
             align: "center",
+            sortable: true
+        }),
+        createColumn("subNameEn", "STRING", "ชื่อวิชา (ภาษาอังกฤษ)", 350, {
+            headerAlign: "center",
+            align: "center",
+            sortable: true
         }),
     ]
 
@@ -131,49 +131,18 @@ export default function Home() {
         setSearchText('');
     };
 
-    const subjectName = subjectsData?.data?.find((item: ISubjects) => item.id === paramsSubId && item.curriculum?.id === paramsCurId)?.subNameTh ?
-        `CLOs ${subjectsData?.data?.find((item: ISubjects) => item.id === paramsSubId && item.curriculum?.id === paramsCurId)?.subNameTh}`
-        : "404 not found";
-
     return (
         <>
             <PageContentLayout
-                title={subjectName}
+                title={`${curriculumData?.data?.find((item: ICurriculum) => item.id === paramsCurId)?.degreeFullTh}`}
                 icon={<MenuBookIcon />}
-                actions={
-                    <>
-                        <ActionBtn
-                            title="Action"
-                            icon={<ExpandMoreIcon />}
-                            onClick={(e) => setAnchorEl(e.currentTarget)}
-                            disabled={rowsSelected.length === 0}
-                        />
-                        <Menu
-                            anchorEl={anchorEl}
-                            open={Boolean(anchorEl)}
-                            onClose={() => setAnchorEl(null)}
-                            className='this-menu'
-                            disableAutoFocus
-                            sx={{
-                                "& .MuiMenu-list": { paddingY: '0px', backgroundColor: "#FFF" },
-                            }}
-                        >
-                            <MenuItem sx={{ width: '100px', backgroundColor: "#FFF" }} onClick={handleConfirmDelete}>ลบข้อมูล</MenuItem>
-                        </Menu>
-                        <ActionBtn
-                            title="สร้าง CLOs"
-                            icon={<AddIcon />}
-                            onClick={handleNavigationCreate}
-                        />
-                    </>
-                }
             >
                 <TableWithSearch
                     idKey='id'
                     key={key}
                     columns={column}
                     rows={filteredRows}
-                    onViewRow={(rowSelected) => handleNavigationEdit(rowSelected)}
+                    onViewRow={(rowSelected) => handleNavigation(rowSelected)}
                     searchType={searchType as string}
                     onSearchTypeChange={(newSearchType) => setSearchType(newSearchType)}
                     searchText={searchText}
@@ -192,14 +161,6 @@ export default function Home() {
                     type={typeAlertBox}
                     isOpen={isOpenAlertBox}
                     setIsOpen={setIsOpenAlertBox}
-                />
-
-                <AlertConfirm
-                    isOpen={isOpenConfirmModalAlert}
-                    setIsOpen={setIsOpenConfirmModalAlert}
-                    onConfirm={() => handleDelete(rowsSelected)}
-                    description="ข้อมูลที่เกี่ยวข้องจะถูกลบด้วย"
-                    title="คุณแน่ใจหรือไม่?"
                 />
             </PageContentLayout>
         </>

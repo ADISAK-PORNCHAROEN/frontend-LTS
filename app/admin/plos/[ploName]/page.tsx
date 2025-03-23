@@ -1,8 +1,9 @@
 "use client";
 import { useEffect, useState } from 'react'
-import { Autocomplete, FormControl, Grid, TextField, Typography } from '@mui/material';
+import { Autocomplete, FormControl, Grid, IconButton, Popover, TextField, Typography } from '@mui/material';
 import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 import CloseIcon from '@mui/icons-material/Close';
+import InfoIcon from '@mui/icons-material/Info';
 import AddIcon from '@mui/icons-material/Add';
 import ActionBtn from '#/components/button/ActionBtn';
 import PageContentLayout from '#/components/layout/PageContentLayout';
@@ -21,6 +22,10 @@ import { useUrlSafeBase64 } from '#/hooks/useUrlSafeBase64';
 export default function Page() {
     const router = useRouter();
     const [ploNames, setPloNames] = useState<string | null>(null);
+    const [anchorEl, setAnchorEl] = useState(null);
+    const handleClick = (event: any) => setAnchorEl(event.currentTarget);
+    const handleClose = () => setAnchorEl(null);
+    const open = Boolean(anchorEl);
     const { ploName } = useParams();
     const pathname = decodeURIComponent(ploName as string);
     const session = useSession();
@@ -30,7 +35,7 @@ export default function Page() {
     const { data: ploData, isLoading: isLoadingPloData } = useGetAllPlo();
     const { data: curriculumData, isLoading: isLoadingCurriculumData } = useGetAllCurriculum();
     const searchParams = useSearchParams();
-    const encodedId = searchParams.get("id");
+    const encodedId = searchParams.get("cur");
     const encodedPloId = searchParams.get("plo");
     const { encode, decode } = useUrlSafeBase64();
     const paramsId = encodedId ? decode(encodedId) : null;
@@ -123,7 +128,7 @@ export default function Page() {
                 }, 1500);
             });
 
-            await router.push(`../plos?id=${encode(paramsId ?? '')}`);
+            await router.push(`../plos?cur=${encode(paramsId ?? '')}`);
 
         } catch (error) {
             setTypeAlertBox("warning");
@@ -146,7 +151,7 @@ export default function Page() {
                             title="ยกเลิก"
                             icon={<CloseIcon />}
                             color='#db3131'
-                            onClick={() => router.push(`../plos?id=${encode(paramsId ?? '')}`)}
+                            onClick={() => router.push(`../plos?cur=${encode(paramsId ?? '')}`)}
                         />
 
                         <ActionBtn
@@ -161,7 +166,32 @@ export default function Page() {
                     <FormControl fullWidth>
                         <Grid container spacing={2}>
                             <Grid item xs={12}>
-                                <Typography variant="h6" sx={{ padding: "8px 0px 16px", fontWeight: "bold" }}>ผลลัพธ์การเรียนรู้ระดับหลักสูตร (PLOs)</Typography>
+                                <Typography variant="h6" sx={{ padding: "8px 0px 16px", fontWeight: "bold" }}>
+                                    ผลลัพธ์การเรียนรู้ระดับหลักสูตร (PLOs)
+                                    <IconButton onClick={handleClick}>
+                                        <InfoIcon />
+                                    </IconButton>
+                                    <Popover
+                                        open={open}
+                                        anchorEl={anchorEl}
+                                        onClose={handleClose}
+                                        anchorOrigin={{
+                                            vertical: 'bottom',
+                                            horizontal: 'center',
+                                        }}
+                                        transformOrigin={{
+                                            vertical: 'top',
+                                            horizontal: 'center',
+                                        }}
+                                    >
+                                        <Typography sx={{ p: 2, maxWidth: 350 }}>
+                                            วิธีการสร้าง PLO สามารถทําได้ดังนี้<br /><br />
+                                            1. PLOs ไว้สำหรับการสร้างกลุ่มข้อมูลไว้ใช้กับ Sub PLO เช่น ใน PLOs1 มี Sub PLO 1.1 และ Sub PLO 1.2<br />
+                                            2. Sub PLO เป็น PLO ย่อยไว้ใช้กับ PLOs เช่น ใน PLOs1 มี Sub PLO 1.1 <br />
+                                            3. PLO เป็นชุดข้อมูลโดยไม่เกี่ยวข้องกับการสร้างกลุ่มข้อมูลและ PLO ย่อย
+                                        </Typography>
+                                    </Popover>
+                                </Typography>
                                 <Controller
                                     control={control}
                                     name="ploName"

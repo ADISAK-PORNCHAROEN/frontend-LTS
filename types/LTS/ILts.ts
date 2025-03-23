@@ -19,6 +19,15 @@ export interface IExcel {
     score?: number | null;
 }
 
+export interface IExcelWithScore {
+    subName?: string | null;
+    userId?: number | null;
+    subId?: number | null;
+    semester?: number | null;
+    year?: string | null;
+    filterRows?: IUserExcel[] | null;
+}
+
 export interface ISubjects {
     id?: number | null;
     curriculum?: ICurriculum | null;
@@ -97,6 +106,22 @@ export interface IUserCloList {
     ids?: string | null;
 }
 
+export interface IUserCloScore {
+    id?: number | null;
+    userCloId?: number | null;
+    curriculumId?: number | null;
+    subId?: number | null;
+    score?: number | null;
+    semester?: number | null;
+    year?: string | null;
+    createdDate?: Date | null;
+    createdBy?: string | null;
+    updatedDate?: Date | null;
+    updatedBy?: string | null;  
+    threshold?: number | null;
+    excelId?: number | null;
+}
+
 export interface ICurriculum {
     id?: number | null;
     curriculumCode?: string | null;
@@ -134,6 +159,7 @@ export interface IUserExcel {
     year?: string | null;
     fullName?: string | null;
     // clos?: IUserCloList[] | null;
+    userCloId?: number | null;
     excel?: IExcel[] | null;
     ids?: string | null;
     score?: number | null;

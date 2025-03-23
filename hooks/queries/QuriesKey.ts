@@ -20,6 +20,7 @@ const createClo = "CREATE_CLO"
 const getFindEmail = "GET_FIND_EMAIL"
 
 const getExcel = "GET_EXCEL"
+const getExcelWithScore = "GET_EXCEL"
 const uploadExcel = "UPLOAD_EXCEL"
 
 const getAllSubjects = "GET_ALL_SUBJECTS"
@@ -51,6 +52,10 @@ const deleteUserExcel = "DELETE_USER_EXCEL"
 const updateExcelName = "UPDATE_EXCEL_NAME"
 const updateExcelSemeNYear = "UPDATE_EXCEL_SEME_N_YEAR"
 const updateExcelScore = "UPDATE_EXCEL_SCORE"
+
+const getAllUserCloScore = "GET_ALL_USER_CLO_SCORE"
+const createUserCloScore = "CREATE_USER_CLO_SCORE"
+const updateUserCloScore = "UPDATE_USER_CLO_SCORE"
 export {
     getAllUsers,
     deleteUser,
@@ -69,6 +74,7 @@ export {
     createClo,
     getFindEmail,
     getExcel,
+    getExcelWithScore,
     uploadExcel,
     getAllSubjects,
     deleteSubjects,
@@ -94,4 +100,7 @@ export {
     updateExcelName,
     updateExcelSemeNYear,
     updateExcelScore,
+    getAllUserCloScore,
+    createUserCloScore,
+    updateUserCloScore,
 }

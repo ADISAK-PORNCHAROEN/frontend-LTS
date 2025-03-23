@@ -35,14 +35,19 @@ export default function ApplicantTracking() {
   let checkCurriculumPage = false;
   let checkCloPage = false;
   let checkPloPage = false;
+  let checkCloSubPage = false;
   // let checkAddTimesheet = false;
   if (dynamicParamsKeys.length > 0) {
     dynamicParamsKeys.forEach(param => {
       // let idx = pathnameWithoutDynamicParams.lastIndexOf("/")
       pathnameWithoutDynamicParams = pathnameWithoutDynamicParams.replace(`/${dynamicParams[param]}`, '')
       // pathnameWithoutDynamicParams = pathnameWithoutDynamicParams.slice(0, idx)
-      if (param == 'subNameEn') {
-        checkCreateSubject = true
+      if (param === 'subNameEn') {
+        if (pathname.includes('/clos/')) {
+          checkCloSubPage = true;
+        } else {
+          checkCreateSubject = true;
+        }
       } else if (param == 'name') {
         checkEditAccount = true
       } else if (param == 'subNameEn') {
@@ -64,6 +69,7 @@ export default function ApplicantTracking() {
   const subId = searchParams.get("sub1");
   const sub2Id = searchParams.get("sub");
   const curriculumId = searchParams.get("cur");
+  const cloId = searchParams.get("clo");
   const { encode, decode } = useUrlSafeBase64();
   const paramsId = Number(encodedCurId ? decode(encodedCurId) : null);
   const paramsSubId = Number(encodedSubId ? decode(encodedSubId) : null);
@@ -83,8 +89,8 @@ export default function ApplicantTracking() {
   const { data: cloData, isLoading: isLoadingPloData } = useGetAllClo();
 
   const curriculum = useMemo(() => {
-    return curriculumData?.data?.find((item: ICurriculum) => item.id === paramsId)?.degreeShortTh;
-  }, [curriculumData, paramsId]);
+    return curriculumData?.data?.find((item: ICurriculum) => item.id === paramsCurId)?.degreeShortTh;
+  }, [curriculumData, paramsCurId]);
 
   const subject = useMemo(() => {
     const foundSubject = subjectsData?.data?.find((item: ISubjects) => item.id === paramsId && item.curriculum?.id === paramsCurId);
@@ -155,12 +161,19 @@ export default function ApplicantTracking() {
     },
     {
       url: Paths.lts.plos, tracks: [
-        { level: 1, name: `${curriculum}`, linkTo: `${Paths.lts.plos}?id=${encodedCurId}` },
+        { level: 1, name: `${curriculum}`, linkTo: `${Paths.lts.plos}?cur=${curriculumId}` },
       ]
     },
     {
       url: Paths.lts.clos, tracks: [
-        { level: 1, name: `${subject1 ? subject1 : subject}`, linkTo: `${Paths.lts.clos}?id=${subId}&cur=${curriculumId}` },
+        { level: 1, name: `${curriculum}`, linkTo: `${Paths.lts.clos}?cur=${curriculumId}` },
+      ]
+    },
+    {
+      url: Paths.lts.createClo, tracks: [
+        { level: 1, name: `${curriculum}`, linkTo: `${Paths.lts.clos}?cur=${curriculumId}` },
+        { level: 2, name: `${subjectTh}`, linkTo: `${Paths.lts.clos}/${decodeURIComponent(dynamicParams?.subNameEn as string)}/?sub=${sub2Id}&cur=${curriculumId}` },
+        { level: 2, name: "สร้าง Clos", linkTo: Paths.lts.createClo },
       ]
     },
     {
@@ -177,14 +190,8 @@ export default function ApplicantTracking() {
     },
     {
       url: Paths.lts.createPlo, tracks: [
-        { level: 1, name: `${curriculum}`, linkTo: `${Paths.lts.plos}?id=${encodedCurId}` },
+        { level: 1, name: `${curriculum}`, linkTo: `${Paths.lts.plos}?cur=${curriculumId}` },
         { level: 2, name: "สร้าง Plos", linkTo: Paths.lts.createPlo },
-      ]
-    },
-    {
-      url: Paths.lts.createClo, tracks: [
-        { level: 1, name: `${subject}`, linkTo: `${Paths.lts.clos}?id=${encodedSubId}&cur=${curriculumId}` },
-        { level: 2, name: "สร้าง Clos", linkTo: Paths.lts.createClo },
       ]
     },
     {
@@ -249,7 +256,7 @@ export default function ApplicantTracking() {
     },
   ];
 
-  if (checkCreateSubject || checkEditAccount || checkTeachingPage || checkCurriculumPage || checkPloPage || checkCloPage) {
+  if (checkCreateSubject || checkEditAccount || checkTeachingPage || checkCurriculumPage || checkPloPage || checkCloPage || checkCloSubPage) {
 
     if (pathnameWithoutDynamicParams == `${Paths.lts.subjects}`) {
       const idx = pathUrls.findIndex(path => path.url == pathnameWithoutDynamicParams)
@@ -280,11 +287,29 @@ export default function ApplicantTracking() {
         )
       }
     } else if (pathnameWithoutDynamicParams == `${Paths.lts.clos}`) {
-      const idx = pathUrls.findIndex(path => path.url == pathnameWithoutDynamicParams)
+      if (cloId) {
+        const idx = pathUrls.findIndex(path => path.url == pathnameWithoutDynamicParams);
+        if (idx != -1) {
+          pathUrls[idx].tracks = [
+            { level: 1, name: `${curriculum}`, linkTo: `${Paths.lts.clos}?cur=${curriculumId}` },
+            { level: 2, name: `${subjectTh}`, linkTo: `${Paths.lts.clos}/${encodeURIComponent(dynamicParams?.subNameEn as string)}/?sub=${sub2Id}&cur=${curriculumId}` },
+            { level: 3, name: `${decodeURIComponent(dynamicParams?.cloName as string || "CLO" + cloId)}`, linkTo: `${Paths.lts.clos}?sub=${sub2Id}&cur=${curriculumId}&clo=${cloId}` }
+          ];
+        }
+      } else {
+        const idx = pathUrls.findIndex(path => path.url == pathnameWithoutDynamicParams);
+        if (idx != -1) {
+          pathUrls[idx].tracks.push(
+            { level: 3, name: `${subjectTh}`, linkTo: `${Paths.lts.clos}?sub=${sub2Id}&cur=${curriculumId}` },
+          );
+        }
+      }
+    } else if (pathnameWithoutDynamicParams.includes(`${Paths.lts.clos}`) && pathnameWithoutDynamicParams != `${Paths.lts.createClo}`) {
+      const idx = pathUrls.findIndex(path => path.url == pathnameWithoutDynamicParams);
       if (idx != -1) {
         pathUrls[idx].tracks.push(
-          { level: 3, name: `${decodeURIComponent(dynamicParams?.cloName as string)}`, linkTo: Paths.lts.clos },
-        )
+          { level: 3, name: `${decodeURIComponent(dynamicParams?.cloName as string)}`, linkTo: `${Paths.lts.clos}?sub=${sub2Id}&cur=${curriculumId}&clo=${cloId}` },
+        );
       }
     }
   }

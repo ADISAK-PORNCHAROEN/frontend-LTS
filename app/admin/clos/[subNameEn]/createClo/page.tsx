@@ -10,7 +10,7 @@ import Alert from '#/components/modal/Alert';
 import AccountBoxIcon from '@mui/icons-material/AccountBox';
 import CardBox from '#/components/CardBox';
 import { ICurriculum, ISubjects } from '#/types/LTS/ILts';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import useGetAllCurriculum from '#/hooks/useGetAllCurriculum';
 import { IClo } from '#/types/LTS/IPlo';
@@ -31,11 +31,14 @@ export default function Home() {
     const { data: curriculumData, isLoading: isLoadingCurriculumData } = useGetAllCurriculum();
     const { data: subjectsData, isLoading: isLoadingSubjectsData } = useGetAllSubjects();
     const searchParams = useSearchParams();
-    const encodedId = searchParams.get("id");
+    const subId = searchParams.get("sub");
     const curriculumId = searchParams.get("cur");
     const { encode, decode } = useUrlSafeBase64();
-    const paramsSubId = Number(encodedId ? decode(encodedId) : null);
+    const paramsSubId = Number(subId ? decode(subId) : null);
     const paramsCurId = Number(curriculumId ? decode(curriculumId) : null);
+    const pathname = usePathname();
+    const pathSegments = pathname.split('/');
+    const lastButOneSegment = pathSegments[pathSegments.length - 2];
 
     // modal
     const [textAlertBox, setTextAlertBox] = useState("");
@@ -119,7 +122,7 @@ export default function Home() {
                 }, 1500)
             });
 
-            await router.push(`../clos?id=${encodedId}&cur=${curriculumId}`);
+            await router.push(`../${lastButOneSegment}?sub=${subId}&cur=${curriculumId}`);
 
         } catch (error) {
             setTypeAlertBox("warning");
@@ -142,7 +145,7 @@ export default function Home() {
                             title="ยกเลิก"
                             icon={<CloseIcon />}
                             color='#db3131'
-                            onClick={() => router.push(`../clos?id=${encodedId}&cur=${curriculumId}`)}
+                            onClick={() => router.push(`../${lastButOneSegment}?sub=${subId}&cur=${curriculumId}`)}
                         />
 
                         <ActionBtn

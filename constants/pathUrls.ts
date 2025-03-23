@@ -18,6 +18,7 @@ export const PathUrls = {
     curriculum: "/admin/curriculum",
     plos: "/admin/plos",
     clos: "/admin/clos",
+    closSubName: "/admin/clos/[subNameEn]",
     evaluation: "/admin/teaching/evaluation",
     createSubjects: "/admin/subjects/createSubject",
     createCurriculum: "/admin/curriculum/createCurriculum",
@@ -29,7 +30,7 @@ export const PathUrls = {
     editTeaching: "/admin/teaching/editTeaching",
     editCurriculum: "admin/curriculum/[degreeFullEn]",
     editPlo: "admin/plos/[ploName]",
-    editClo: "admin/clos/[cloName]",
+    editClo: "admin/clos/[subNameEn]/[cloName]",
 
     coorTeaching: "/coordinator/teaching",
     coorCreateTeaching: "/coordinator/teaching/createTeaching",

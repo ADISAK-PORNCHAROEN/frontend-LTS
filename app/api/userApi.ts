@@ -2,7 +2,7 @@
 import axiosApi, { isAxiosError } from "#/utils/axiosApi";
 import { IAccount, IResponse, IUser } from "#/types/IResponse/IResponse";
 import { IClo, IPlo, IPloChecked, IPloClo, IPloRows } from "#/types/LTS/IPlo";
-import { ICurriculum, IExcel, ISubjects, IUserClo, IUserCloList, IUserExcel, IUserPlo, IUserSubject } from "#/types/LTS/ILts";
+import { ICurriculum, IExcel, IExcelWithScore, ISubjects, IUserClo, IUserCloList, IUserCloScore, IUserExcel, IUserPlo, IUserSubject } from "#/types/LTS/ILts";
 import { headers } from "next/headers";
 
 //nextauth api
@@ -876,6 +876,112 @@ export const uploadExcelApi = async (payload: IExcel, file: File) => {
         }
       }
     );
+
+    if (response?.data === undefined) {
+      throw new Error("Undefined response data");
+    }
+
+    return response.data;
+  } catch (error) {
+    if (isAxiosError(error)) {
+      console.error('Error details:', error.response?.data);
+    } else {
+      console.error('Unexpected error:', error);
+    }
+    throw error;
+  }
+};
+
+export const getAllUserCloScoreApi = async (): Promise<IResponse<IUserCloScore[]>> => {
+  try {
+    const response = await axiosApi.get<IResponse<IUserCloScore[]>>(
+      '/user-clo-score/getAllLtsUserCloScore'
+    );
+    // // console.log('Response:', response.data);
+    if (response?.data === undefined) {
+      throw new Error("Undefined response data");
+    }
+    return response.data;
+  } catch (error) {
+    if (isAxiosError(error)) {
+      console.error('Error details:', error.response?.data);
+    } else {
+      console.error('Unexpected error:', error);
+    }
+    throw error;
+  }
+};
+
+export const updateUserCloScoreApi = async (payload: IUserCloScore) => {
+  try {
+    const response = await axiosApi.put<IResponse<IUserCloScore>>(`/user-clo-score/updateLtsUserCloScore`, payload);
+    // // console.log('Response:', response.data);
+
+    if (response?.data === undefined) {
+      throw new Error("Undefined response data");
+    }
+
+    return response.data;
+  } catch (error) {
+    if (isAxiosError(error)) {
+      console.error('Error details:', error.response?.data);
+    } else {
+      console.error('Unexpected error:', error);
+    }
+    throw error;
+  }
+};
+
+export const getExcelWithScoreApi = async (payload: IExcelWithScore) => {
+  console.log("payload", payload);
+  try {
+    const response = await axiosApi.post(`/excel/clo-report-with-score`,
+      { filterRows: payload.filterRows },  // ส่งเป็น object ที่มี property ชื่อ filterRows
+      {
+        params: {
+          userId: payload.userId,
+          subId: payload.subId,
+          semester: payload.semester,
+          year: payload.year
+        },
+        responseType: 'blob',
+      }
+    );
+
+    // ส่วนที่เหลือเหมือนเดิม
+    if (!response.data) {
+      throw new Error("Undefined response data");
+    }
+
+    const blob = new Blob([response.data], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    });
+    const url = window.URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${payload.subName as any}_${payload.year}_${payload.semester}_${payload.subId}.xlsx`;
+    document.body.appendChild(a);
+    a.click();
+
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+
+    return { success: true, message: 'ดาวน์โหลดสำเร็จ' };
+  } catch (error) {
+    if (isAxiosError(error)) {
+      console.error('Error details:', error.response?.data);
+    } else {
+      console.error('Unexpected error:', error);
+    }
+    throw error;
+  }
+};
+
+export const createUserCloScoreApi = async (payload: IUserCloScore) => {
+  try {
+
+    const response = await axiosApi.post<IResponse<IUserClo>>(`/lts-user-excel-relation/createLtsUserExcelRelation`, payload);
 
     if (response?.data === undefined) {
       throw new Error("Undefined response data");

@@ -13,6 +13,8 @@ import { useSession } from "next-auth/react";
 // import useCreateOrganizeTableUser from "#/hooks/organizeTable/useCreateOrganizeTableUser";
 import TableLoading from "./TableLoading";
 
+// import { GridToolbar } from '@mui/x-data-grid';
+
 // TODO: try fix Warning: Cannot update a component (`candidate`) while rendering a different component (`Table`). try move onSelectRows outside setSelectedRows
 
 /**
@@ -25,7 +27,7 @@ export type CustomTableColumnType<R extends GridValidRowModel> = GridColDef<R> &
  * @template R as type of data in table
  */
 export type TableProps<R extends GridValidRowModel> = {
-  components?: any;
+  components?: any
   sx?: any
   getRowClassName?: (params: any) => string
 
@@ -167,6 +169,10 @@ export type TableProps<R extends GridValidRowModel> = {
   showViewButton?: boolean;
 
   isOrganize?: boolean;
+
+  headerComponent?: React.ReactNode;
+
+  footerComponent?: React.ReactNode;
 };
 
 export default function Table<R extends GridValidRowModel>({
@@ -194,7 +200,10 @@ export default function Table<R extends GridValidRowModel>({
   showViewButton = true,
   organizeCode,
   isOrganize = true,
-  getRowId
+  getRowId,
+  headerComponent,
+  footerComponent,
+  components,
 }: TableProps<R>) {
 
   const [selectedRows, setSelectedRows] = useState<R[]>([]) // NOTE: old logic for multi-selection
@@ -391,8 +400,31 @@ export default function Table<R extends GridValidRowModel>({
     return null; // Or display an error message
   }
 
+  const customComponents = {
+    ...components,
+    Toolbar: (props: any) => (
+      <>
+        {headerComponent && <>{headerComponent}</>}
+        {props.children}
+        {/* ส่วนสรุปผลการประเมิน */}
+        {footerComponent && <>{footerComponent}</>}
+        {/* Original footer with pagination */}
+        {props.children}
+      </>
+    ),
+    Footer: (props: any) => (
+      <>
+        {/* ส่วนสรุปผลการประเมิน */}
+        {footerComponent && <>{footerComponent}</>}
+        {/* Original footer with pagination */}
+        {props.children}
+      </>
+    )
+  };
+
   return (
     <>
+      {/* {headerComponent && <>{headerComponent}</>} */}
       <Box
         className=" w-full"
         sx={{
@@ -420,6 +452,8 @@ export default function Table<R extends GridValidRowModel>({
             loading={loading}
             slots={{
               noRowsOverlay: NoRowsOverlay,
+              toolbar: customComponents.Toolbar,
+              // footer: customComponents.Footer,
               // loadingOverlay: LinearProgress,
             }}
             rows={rowsWithIds}
@@ -436,6 +470,7 @@ export default function Table<R extends GridValidRowModel>({
           />)
         }
       </Box>
+      {/* {footerComponent && <>{footerComponent}</>} */}
       <CustomColumnDialog open={isOpenDialog}
         columns={customColumns}
         onClose={(_reason) => setOpenDialog(false)}

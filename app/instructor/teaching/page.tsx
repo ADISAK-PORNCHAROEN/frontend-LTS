@@ -30,6 +30,7 @@ import CheckIcon from '@mui/icons-material/Check';
 import AlertConfirm from '#/components/modal/AlertConfirm';
 import useGetAllUsers from '#/hooks/useGetAllUsers';
 import AccessDeniedPage from '#/components/AccessDeniedPage';
+import useGetAllUserCloScore from '#/hooks/useGetAllUserCloScore';
 
 export default function Page() {
     const [rows, setRows] = useState<IUserClo[]>([]);
@@ -51,6 +52,7 @@ export default function Page() {
     const { mutateAsync: updateNewUserClo, isLoading: isLoadingUpdateNewUserClo } = useUpdateNewUserClo();
     const { data: userCloList, isLoading: isLoadingUserCloList } = useGetAllCloList();
     const { data: userData, isLoading: isLoadingUserData } = useGetAllUsers();
+    const { data: userCloScoreData, isLoading: isLoadingUserloScoreData, refetch } = useGetAllUserCloScore();
     const [pendingChanges, setPendingChanges] = useState<{
         cloId: string | number | null | undefined;
         plos: IUserPlo[];
@@ -483,18 +485,33 @@ export default function Page() {
 
     const filteredPastClo = nowClo?.filter(
         (cloItem) => filteredRows.some((row) =>
-            row.clo?.every((filteredClo: any) => filteredClo.cloId !== cloItem.id)
+            row.clo?.some((filteredClo: any) => filteredClo.cloId === cloItem.id)
         )
     );
-
+    
     const missingRows = filteredRows.filter(row =>
-        row.clo?.some((filteredClo: IPlo) =>
+        row.clo?.every((filteredClo: IPlo) =>
             !filteredPastClo?.some(cloItem => cloItem.id === filteredClo.cloId)
         )
     );
 
     const handleUpdateNewClo = async (data: IUserClo[]) => {
         try {
+            if (filteredNowClo && filteredNowClo.length > 0) {
+                const resCreate = {
+                    ploIds: filteredNowPloIds,
+                    cloIds: filteredNowClo?.map((plo) => plo.id),
+                    userId: user?.id,
+                    subId: paramsSubId,
+                    curriculumId: paramsCurId,
+                    semester: data[0].semester,
+                    year: data[0].year,
+                    createdDate: new Date(),
+                    createdBy: user?.name
+                }
+    
+                await createUserCloWithPloUpdate(resCreate);
+            }
 
             const updatedCloIds: number[] = [];
 
@@ -516,20 +533,6 @@ export default function Page() {
             }));
 
             await updateNewUserClo(resUpdate);
-
-            const resCreate = {
-                ploIds: filteredNowPloIds,
-                cloIds: filteredNowClo?.map((plo) => plo.id),
-                userId: user?.id,
-                subId: paramsSubId,
-                curriculumId: paramsCurId,
-                semester: data[0].semester,
-                year: data[0].year,
-                createdDate: new Date(),
-                createdBy: user?.name
-            }
-
-            await createUserCloWithPloUpdate(resCreate);
 
             if (missingRows?.length > 0) {
                 const ids = missingRows?.map((data) => data.id).join(',');
