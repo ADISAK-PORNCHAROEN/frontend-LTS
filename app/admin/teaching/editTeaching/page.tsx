@@ -161,6 +161,7 @@ export default function Page() {
                 updatedBy: user?.name,
                 updatedDate: new Date(),
             }));
+            console.log("result", result);
 
             const validationErrors = checkExistingField(result);
 
@@ -240,7 +241,36 @@ export default function Page() {
     };
 
     const renderPloSelection = () => {
-        const groupedPlos = ploData?.data?.filter(plo => plo.curriculum?.id === paramsCurId).reduce((acc, plo) => {
+        const ploDataItems = ploData?.data?.filter(plo => plo.curriculum?.id === paramsCurId) || [];
+
+        const userCloPlos = new Set();
+        rows.forEach(clo => {
+            if (clo.plo && Array.isArray(clo.plo)) {
+                clo.plo.forEach(plo => {
+                    if (plo.ploId) userCloPlos.add(plo.ploId);
+                });
+            }
+        });
+
+        let combinedPlos = [...ploDataItems];
+
+        rows.forEach(clo => {
+            if (clo.plo && Array.isArray(clo.plo)) {
+                clo.plo.forEach(ploClo => {
+                    const existsInCombined = combinedPlos.some(p => p.id === ploClo.ploId);
+                    if (!existsInCombined && ploClo.ploId && ploClo.ploName) {
+                        combinedPlos.push({
+                            id: ploClo.ploId,
+                            ploName: ploClo.ploName,
+                            ploDesc: ploClo.ploDesc || '',
+                            curriculum: { id: paramsCurId }
+                        });
+                    }
+                });
+            }
+        });
+
+        const groupedPlos = combinedPlos.reduce((acc, plo) => {
             const mainPloMatch = plo?.ploName?.match(/^(PLOs?\d+)/)?.[1];
             const subPloMatch = plo?.ploName?.match(/^(Sub PLO (\d+\.\d+))/);
 
@@ -258,7 +288,6 @@ export default function Page() {
                 const correspondingMainPlo = `PLOs${subPloNumber}`;
 
                 if (acc[correspondingMainPlo]) {
-
                     acc[correspondingMainPlo] = acc[correspondingMainPlo].filter(
                         p => !p.ploName.startsWith(`PLOs${subPloNumber}`)
                     );

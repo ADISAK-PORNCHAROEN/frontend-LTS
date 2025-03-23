@@ -77,6 +77,8 @@ export default function Page() {
     const [isOpenAlertBox, setIsOpenAlertBox] = useState(false);
     const [isOpenAlertForm, setIsOpenAlertForm] = useState(false);
     const [isOpenConfirmModalAlert, setIsOpenConfirmModalAlert] = useState(false);
+    const [isOpenConfirmUpdateAlert, setIsOpenConfirmUpdateAlert] = useState(false);
+    const [textAlertBoxConfirm, setTextAlertBoxConfirm] = useState("");
 
     const Role = {
         isAdmin: "admin",
@@ -223,6 +225,11 @@ export default function Page() {
         setRowsSelected(data);
         setAnchorEl(null);
         setIsOpenConfirmModalAlert(true);
+    }
+
+    const handleConfirmUpdate = async () => {
+        setAnchorEl(null);
+        setIsOpenConfirmUpdateAlert(true);
     }
 
     const handleDelete = async (data: IUserClo[]) => {
@@ -488,7 +495,7 @@ export default function Page() {
             row.clo?.some((filteredClo: any) => filteredClo.cloId === cloItem.id)
         )
     );
-    
+
     const missingRows = filteredRows.filter(row =>
         row.clo?.every((filteredClo: IPlo) =>
             !filteredPastClo?.some(cloItem => cloItem.id === filteredClo.cloId)
@@ -496,6 +503,7 @@ export default function Page() {
     );
 
     const handleUpdateNewClo = async (data: IUserClo[]) => {
+        setIsOpenConfirmUpdateAlert(false);
         try {
             if (filteredNowClo && filteredNowClo.length > 0) {
                 const resCreate = {
@@ -509,7 +517,7 @@ export default function Page() {
                     createdDate: new Date(),
                     createdBy: user?.name
                 }
-    
+
                 await createUserCloWithPloUpdate(resCreate);
             }
 
@@ -611,7 +619,7 @@ export default function Page() {
                         >
                             <MenuItem sx={{ width: '150px', backgroundColor: "#FFF" }} onClick={() => handleConfirmDelete(filteredRows)}>ลบข้อมูลทั้งหมด</MenuItem>
                             <MenuItem sx={{ width: '150px', backgroundColor: "#FFF" }} onClick={handleNavigationEditPush}>แก้ไข PLO</MenuItem>
-                            <MenuItem sx={{ width: '150px', backgroundColor: "#FFF" }} onClick={() => handleUpdateNewClo(filteredRows)}>อัพเดต CLO</MenuItem>
+                            <MenuItem sx={{ width: '150px', backgroundColor: "#FFF" }} onClick={handleConfirmUpdate}>อัพเดต CLO</MenuItem>
                         </Menu>
                         <ActionBtn
                             title="Export Excel"
@@ -693,6 +701,14 @@ export default function Page() {
                     setIsOpen={setIsOpenConfirmModalAlert}
                     onConfirm={() => handleDelete(rowsSelected.length > 0 ? rowsSelected : filteredRows)}
                     description="ลบข้อมูลทั้งหมด"
+                    title="คุณแน่ใจหรือไม่?"
+                />
+
+                <AlertConfirm
+                    isOpen={isOpenConfirmUpdateAlert}
+                    setIsOpen={setIsOpenConfirmUpdateAlert}
+                    onConfirm={() => handleUpdateNewClo(filteredRows)}
+                    description="อัพเดต CLO ทั้งหมด"
                     title="คุณแน่ใจหรือไม่?"
                 />
             </PageContentLayout>

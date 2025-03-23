@@ -1,12 +1,22 @@
 "use client";
 import { useEffect, useState } from 'react';
-import { BarChart } from '@mui/x-charts/BarChart';
-import { Grid, Typography, Box, Paper, FormControl, InputLabel, Select, MenuItem, SelectChangeEvent, Button, Switch, FormControlLabel, LinearProgress } from '@mui/material';
+import {
+    Grid, Typography, Box, Paper, FormControl, InputLabel,
+    Select, MenuItem, SelectChangeEvent, LinearProgress,
+    Chip
+} from '@mui/material';
 import SchoolIcon from '@mui/icons-material/School';
-import TimelineIcon from '@mui/icons-material/Timeline';
+import BarChartIcon from '@mui/icons-material/BarChart';
 import { useSession } from 'next-auth/react';
-import { StudentEnrollmentChartProps, ComprehensiveChartData } from '#/types/LTS/ILts';
-import { m } from 'framer-motion';
+import { StudentEnrollmentChartProps } from '#/types/LTS/ILts';
+import useGetAllUserCloScore from '#/hooks/useGetAllUserCloScore';
+import { BarChart } from '@mui/x-charts/BarChart';
+
+interface CloScoreThreshold {
+    cloId: number;
+    requiredScore: number;
+}
+
 
 export const StudentEnrollmentChart = ({
     excelData,
@@ -21,25 +31,15 @@ export const StudentEnrollmentChart = ({
     const [selectedSemester, setSelectedSemester] = useState<string>("");
     const [availableSubjects, setAvailableSubjects] = useState<{ id: number; subNameTh: string }[]>([]);
     const [selectedSubject, setSelectedSubject] = useState<string>("");
-    const [showAllData, setShowAllData] = useState<boolean>(true);
-    const [chartData, setChartData] = useState<{
-        studentCount: number;
-        subjectName: string;
-    }>({
-        studentCount: 0,
-        subjectName: ""
-    });
-    const [comprehensiveData, setComprehensiveData] = useState<ComprehensiveChartData>({
-        labels: [],
-        data: []
-    });
-
-    console.log("subjects", subjects)
+    const [cloThresholds, setCloThresholds] = useState<CloScoreThreshold[]>([]);
+    const [validationResults, setValidationResults] = useState<any[]>([]);
+    const { data: userCloScoreData, isLoading: isLoadingUserCloScoreData, refetch } = useGetAllUserCloScore();
+    const [initialSetupDone, setInitialSetupDone] = useState(false);
 
     useEffect(() => {
         if (isLoadingExcelData || !excelData?.data || subjects.length === 0) return;
+        if (initialSetupDone) return;
 
-        // รับรองว่ามีข้อมูล subjects ครบถ้วนก่อนประมวลผล
         const validSubjects = subjects.filter(sub => sub.id && sub.subNameTh);
         if (validSubjects.length === 0) return;
 
@@ -52,105 +52,109 @@ export const StudentEnrollmentChart = ({
         const years = Array.from(new Set(filteredData.map(item => item.year))).sort();
         setAvailableYears(years);
 
-        if (years.length > 0 && !selectedYear) {
-            setSelectedYear(years[years.length - 1]);
-        }
-
         const subjectsFromData = Array.from(
             new Set(filteredData.map(item => item.subId))
         ).map(subId => {
             const subject = subjects.find(s => s.id === subId);
             return {
                 id: subId,
-                subNameTh: subject?.subNameTh!
+                subNameTh: subject?.subNameTh || ''
             };
-        });
+        }).filter(subject => subject.subNameTh);
 
         setAvailableSubjects(subjectsFromData);
 
-        if (subjectsFromData.length > 0 && !selectedSubject && subjectsFromData[0].subNameTh) {
+        if (years.length > 0 && subjectsFromData.length > 0) {
+            setSelectedYear(years[years.length - 1]);
             setSelectedSubject(subjectsFromData[0].id.toString());
+            setInitialSetupDone(true);
         }
-    }, [excelData, isLoadingExcelData, selectedYear, subjects]);
+    }, [excelData?.data, isLoadingExcelData, subjects, initialSetupDone]);
 
     useEffect(() => {
         if (!excelData?.data || !selectedYear || !selectedSubject) return;
-
+        
         const subId = parseInt(selectedSubject);
-
+        
         const filteredData = excelData.data.filter(
             item => item.year === selectedYear && item.subId === subId
         );
-
+        
         const semesters = Array.from(
             new Set(filteredData.map(item => item.semester))
         ).sort();
-
+        
         setAvailableSemesters(semesters);
-
+        
         if (semesters.length > 0 && (!selectedSemester || !semesters.includes(parseInt(selectedSemester)))) {
             setSelectedSemester(semesters[0].toString());
         }
-    }, [excelData, selectedYear, selectedSubject]);
+    }, [excelData?.data, selectedYear, selectedSubject, selectedSemester]); 
 
     useEffect(() => {
-        if (!excelData?.data || !selectedYear || !selectedSubject || !selectedSemester) return;
+        if (isLoadingUserCloScoreData || isLoadingExcelData ||
+            !userCloScoreData || !excelData?.data ||
+            !selectedYear || !selectedSubject || !selectedSemester) {
+            return;
+        }
 
         const subId = parseInt(selectedSubject);
         const semesterId = parseInt(selectedSemester);
 
-        const subject = availableSubjects.find(s => s.id === subId);
-        const subjectName = subject?.subNameTh as string;
-
-        const filteredData = excelData.data.filter(item =>
-            item.year === selectedYear &&
+        const thresholds = userCloScoreData?.data?.filter(item =>
             item.subId === subId &&
-            item.semester === semesterId
+            item.year === selectedYear &&
+            item.semester === semesterId)
+            .map(item => ({
+                cloId: item.userCloId!,
+                requiredScore: item.score ?? 0
+            }));
+
+        setCloThresholds(thresholds || []);
+
+        const relevantExcelData = excelData.data.filter(student =>
+            student.subId === subId &&
+            student.year === selectedYear &&
+            student.semester === semesterId
         );
 
-        const uniqueStudents = new Set(filteredData.map(item => item.id));
+        const results = relevantExcelData.map(student => {
+            const studentCloScores = student.excel || [];
 
-        setChartData({
-            studentCount: uniqueStudents.size,
-            subjectName
-        });
-    }, [excelData, selectedYear, selectedSubject, selectedSemester, availableSubjects]);
+            const cloResults = thresholds?.map(threshold => {
+                const studentCloScore = studentCloScores.find(score => score.userCloId === threshold.cloId);
+                const scoreValue = studentCloScore ? studentCloScore.score : 0;
+                const isPassing = scoreValue >= threshold?.requiredScore;
 
-    useEffect(() => {
-        if (isLoadingExcelData || !excelData?.data || !selectedSubject) return;
+                return {
+                    cloId: threshold.cloId,
+                    requiredScore: threshold.requiredScore,
+                    actualScore: scoreValue,
+                    isPassing
+                };
+            }) || [];
 
-        const subId = parseInt(selectedSubject);
+            const overallResult = cloResults.every(result => result.isPassing);
 
-        const subject = availableSubjects.find(s => s.id === subId);
-        const subjectName = subject?.subNameTh;
-
-        const subjectData = excelData.data.filter(item => item.subId === subId);
-
-        const groupedData: Map<string, Set<number>> = new Map();
-
-        subjectData.forEach(item => {
-            const key = `${item.year} (${item.semester})`;
-            if (!groupedData.has(key)) {
-                groupedData.set(key, new Set());
-            }
-            groupedData.get(key)!.add(item.id);
-        });
-
-        const sortedLabels = Array.from(groupedData.keys()).sort((a, b) => {
-            const [yearA, semA] = a.split(' ');
-            const [yearB, semB] = b.split(' ');
-            return yearA === yearB
-                ? parseInt(semA.replace(/[()]/g, '')) - parseInt(semB.replace(/[()]/g, ''))
-                : yearA.localeCompare(yearB);
+            return {
+                studentId: student.id,
+                studentName: student.fullName,
+                stuId: student.subId,
+                cloResults,
+                overallResult
+            };
         });
 
-        const chartData = {
-            labels: sortedLabels,
-            data: sortedLabels.map(key => groupedData.get(key)!.size)
-        };
-
-        setComprehensiveData(chartData);
-    }, [excelData, selectedSubject, availableSubjects]);
+        setValidationResults(results);
+    }, [
+        userCloScoreData,
+        selectedYear,
+        selectedSubject,
+        selectedSemester,
+        isLoadingUserCloScoreData,
+        isLoadingExcelData,
+        excelData
+    ]);
 
     const handleYearChange = (event: SelectChangeEvent) => {
         setSelectedYear(event.target.value);
@@ -166,13 +170,36 @@ export const StudentEnrollmentChart = ({
         setSelectedSemester("");
     };
 
-    const handleToggleView = () => {
-        setShowAllData(!showAllData);
+    const getChartData = () => {
+        if (!validationResults.length) return { xAxisData: [], passData: [], failData: [] };
+
+        // นับจำนวนคนที่ผ่านและไม่ผ่านรวม
+        const passCount = validationResults.filter(student => student.overallResult).length;
+        const failCount = validationResults.filter(student => !student.overallResult).length;
+
+        // ข้อมูล CLO แต่ละตัว
+        const cloLabels = cloThresholds.map((_, index) => `CLO ${index + 1}`);
+        const cloPassCounts = cloLabels.map((_, index) => {
+            return validationResults.filter(student =>
+                student.cloResults[index]?.isPassing
+            ).length;
+        });
+        const cloFailCounts = cloLabels.map((_, index) => {
+            return validationResults.filter(student =>
+                !student.cloResults[index]?.isPassing
+            ).length;
+        });
+
+        return {
+            xAxisData: ['ผลรวม', ...cloLabels],
+            passData: [passCount, ...cloPassCounts],
+            failData: [failCount, ...cloFailCounts]
+        };
     };
 
-    if (isLoadingCloList || isLoadingExcelData) {
+    if (isLoadingCloList || isLoadingExcelData || isLoadingUserCloScoreData) {
         return <div className='mt-4'>
-            <LinearProgress />;
+            <LinearProgress />
         </div>
     }
 
@@ -180,7 +207,11 @@ export const StudentEnrollmentChart = ({
         return <Typography>ไม่พบข้อมูลนักศึกษา</Typography>;
     }
 
-    const subjectName = availableSubjects.find(s => s.id === parseInt(selectedSubject))?.subNameTh
+    if (!userCloScoreData || userCloScoreData?.data?.length === 0) {
+        return <Typography>ไม่พบข้อมูลเกณฑ์คะแนน CLO</Typography>;
+    }
+
+    const { xAxisData, passData, failData } = getChartData();
 
     return (
         <Grid container spacing={2} sx={{ mt: 2 }}>
@@ -203,7 +234,7 @@ export const StudentEnrollmentChart = ({
                         <Box sx={{ display: 'flex', alignItems: 'center', mb: { xs: 2, md: 0 } }}>
                             <SchoolIcon sx={{ fontSize: 30, color: '#1976d2', mr: 1 }} />
                             <Typography variant="h6" color="primary" sx={{ fontWeight: 'bold' }}>
-                                จำนวนนักศึกษาที่ลงทะเบียนเรียน
+                                ผลการตรวจสอบคะแนน CLO
                             </Typography>
                         </Box>
 
@@ -213,21 +244,6 @@ export const StudentEnrollmentChart = ({
                             gap: 2,
                             alignItems: 'center'
                         }}>
-                            <FormControlLabel
-                                control={
-                                    <Switch
-                                        checked={showAllData}
-                                        onChange={handleToggleView}
-                                        color="primary"
-                                    />
-                                }
-                                label={
-                                    <Typography variant="body2" sx={{ whiteSpace: 'nowrap' }}>
-                                        แสดงข้อมูลทั้งหมด
-                                    </Typography>
-                                }
-                            />
-
                             <FormControl sx={{ minWidth: 120 }} size="small">
                                 <InputLabel id="subject-select-label">รายวิชา</InputLabel>
                                 <Select
@@ -249,143 +265,138 @@ export const StudentEnrollmentChart = ({
                                 </Select>
                             </FormControl>
 
-                            {!showAllData && (
-                                <>
-                                    <FormControl sx={{ minWidth: 100 }} size="small">
-                                        <InputLabel id="year-select-label">ปีการศึกษา</InputLabel>
-                                        <Select
-                                            labelId="year-select-label"
-                                            id="year-select"
-                                            value={selectedYear}
-                                            label="ปีการศึกษา"
-                                            onChange={handleYearChange}
-                                        >
-                                            {availableYears.map(year => (
-                                                <MenuItem key={year} value={year}>{year}</MenuItem>
-                                            ))}
-                                        </Select>
-                                    </FormControl>
+                            <FormControl sx={{ minWidth: 100 }} size="small">
+                                <InputLabel id="year-select-label">ปีการศึกษา</InputLabel>
+                                <Select
+                                    labelId="year-select-label"
+                                    id="year-select"
+                                    value={selectedYear}
+                                    label="ปีการศึกษา"
+                                    onChange={handleYearChange}
+                                >
+                                    {availableYears.map(year => (
+                                        <MenuItem key={year} value={year}>{year}</MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
 
-                                    <FormControl sx={{ minWidth: 100 }} size="small">
-                                        <InputLabel id="semester-select-label">ภาคเรียน</InputLabel>
-                                        <Select
-                                            labelId="semester-select-label"
-                                            id="semester-select"
-                                            value={selectedSemester}
-                                            label="ภาคเรียน"
-                                            onChange={handleSemesterChange}
-                                            disabled={availableSemesters.length === 0}
-                                        >
-                                            {availableSemesters.map(semester => (
-                                                <MenuItem key={semester} value={semester.toString()}>
-                                                    {semester}
-                                                </MenuItem>
-                                            ))}
-                                        </Select>
-                                    </FormControl>
-                                </>
-                            )}
+                            <FormControl sx={{ minWidth: 100 }} size="small">
+                                <InputLabel id="semester-select-label">ภาคเรียน</InputLabel>
+                                <Select
+                                    labelId="semester-select-label"
+                                    id="semester-select"
+                                    value={selectedSemester}
+                                    label="ภาคเรียน"
+                                    onChange={handleSemesterChange}
+                                    disabled={availableSemesters.length === 0}
+                                >
+                                    {availableSemesters.map(semester => (
+                                        <MenuItem key={semester} value={semester.toString()}>
+                                            {semester}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
                         </Box>
                     </Box>
 
-                    {!showAllData && selectedYear && selectedSubject && selectedSemester && (
-                        <Box sx={{ height: 400, width: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
-                            <BarChart
-                                xAxis={[{
-                                    scaleType: 'band',
-                                    data: [`${chartData.subjectName}`],
-                                    tickLabelStyle: {
-                                        fontSize: 16,
-                                        fontWeight: 'bold'
-                                    }
-                                }]}
-                                series={[
-                                    {
-                                        data: [chartData.studentCount],
-                                        label: 'จำนวนนักศึกษาลงทะเบียน',
-                                        color: '#1976d2'
-                                    }
-                                ]}
-                                height={300}
-                                width={500}
-                            // margin={{ top: 10, bottom: 50, left: 80, right: 80 }}
-                            />
-
-                            <Box sx={{
-                                mt: 4,
-                                p: 2,
-                                borderRadius: 2,
-                                backgroundColor: '#e3f2fd',
-                                textAlign: 'center',
-                                width: 'fit-content'
-                            }}>
-                                <Typography variant="h6" color="primary" sx={{ fontWeight: 'medium' }}>
-                                    {`วิชา ${chartData.subjectName} ปีการศึกษา ${selectedYear} ภาคเรียนที่ ${selectedSemester}`}
+                    {selectedYear && selectedSubject && selectedSemester && (
+                        <>
+                            {/* CLO Thresholds Summary */}
+                            <Box sx={{ mb: 3, p: 2, bgcolor: '#f5f5f5', borderRadius: 1 }}>
+                                <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 1 }}>
+                                    เกณฑ์การผ่าน CLO:
                                 </Typography>
-                                <Typography variant="h5" color="text.primary" sx={{ fontWeight: 'bold', mt: 1 }}>
-                                    {`มีนักศึกษาลงทะเบียนทั้งหมด ${chartData.studentCount} คน`}
+                                <Grid container spacing={2}>
+                                    {cloThresholds.map((threshold, index) => (
+                                        <Grid item key={threshold.cloId}>
+                                            <Chip
+                                                label={`CLO ${index + 1}: ≥ ${threshold.requiredScore}`}
+                                                color="primary"
+                                                variant="outlined"
+                                            />
+                                        </Grid>
+                                    ))}
+                                </Grid>
+                                <Typography variant="body2" sx={{ mt: 1, fontStyle: 'italic' }}>
+                                    *นักศึกษาต้องผ่านทุก CLO จึงจะถือว่าผ่านเกณฑ์โดยรวม
                                 </Typography>
                             </Box>
-                        </Box>
-                    )}
 
-                    {/* แสดงข้อมูลทั้งหมดของวิชาที่เลือก */}
-                    {showAllData && selectedSubject && (
-                        <Box sx={{ height: 500, width: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
-                            {comprehensiveData.labels.length > 0 ? (
-                                <>
-                                    <BarChart
-                                        xAxis={[{
-                                            scaleType: 'band',
-                                            data: comprehensiveData.labels,
-                                            tickLabelStyle: {
-                                                fontSize: 12,
-                                            }
-                                        }]}
-                                        series={[
-                                            {
-                                                data: comprehensiveData.data,
-                                                label: 'จำนวนนักศึกษาลงทะเบียน',
-                                                color: '#1976d2'
-                                            }
-                                        ]}
-                                        height={350}
-                                    // width={Math.max(500, comprehensiveData.labels.length * 70)}
-                                    // margin={{ top: 10, bottom: 70, left: 80, right: 80 }}
-                                    />
-
-                                    <Box sx={{
-                                        mt: 4,
-                                        p: 2,
-                                        borderRadius: 2,
-                                        backgroundColor: '#e3f2fd',
-                                        textAlign: 'center',
-                                        width: 'fit-content'
-                                    }}>
-                                        <Typography variant="h6" color="primary" sx={{ fontWeight: 'medium' }}>
-                                            {`วิชา ${subjectName} - ข้อมูลทั้งหมด`}
-                                        </Typography>
-                                        <Typography variant="h5" color="text.primary" sx={{ fontWeight: 'bold', mt: 1 }}>
-                                            {`มีข้อมูลทั้งหมด ${comprehensiveData.labels.length} ภาคการศึกษา`}
-                                        </Typography>
+                            {/* Chart MUI */}
+                            <Paper sx={{ p: 2, mb: 3 }} variant="outlined">
+                                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                                    <BarChartIcon sx={{ mr: 1, color: 'primary.main' }} />
+                                    <Typography variant="h6">กราฟแสดงผลการตรวจสอบคะแนน CLO</Typography>
+                                </Box>
+                                <Box sx={{ width: '100%', height: 400 }}>
+                                    {validationResults.length > 0 && (
+                                        <BarChart
+                                            height={350}
+                                            series={[
+                                                {
+                                                    data: passData,
+                                                    label: 'จำนวนนักศึกษาที่ผ่าน',
+                                                    color: '#4caf50',
+                                                    valueFormatter: (value) => `${value} คน`
+                                                },
+                                                {
+                                                    data: failData,
+                                                    label: 'จำนวนนักศึกษาที่ไม่ผ่าน',
+                                                    color: '#f44336',
+                                                    valueFormatter: (value) => `${value} คน`
+                                                }
+                                            ]}
+                                            xAxis={[{
+                                                data: xAxisData,
+                                                scaleType: 'band'
+                                            }]}
+                                            yAxis={[{
+                                                label: 'จำนวนนักศึกษา (คน)'
+                                            }]}
+                                            title="ผลการตรวจสอบคะแนน CLO"
+                                            sx={{ width: '100%' }}
+                                        />
+                                    )}
+                                </Box>
+                                <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center', gap: 4 }}>
+                                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                        <Box sx={{ width: 16, height: 16, bgcolor: '#4caf50', mr: 1 }}></Box>
+                                        <Typography variant="body2">ผ่านเกณฑ์</Typography>
                                     </Box>
-                                </>
-                            ) : (
-                                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 300 }}>
-                                    <Typography variant="body1" color="text.secondary">
-                                        ไม่พบข้อมูลนักศึกษาสำหรับวิชานี้
+                                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                        <Box sx={{ width: 16, height: 16, bgcolor: '#f44336', mr: 1 }}></Box>
+                                        <Typography variant="body2">ไม่ผ่านเกณฑ์</Typography>
+                                    </Box>
+                                </Box>
+                            </Paper>
+
+                            {/* Summary Statistics */}
+                            <Box sx={{ mt: 3, p: 2, bgcolor: '#f5f5f5', borderRadius: 1 }}>
+                                <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 1 }}>
+                                    สรุปผล:
+                                </Typography>
+                                <Box sx={{ display: 'flex', gap: 3 }}>
+                                    <Typography>
+                                        จำนวนนักศึกษาทั้งหมด: {validationResults.length} คน
+                                    </Typography>
+                                    <Typography>
+                                        ผ่านเกณฑ์: {validationResults.filter(student => student.overallResult).length} คน
+                                    </Typography>
+                                    <Typography>
+                                        ไม่ผ่านเกณฑ์: {validationResults.filter(student => !student.overallResult).length} คน
                                     </Typography>
                                 </Box>
-                            )}
-                        </Box>
+                            </Box>
+                        </>
                     )}
 
-                    {(!selectedSubject || (!selectedYear || !selectedSemester) && !showAllData) && (
+                    {(!selectedSubject || (!selectedYear || !selectedSemester)) && (
                         <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 300 }}>
                             <Typography variant="body1" color="text.secondary">
                                 {!selectedSubject
                                     ? 'กรุณาเลือกรายวิชาเพื่อแสดงข้อมูล'
-                                    : 'กรุณาเลือกปีการศึกษาและภาคเรียน หรือเปิดโหมดแสดงข้อมูลทั้งหมด'}
+                                    : 'กรุณาเลือกปีการศึกษาและภาคเรียน'}
                             </Typography>
                         </Box>
                     )}
