@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from 'react'
-import { Box, Alert, Checkbox, FormControl, FormControlLabel, FormGroup, FormHelperText, Grid, InputLabel, Menu, MenuItem, Paper, Select, Stack, TextField, Typography } from '@mui/material';
+import { Box, Alert, Checkbox, FormControl, FormControlLabel, FormGroup, FormHelperText, Grid, InputLabel, Menu, MenuItem, Paper, Select, Stack, TextField, Typography, Backdrop, CircularProgress } from '@mui/material';
 import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 import AddIcon from '@mui/icons-material/Add';
 import ActionBtn from '#/components/button/ActionBtn';
@@ -29,6 +29,8 @@ import useUpdateExcelName from '#/hooks/useUpdateExcelName';
 import { IResponse } from '#/types/IResponse/IResponse';
 import useGetAllUserExcel from '#/hooks/useGetAllUserExcel';
 import useUpdateExcelSemeNYear from '#/hooks/useUpdateExcelSemeNYear';
+import useGetAllUsers from '#/hooks/useGetAllUsers';
+import AccessDeniedPage from '#/components/AccessDeniedPage';
 
 export default function Page() {
     const [rows, setRows] = useState<IUserClo[]>([]);
@@ -46,6 +48,7 @@ export default function Page() {
     const { mutateAsync: uploadExcelName, isLoading: isLoadingUploadName } = useUpdateExcelName();
     const { mutateAsync: uploadExcelSemeNYear, isLoading: isLoadingUploadSemeNYear } = useUpdateExcelSemeNYear();
     const { data: excelData, isLoading: isLoadingExcelData } = useGetAllUserExcel();
+    const { data: userData, isLoading: isLoadingUserData } = useGetAllUsers();
     const { encode, decode } = useUrlSafeBase64();
     const searchParams = useSearchParams();
     const subId = searchParams.get("sub");
@@ -57,11 +60,51 @@ export default function Page() {
     const paramsSemId = Number(semId ? decode(semId) : null);
     const paramsYearId = yearId ? decode(yearId) : null;
     const [selectedPlos, setSelectedPlos] = useState<number[]>([]);
+    const [hasAccess, setHasAccess] = useState<boolean | null>(null);
+    const [isCheckingAccess, setIsCheckingAccess] = useState(true);
 
     // modal
     const [textAlertBox, setTextAlertBox] = useState("");
     const [typeAlertBox, setTypeAlertBox] = useState<"success" | "warning" | "error">("success");
     const [isOpenAlertBox, setIsOpenAlertBox] = useState(false);
+
+    const Role = {
+        isAdmin: "admin",
+        isCoordinator: "program_coordinator",
+        isInstructor: "instructor"
+    }
+
+    useEffect(() => {
+        const checkAccess = async () => {
+            if (!userData?.data || !user || !paramsSubId || !paramsCurId) {
+                return;
+            }
+
+            let hasPermission = false;
+
+            if (user.role === Role.isAdmin) {
+                hasPermission = true;
+            } else {
+                const currentUser = userData.data.find((u: any) => u.id === user.id);
+
+                if (currentUser) {
+                    const hasSubject = currentUser.subjects?.some((subject: any) => {
+                        return subject.subjects?.some((sub: any) =>
+                            sub.id === paramsSubId &&
+                            sub.curriculum?.id === paramsCurId
+                        );
+                    });
+
+                    hasPermission = !!hasSubject;
+                }
+            }
+
+            setHasAccess(hasPermission);
+            setIsCheckingAccess(false);
+        };
+
+        checkAccess();
+    }, [userData, user, paramsSubId, paramsCurId, Role.isAdmin, Role.isCoordinator]);
 
     useEffect(() => {
         if (excelData?.data && paramsYearId) {
@@ -297,6 +340,21 @@ export default function Page() {
 
             return acc;
         }, {} as Record<string, any[]>);
+
+        if (isCheckingAccess || isLoadingUserData) {
+            return <div>
+                <Backdrop
+                    sx={(theme) => ({ color: '#fff', zIndex: theme.zIndex.drawer + 1 })}
+                    open={true}
+                >
+                    <CircularProgress color="inherit" />
+                </Backdrop>
+            </div>;
+        }
+
+        if (!hasAccess) {
+            return <AccessDeniedPage />;
+        }
 
         return (
             <Grid item xs={12}>

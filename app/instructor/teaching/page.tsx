@@ -495,7 +495,7 @@ export default function Page() {
             row.clo?.some((filteredClo: any) => filteredClo.cloId === cloItem.id)
         )
     );
-
+    
     const missingRows = filteredRows.filter(row =>
         row.clo?.every((filteredClo: IPlo) =>
             !filteredPastClo?.some(cloItem => cloItem.id === filteredClo.cloId)
@@ -517,7 +517,7 @@ export default function Page() {
                     createdDate: new Date(),
                     createdBy: user?.name
                 }
-
+    
                 await createUserCloWithPloUpdate(resCreate);
             }
 

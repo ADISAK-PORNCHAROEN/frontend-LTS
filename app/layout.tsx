@@ -13,10 +13,11 @@ const basePath = process.env.NEXT_PUBLIC_BASE_PATH
 
 export const metadata: Metadata = {
   title: "LTS PROJECT",
-  description: "",
+  description: "Recruitment Management System",
   icons: {
     // icon: `${basePath}/Metadata/favicon.ico`, // /public path
     // icon: `${basePath}/Metadata/logo6.png`, // /public path
+
   },
 };
 
@@ -28,11 +29,44 @@ export default async function RootLayout({
   params: Promise<{ lang: string }>
 }) {
   const session = await getServerSession();
+  // console.log("layout session", session);
 
+  // return (
+  //   <html lang={(await params).lang}>
+  //     {/* <Head /> */}
+  //     <body
+  //       className="overflow-y-auto bg-ats-bg"
+  //       suppressHydrationWarning={true}
+  //     >
+  //       {/* <NextAuthProvider>
+  //         <SessionGuard> */}
+  //       <QueryProvider>
+  //         <ThemesProvider>
+  // {/* {session != null && session.error != 'RefreshAccessTokenError' ? ( */}
+  //           <>
+  //             <Navbar>
+  //               {/* <ApplicantTracking /> */}
+  //               <main className="flex-grow overflow-y-auto">
+  //                 {children}
+  //               </main>
+  //             </Navbar>
+  //           </>
+  //           {/*  : (
+  //                 children
+  //               )} */}
+
+  //         </ThemesProvider>
+  //         <div style={{ margin: '3rem 0' }}></div>
+  //       </QueryProvider>
+  //       {/* </SessionGuard>
+  //       </NextAuthProvider> */}
+  //     </body>
+  //   </html>
+  // );
   return (
     <html lang={(await params).lang}>
       <body
-        className="bg-ats-bg"
+        className="overflow-hidden bg-ats-bg"
         suppressHydrationWarning={true}
       >
         <NextAuthProvider>
@@ -42,18 +76,18 @@ export default async function RootLayout({
                 // Layout สำหรับหน้าที่ login แล้ว
                 <div className="flex h-screen">
                   <Navbar />
-                  <div className="flex flex-col flex-1">
-                    <main
-                      className="relative flex-1 overflow-y-auto px-8 pt-20 pb-8"
-                      key={session.user?.email}
-                    >
-                      <ApplicantTracking />
-                      <div className="w-full min-h-[calc(100vh-200px)]">
-                        {children}
-                      </div>
-                    </main>
-                    <Footer />
-                  </div>
+                  <main
+                    className="relative flex-1 overflow-x-hidden overflow-y-auto px-8 pt-20 flex flex-col"
+                    key={session.user?.email}
+                  >
+                    <ApplicantTracking />
+                    <div className="w-full flex-grow">
+                      {children}
+                    </div>
+                    <div className="w-screen relative left-0 right-0 -mx-8">
+                      <Footer />
+                    </div>
+                  </main>
                 </div>
               ) : (
                 // Layout สำหรับหน้า login

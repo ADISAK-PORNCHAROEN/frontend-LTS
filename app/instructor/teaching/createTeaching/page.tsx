@@ -1,6 +1,6 @@
 "use client";
-import { useState } from 'react'
-import { Box, Alert, Checkbox, FormControl, FormControlLabel, FormGroup, FormHelperText, Grid, InputLabel, Menu, MenuItem, Paper, Select, Stack, TextField, Typography } from '@mui/material';
+import { useEffect, useState } from 'react'
+import { Box, Alert, Checkbox, FormControl, FormControlLabel, FormGroup, FormHelperText, Grid, InputLabel, Menu, MenuItem, Paper, Select, Stack, TextField, Typography, Backdrop, CircularProgress } from '@mui/material';
 import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 import AddIcon from '@mui/icons-material/Add';
 import ActionBtn from '#/components/button/ActionBtn';
@@ -24,6 +24,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import useCreateUserCloWithPlo from '#/hooks/useCreateUserCloWithPlo';
 import useGetAllUserClo from '#/hooks/useGetAllUserClo';
 import useCreateUserCloScore from '#/hooks/useGetAllUserCloScore';
+import AccessDeniedPage from '#/components/AccessDeniedPage';
+import useGetAllUsers from '#/hooks/useGetAllUsers';
 
 export default function Page() {
     const router = useRouter();
@@ -36,6 +38,7 @@ export default function Page() {
     const { data: subjectsData, isLoading: isLoadingSubjectsData } = useGetAllSubjects();
     const { data: ploData, isLoading: isLoadingPloData } = useGetAllPlo();
     const { data: userClo, isLoading: isLoadingUserClo } = useGetAllUserClo();
+    const { data: userData, isLoading: isLoadingUserData } = useGetAllUsers();
     const { encode, decode } = useUrlSafeBase64();
     const searchParams = useSearchParams();
     const subId = searchParams.get("sub");
@@ -43,11 +46,51 @@ export default function Page() {
     const paramsSubId = Number(subId ? decode(subId) : null);
     const paramsCurId = Number(curId ? decode(curId) : null);
     const [selectedPlos, setSelectedPlos] = useState<number[]>([]);
+    const [hasAccess, setHasAccess] = useState<boolean | null>(null);
+    const [isCheckingAccess, setIsCheckingAccess] = useState(true);
 
     // modal
     const [textAlertBox, setTextAlertBox] = useState("");
     const [typeAlertBox, setTypeAlertBox] = useState<"success" | "warning" | "error">("success");
     const [isOpenAlertBox, setIsOpenAlertBox] = useState(false);
+
+    const Role = {
+        isAdmin: "admin",
+        isCoordinator: "program_coordinator",
+        isInstructor: "instructor"
+    }
+
+    useEffect(() => {
+        const checkAccess = async () => {
+            if (!userData?.data || !user || !paramsSubId || !paramsCurId) {
+                return;
+            }
+
+            let hasPermission = false;
+
+            if (user.role === Role.isAdmin) {
+                hasPermission = true;
+            } else {
+                const currentUser = userData.data.find((u: any) => u.id === user.id);
+
+                if (currentUser) {
+                    const hasSubject = currentUser.subjects?.some((subject: any) => {
+                        return subject.subjects?.some((sub: any) =>
+                            sub.id === paramsSubId &&
+                            sub.curriculum?.id === paramsCurId
+                        );
+                    });
+
+                    hasPermission = !!hasSubject;
+                }
+            }
+
+            setHasAccess(hasPermission);
+            setIsCheckingAccess(false);
+        };
+
+        checkAccess();
+    }, [userData, user, paramsSubId, paramsCurId, Role.isAdmin, Role.isCoordinator]);
 
     const checkExistingField = (data: IUserClo) => {
         const errors: string[] = [];
@@ -337,6 +380,22 @@ export default function Page() {
             </Grid>
         );
     };
+
+    if (isCheckingAccess || isLoadingUserData) {
+        return <div>
+            <Backdrop
+                sx={(theme) => ({ color: '#fff', zIndex: theme.zIndex.drawer + 1 })}
+                open={true}
+            >
+                <CircularProgress color="inherit" />
+            </Backdrop>
+        </div>;
+    }
+
+    if (!hasAccess) {
+        return <AccessDeniedPage />;
+    }
+
 
     return (
         <>
