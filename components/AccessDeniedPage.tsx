@@ -6,7 +6,7 @@ const AccessDeniedPage = () => {
     const router = useRouter();
 
     return (
-        <div className="flex flex-col items-center justify-center h-screen bg-gray-50">
+        <div className="flex flex-col items-center justify-center h-screen">
             <div className="text-center p-8 bg-white rounded-lg shadow-xl max-w-md">
                 <div className="text-red-500 text-6xl mb-4">
                     <svg

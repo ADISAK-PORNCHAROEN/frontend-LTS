@@ -52,17 +52,17 @@ export default function Footer() {
                 <DeveloperInfo>
                     <Box sx={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: 1.5 }}>
                         <Typography variant="caption">
-                            <Link href="mailto:adisakporncharoen@gmail.com" color="inherit" underline="hover">
+                            {/* <Link href="mailto:adisakporncharoen@gmail.com" color="inherit" underline="hover"> */}
                                 พัฒนาโดย อดิศักดิ์ พรเจริญ (adisakporncharoen@gmail.com)
-                            </Link>
+                            {/* </Link> */}
                         </Typography>
 
                         <Typography variant="caption" sx={{ display: { xs: 'none', sm: 'block' } }}>•</Typography>
 
                         <Typography variant="caption">
-                            <Link href="mailto:weerapat.dearr@gmail.com" color="inherit" underline="hover">
+                            {/* <Link href="mailto:weerapat.dearr@gmail.com" color="inherit" underline="hover"> */}
                                 วีรภัทร อินทร (weerapat.dearr@gmail.com)
-                            </Link>
+                            {/* </Link> */}
                         </Typography>
                     </Box>
                 </DeveloperInfo>
