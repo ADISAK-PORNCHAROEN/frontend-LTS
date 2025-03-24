@@ -20,7 +20,7 @@ export default function PageContentLayout({
         {(title || actions) && <Box className="flex justify-between px-3.5 pb-3.5 lg:px-6 lg:pb-6 pt-0">
           <Box className="flex gap-4 items-center">
             {icon && <>{icon}</>}
-            <Box className=" font-light text-3xl">
+            <Box className=" font-light text-2xl">
               {title && <>{title}</>}
             </Box>
           </Box>

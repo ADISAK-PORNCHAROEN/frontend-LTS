@@ -29,7 +29,7 @@ export default function Page() {
     const { data: curriculumData, isLoading: isLoadingCurriculumData } = useGetAllCurriculum();
     const { encode, decode } = useUrlSafeBase64();
     const searchParams = useSearchParams();
-    const encodedId = searchParams.get("id");
+    const encodedId = searchParams.get("cur");
     const paramsId = encodedId ? decode(encodedId) : null;
     const selectedType = watch('curriculumType');
 

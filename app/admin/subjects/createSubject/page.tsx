@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { Autocomplete, FormControl, FormHelperText, Grid, InputLabel, Menu, MenuItem, Select, Stack, TextField, Typography } from '@mui/material';
 import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 import AddIcon from '@mui/icons-material/Add';
+import CloseIcon from '@mui/icons-material/Close';
 import ActionBtn from '#/components/button/ActionBtn';
 import PageContentLayout from '#/components/layout/PageContentLayout';
 import Alert from '#/components/modal/Alert';
@@ -110,10 +111,16 @@ export default function Home() {
     return (
         <>
             <PageContentLayout
-                title="Create Subject"
+                title="สร้างรายวิชา"
                 icon={<AccountBoxIcon />}
                 actions={
                     <>
+                        <ActionBtn
+                            title="ยกเลิก"
+                            icon={<CloseIcon />}
+                            color='#db3131'
+                            onClick={() => router.push("../subjects")}
+                        />
                         <ActionBtn
                             title="บันทึก"
                             icon={<AddIcon />}

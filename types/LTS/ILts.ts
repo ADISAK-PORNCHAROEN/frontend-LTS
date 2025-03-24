@@ -157,6 +157,7 @@ export interface IUserExcel {
     subId?: number | null;
     semester?: number | null;
     year?: string | null;
+    stuId?: string | null;
     fullName?: string | null;
     // clos?: IUserCloList[] | null;
     userCloId?: number | null;

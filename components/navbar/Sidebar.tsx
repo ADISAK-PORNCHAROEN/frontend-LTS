@@ -477,7 +477,7 @@ export default function SidebarLayout({ children }: Props) {
                         <Collapse in={open && plosOpen} timeout="auto" unmountOnExit>
                             <List component="div" disablePadding>
                                 {curriculumList.map((curriculum: ICurriculum) => {
-                                    const isActive = pathname.includes("/plos") && paramsSubId === curriculum.id;
+                                    const isActive = pathname.includes("/plos") && paramsCurId === curriculum.id;
 
                                     return (
                                         <ListItemButton

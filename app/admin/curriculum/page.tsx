@@ -78,7 +78,7 @@ export default function Home() {
     const handleNavigationEdit = (data: ICurriculum) => {
         const pathname = encodeURIComponent(data?.degreeFullEn!)
         const encodedId = encode((data?.id ?? '').toString());
-        router.push(`/admin/curriculum/${pathname}?id=${encodedId}`);
+        router.push(`/admin/curriculum/${pathname}?cur=${encodedId}`);
     }
 
     const column: GridColDef[] = [

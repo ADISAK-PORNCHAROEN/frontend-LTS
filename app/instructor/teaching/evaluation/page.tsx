@@ -27,8 +27,6 @@ import { IResponse } from "#/types/IResponse/IResponse";
 import useUpdateExcelName from '#/hooks/useUpdateExcelName';
 import useGetAllUsers from '#/hooks/useGetAllUsers';
 import AccessDeniedPage from '#/components/AccessDeniedPage';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import CancelIcon from '@mui/icons-material/Cancel';
 import EqualizerIcon from '@mui/icons-material/Equalizer';
 import useGetAllUserCloScore from '#/hooks/useGetAllUserCloScore';
 import { Controller, useForm } from 'react-hook-form';
@@ -54,6 +52,7 @@ export default function Page() {
     const [rowsSelectedModal, setRowsSelectedModal] = useState<IUserExcel[]>([]);
     const [cols, setCols] = useState<IUserCloList[]>([]);
     const [cloScore, setCloScore] = useState<IUserCloScore[]>([]);
+    const [stuChanges, setStuChanges] = useState<{ [key: number]: string }>({});
     const [nameChanges, setNameChanges] = useState<{ [key: number]: string }>({});
     const [rowsSelected, setRowsSelected] = useState<IUserExcel[]>([]);
     const [searchText, setSearchText] = useState<string>('');
@@ -439,6 +438,25 @@ export default function Page() {
         );
     }
 
+    const handleStuChange = (rowId: number, newStu: string) => {
+        setStuChanges(prev => ({
+            ...prev,
+            [rowId]: newStu
+        }));
+
+        setRowsSelectedModal(prev =>
+            prev.map(row => {
+                if (row.id === rowId) {
+                    return {
+                        ...row,
+                        stuId: newStu
+                    };
+                }
+                return row;
+            })
+        );
+    };
+
     const column: GridColDef[] = [
         createColumn("stuId", "STRING", "รหัสนักศึกษา", 150, {
             headerAlign: "center",
@@ -567,6 +585,25 @@ export default function Page() {
     );
 
     const columnEdit: GridColDef[] = [
+        createColumn("stuId", "STRING", "รหัสนักศึกษา", 180, {
+            headerAlign: "center",
+            align: "center",
+            renderCell(params) {
+                return (
+                    <TextField
+                        fullWidth
+                        size="small"
+                        value={stuChanges[params.row.id] ?? params.row.stuId}
+                        onChange={(e) => handleStuChange(params.row.id, e.target.value)}
+                        onKeyDown={(e) => {
+                            if (e.key === " ") {
+                                e.stopPropagation();
+                            }
+                        }}
+                    />
+                );
+            }
+        }),
         createColumn("fullName", "STRING", "รายชื่อนักศึกษา", 400, {
             headerAlign: "center",
             align: "left",
@@ -610,7 +647,7 @@ export default function Page() {
                             <TextField
                                 type="number"
                                 size="small"
-                                defaultValue={matchingItem ? matchingItem.score : 0}
+                                value={matchingItem ? matchingItem.score : 0}
                                 onChange={(e) => handleScoreChange({
                                     rowId: params.row.id,
                                     excelId: matchingItem?.id,
@@ -710,10 +747,11 @@ export default function Page() {
                     );
                 });
 
-                if (nameChanges[row.id!]) {
+                if (nameChanges[row.id!] && stuChanges[row.id!]) {
                     nameUpdatePromises.push(
                         uploadExcelName({
                             id: row.id,
+                            stuId: stuChanges[row.id!],
                             fullName: nameChanges[row.id!],
                             semester: row.semester,
                             year: row.year,
@@ -739,6 +777,7 @@ export default function Page() {
                     if (updatedRow) {
                         return {
                             ...row,
+                            stuId: updatedRow.stuId,
                             fullName: updatedRow.fullName,
                             excel: updatedRow.excel ? updatedRow.excel : row.excel
                         };
