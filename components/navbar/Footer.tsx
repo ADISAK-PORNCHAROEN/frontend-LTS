@@ -10,9 +10,12 @@ import { useTheme } from '@mui/material';
 const FooterWrapper = styled(Box)(({ theme }) => ({
     backgroundColor: theme.palette.primary.main,
     color: theme.palette.primary.contrastText,
-    padding: theme.spacing(1, 0), // ลดขนาดให้เล็กลง
+    padding: theme.spacing(1, 0),
     width: '100%',
     zIndex: theme.zIndex.drawer - 1,
+    position: 'relative',
+    left: 0,
+    right: 0,
     transition: theme.transitions.create(['width', 'margin'], {
         easing: theme.transitions.easing.sharp,
         duration: theme.transitions.duration.leavingScreen,
@@ -53,7 +56,7 @@ export default function Footer() {
                     <Box sx={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: 1.5 }}>
                         <Typography variant="caption">
                             {/* <Link href="mailto:adisakporncharoen@gmail.com" color="inherit" underline="hover"> */}
-                                พัฒนาโดย อดิศักดิ์ พรเจริญ (adisakporncharoen@gmail.com)
+                            พัฒนาโดย อดิศักดิ์ พรเจริญ (adisakporncharoen@gmail.com)
                             {/* </Link> */}
                         </Typography>
 
@@ -61,7 +64,7 @@ export default function Footer() {
 
                         <Typography variant="caption">
                             {/* <Link href="mailto:weerapat.dearr@gmail.com" color="inherit" underline="hover"> */}
-                                วีรภัทร อินทร (weerapat.dearr@gmail.com)
+                            วีรภัทร อินทร (weerapat.dearr@gmail.com)
                             {/* </Link> */}
                         </Typography>
                     </Box>

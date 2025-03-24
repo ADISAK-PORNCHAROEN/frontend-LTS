@@ -26,6 +26,8 @@ export const PathUrls = {
     coorCreateTeaching: "/coordinator/teaching/createTeaching",
     coorEditTeaching: "/coordinator/teaching/editTeaching",
     coorEvaluation: "/coordinator/teaching/evaluation",
+    coorTracking: "/coordinator/tracking",
+    coorEval: "/coordinator/tracking/eval",
     
     instructorTeaching: "/instructor/teaching",
     instructorCreateTeaching: "/instructor/teaching/createTeaching",

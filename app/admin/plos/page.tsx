@@ -194,7 +194,7 @@ export default function Home() {
                             <MenuItem sx={{ width: '100px', backgroundColor: "#FFF" }} onClick={handleConfirmDelete}>ลบข้อมูล</MenuItem>
                         </Menu>
                         <ActionBtn
-                            title="สร้างรายวิชา"
+                            title="สร้าง PLO"
                             icon={<AddIcon />}
                             onClick={handleNavigationCreate}
                         />

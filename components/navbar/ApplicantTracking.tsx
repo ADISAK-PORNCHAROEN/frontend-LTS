@@ -76,13 +76,6 @@ export default function ApplicantTracking() {
   const paramsSub1Id = Number(subId ? decode(subId) : null);
   const paramsSub2Id = Number(sub2Id ? decode(sub2Id) : null);
   const paramsCurId = Number(curriculumId ? decode(curriculumId) : null);
-  // console.log("encodedCurId", encodedCurId)
-  // console.log("encodedSubId", encodedSubId)
-  // console.log("curriculumId", curriculumId)
-  // console.log("paramsId", paramsId)
-  // console.log("paramsSubId", paramsSubId)
-  // console.log("paramsSub1Id", paramsSub1Id)
-  // console.log("paramsCurId", paramsCurId)
 
   const { data: curriculumData, isLoading: isLoadingCurriculumData } = useGetAllCurriculum();
   const { data: subjectsData, isLoading: isLoadingSubjectsData } = useGetAllSubjects();
@@ -116,10 +109,6 @@ export default function ApplicantTracking() {
     return foundSubject?.subjects?.subNameTh;
   }, [cloData?.data, paramsCurId, paramsSub1Id, paramsSubId]);
 
-  // console.log("curriculum", curriculum)
-  // console.log("subject", subject)
-  // console.log("subject1", subject1)
-
   pathnameWithoutDynamicParams = pathnameWithoutDynamicParams.replaceAll(`/lts`, '')
 
   let pathUrls: MatchUrlType[] = [
@@ -147,6 +136,11 @@ export default function ApplicantTracking() {
     {
       url: Paths.lts.coorTeaching, tracks: [
         { level: 1, name: `${subjectTh}`, linkTo: Paths.lts.coorTeaching },
+      ]
+    },
+    {
+      url: Paths.lts.coorTracking, tracks: [
+        { level: 1, name: `${subjectTh}`, linkTo: Paths.lts.coorTracking },
       ]
     },
     {
@@ -258,6 +252,12 @@ export default function ApplicantTracking() {
       url: Paths.lts.coorEvaluation, tracks: [
         { level: 1, name: `${subjectTh}`, linkTo: `${Paths.lts.coorTeaching}?sub=${sub2Id}&cur=${curriculumId}` },
         { level: 2, name: `ประเมินรายวิชา ${subjectTh}`, linkTo: Paths.lts.coorEvaluation },
+      ]
+    },
+    {
+      url: Paths.lts.coorEval, tracks: [
+        { level: 1, name: `${subjectTh}`, linkTo: `${Paths.lts.coorTracking}?sub=${sub2Id}&cur=${curriculumId}` },
+        { level: 2, name: `ประเมินรายวิชา ${subjectTh}`, linkTo: Paths.lts.coorEval },
       ]
     },
     {

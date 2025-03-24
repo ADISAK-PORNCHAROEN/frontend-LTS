@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { Box, Alert, Checkbox, FormControl, FormControlLabel, FormGroup, FormHelperText, Grid, InputLabel, Menu, MenuItem, Paper, Select, Stack, TextField, Typography, Backdrop, CircularProgress } from '@mui/material';
 import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 import AddIcon from '@mui/icons-material/Add';
+import CloseIcon from '@mui/icons-material/Close';
 import ActionBtn from '#/components/button/ActionBtn';
 import PageContentLayout from '#/components/layout/PageContentLayout';
 import Alert1 from '#/components/modal/Alert';
@@ -404,6 +405,12 @@ export default function Page() {
                 icon={<AccountBoxIcon />}
                 actions={
                     <>
+                        <ActionBtn
+                            title="ยกเลิก"
+                            icon={<CloseIcon />}
+                            color='#db3131'
+                            onClick={() => router.push(`../teaching?sub=${subId}&cur=${curId}`)}
+                        />
                         <ActionBtn
                             title="บันทึก"
                             icon={<AddIcon />}

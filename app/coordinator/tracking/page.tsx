@@ -31,6 +31,7 @@ import AlertConfirm from '#/components/modal/AlertConfirm';
 import useGetAllUsers from '#/hooks/useGetAllUsers';
 import AccessDeniedPage from '#/components/AccessDeniedPage';
 import useGetAllUserCloScore from '#/hooks/useGetAllUserCloScore';
+import { IUser } from '#/types/IResponse/IResponse';
 
 export default function Page() {
     const [rows, setRows] = useState<IUserClo[]>([]);
@@ -77,6 +78,8 @@ export default function Page() {
     const [isOpenAlertBox, setIsOpenAlertBox] = useState(false);
     const [isOpenAlertForm, setIsOpenAlertForm] = useState(false);
     const [isOpenConfirmModalAlert, setIsOpenConfirmModalAlert] = useState(false);
+    const [isOpenConfirmUpdateAlert, setIsOpenConfirmUpdateAlert] = useState(false);
+    const [textAlertBoxConfirm, setTextAlertBoxConfirm] = useState("");
 
     const Role = {
         isAdmin: "admin",
@@ -95,17 +98,10 @@ export default function Page() {
             if (user.role === Role.isAdmin) {
                 hasPermission = true;
             } else {
-                const currentUser = userData.data.find((u: any) => u.id === user.id);
+                const currentUser = userData.data.find((u: IUser) => u.curriculumId === user.curriculumId);
 
-                if (currentUser) {
-                    const hasSubject = currentUser.subjects?.some((subject: any) => {
-                        return subject.subjects?.some((sub: any) =>
-                            sub.id === paramsSubId &&
-                            sub.curriculum?.id === paramsCurId
-                        );
-                    });
-
-                    hasPermission = !!hasSubject;
+                if (currentUser && currentUser.curriculumId === paramsCurId) {
+                    hasPermission = true;
                 }
             }
 
@@ -114,7 +110,7 @@ export default function Page() {
         };
 
         checkAccess();
-    }, [userData, user, paramsSubId, paramsCurId, Role.isAdmin, Role.isCoordinator]);
+    }, [userData, user, paramsSubId, paramsCurId, Role.isAdmin]);
 
     let currentPath = "/instructor";
     if (pathname.startsWith("/admin")) {
@@ -223,6 +219,11 @@ export default function Page() {
         setRowsSelected(data);
         setAnchorEl(null);
         setIsOpenConfirmModalAlert(true);
+    }
+
+    const handleConfirmUpdate = async () => {
+        setAnchorEl(null);
+        setIsOpenConfirmUpdateAlert(true);
     }
 
     const handleDelete = async (data: IUserClo[]) => {
@@ -496,6 +497,7 @@ export default function Page() {
     );
 
     const handleUpdateNewClo = async (data: IUserClo[]) => {
+        setIsOpenConfirmUpdateAlert(false);
         try {
             if (filteredNowClo && filteredNowClo.length > 0) {
                 const resCreate = {
@@ -593,44 +595,6 @@ export default function Page() {
                 icon={<MenuBookIcon />}
                 actions={
                     <>
-                        {/* <ActionBtn
-                            title="Action"
-                            icon={<ExpandMoreIcon />}
-                            onClick={(e) => setAnchorEl(e.currentTarget)}
-                            disabled={filteredRows.length === 0}
-                        />
-                        <Menu
-                            anchorEl={anchorEl}
-                            open={Boolean(anchorEl)}
-                            onClose={() => setAnchorEl(null)}
-                            className='this-menu'
-                            disableAutoFocus
-                            sx={{
-                                "& .MuiMenu-list": { paddingY: '0px', backgroundColor: "#FFF" },
-                            }}
-                        >
-                            <MenuItem sx={{ width: '150px', backgroundColor: "#FFF" }} onClick={() => handleConfirmDelete(filteredRows)}>ลบข้อมูลทั้งหมด</MenuItem>
-                            <MenuItem sx={{ width: '150px', backgroundColor: "#FFF" }} onClick={handleNavigationEditPush}>แก้ไข PLO</MenuItem>
-                            <MenuItem sx={{ width: '150px', backgroundColor: "#FFF" }} onClick={() => handleUpdateNewClo(filteredRows)}>อัพเดต CLO</MenuItem>
-                        </Menu>
-                        <ActionBtn
-                            title="Export Excel"
-                            icon={<FileDownloadIcon />}
-                            color='#3FA26E'
-                            onClick={() => handleExportExcel(filteredRows)}
-                            disabled={filteredRows.length === 0}
-                        />
-                        <ActionBtn
-                            title="Checked"
-                            icon={<AddIcon />}
-                            onClick={() => setIsOpenAlertForm(true)}
-                            disabled={filteredRows.length === 0}
-                        />
-                        <ActionBtn
-                            title="สร้าง PLO"
-                            icon={<AddIcon />}
-                            onClick={handleNavigationCreate}
-                        /> */}
                     </>
                 }
             >
@@ -693,6 +657,14 @@ export default function Page() {
                     setIsOpen={setIsOpenConfirmModalAlert}
                     onConfirm={() => handleDelete(rowsSelected.length > 0 ? rowsSelected : filteredRows)}
                     description="ลบข้อมูลทั้งหมด"
+                    title="คุณแน่ใจหรือไม่?"
+                />
+
+                <AlertConfirm
+                    isOpen={isOpenConfirmUpdateAlert}
+                    setIsOpen={setIsOpenConfirmUpdateAlert}
+                    onConfirm={() => handleUpdateNewClo(filteredRows)}
+                    description="อัพเดต CLO ทั้งหมด"
                     title="คุณแน่ใจหรือไม่?"
                 />
             </PageContentLayout>

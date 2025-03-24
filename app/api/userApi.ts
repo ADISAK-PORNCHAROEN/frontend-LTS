@@ -816,7 +816,7 @@ export const getExcelApi = async (payload: IExcel) => {
         semester: payload.semester,
         year: payload.year
       },
-      responseType: 'blob', // สำคัญมาก! ต้องระบุว่าต้องการ response เป็น blob
+      responseType: 'blob',
     });
 
     // ตรวจสอบว่ามี response หรือไม่
@@ -933,7 +933,7 @@ export const updateUserCloScoreApi = async (payload: IUserCloScore) => {
 };
 
 export const getExcelWithScoreApi = async (payload: IExcelWithScore) => {
-  console.log("payload", payload);
+  // console.log("payload", payload);
   try {
     const response = await axiosApi.post(`/excel/clo-report-with-score`,
       { filterRows: payload.filterRows },  // ส่งเป็น object ที่มี property ชื่อ filterRows
