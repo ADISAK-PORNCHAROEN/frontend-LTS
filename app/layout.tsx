@@ -7,6 +7,7 @@ import { NextAuthProvider } from "./providers";
 import { Metadata } from "next";
 import ApplicantTracking from "#/components/navbar/ApplicantTracking";
 import Footer from "#/components/navbar/Footer";
+import SessionChecker from "#/components/session/SessionChecker";
 
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH
 
@@ -35,6 +36,7 @@ export default async function RootLayout({
         <NextAuthProvider>
           <QueryProvider>
             <ThemesProvider>
+              <SessionChecker />
               {session ? (
                 // Layout สำหรับหน้าที่ login แล้ว
                 <div className="flex h-screen">

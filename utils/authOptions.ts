@@ -3,7 +3,6 @@ import type { NextAuthOptions, SessionStrategy } from "next-auth"
 import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials"
 import bcrypt from "bcryptjs"
-import { Session } from "inspector";
 
 const ROLE = {
     isAdmin: 'admin',
@@ -58,7 +57,14 @@ export const authOptions: NextAuthOptions = {
     },
     pages: {
         signIn: '/auth/signIn',
-      },
+    },
+    events: {
+        signIn: async ({ user }) => {
+            // บันทึกเวลาเริ่มต้น session
+            // หมายเหตุ: ส่วนนี้จะไม่ทำงานในฝั่ง server แต่เราจะใช้ client-side solution แทน
+            return;
+        },
+    },
     callbacks: {
         // signIn: async ({ user, account, profile }: any) => {
         //     try {
