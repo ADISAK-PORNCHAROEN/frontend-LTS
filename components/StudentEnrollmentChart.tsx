@@ -203,13 +203,13 @@ export const StudentEnrollmentChart = ({
         </div>
     }
 
-    if (!excelData?.data || excelData.data.length === 0) {
-        return <Typography>ไม่พบข้อมูลนักศึกษา</Typography>;
-    }
+    // if (!excelData?.data || excelData.data.length === 0) {
+    //     return <Typography>ไม่พบข้อมูลนักศึกษา</Typography>;
+    // }
 
-    if (!userCloScoreData || userCloScoreData?.data?.length === 0) {
-        return <Typography>ไม่พบข้อมูลเกณฑ์คะแนน CLO</Typography>;
-    }
+    // if (!userCloScoreData || userCloScoreData?.data?.length === 0) {
+    //     return <Typography>ไม่พบข้อมูลเกณฑ์คะแนน CLO</Typography>;
+    // }
 
     const { xAxisData, passData, failData } = getChartData();
 
