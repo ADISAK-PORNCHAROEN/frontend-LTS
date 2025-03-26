@@ -2,7 +2,7 @@
 const nextConfig = {
     output: 'standalone',
     reactStrictMode: true,
-    // basePath: process.env.NEXT_PUBLIC_BASE_PATH, // ระบุ base path ถ้าจำเป็น
+    basePath: process.env.NEXT_PUBLIC_BASE_PATH,
     images: {
       unoptimized: true, // กำหนดให้ Next.js ไม่ใช้ Image Optimization เมื่อทำการ build แบบ static
     },

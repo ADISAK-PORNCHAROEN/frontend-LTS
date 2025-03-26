@@ -1,11 +1,11 @@
 "use client";
 
 import { ThemeProvider, CssBaseline } from "@mui/material";
-// import { customTheme } from "./themes";
+import { customTheme } from "./themes";
 
 function ThemesProvider({ children }: React.PropsWithChildren) {
   return (
-    <ThemeProvider theme={[]} /* theme={customTheme} */>
+    <ThemeProvider theme={customTheme} /* theme={customTheme} */>
       <CssBaseline />
       {children}
     </ThemeProvider>

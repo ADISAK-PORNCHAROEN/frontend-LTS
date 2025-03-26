@@ -1,6 +1,6 @@
 "use client"
 import * as React from 'react';
-import { styled, useTheme, Theme, CSSObject } from '@mui/material/styles';
+import { styled, Theme } from '@mui/material/styles';
 import Box from '@mui/material/Box';
 import MuiDrawer from '@mui/material/Drawer';
 import MuiAppBar, { AppBarProps as MuiAppBarProps } from '@mui/material/AppBar';
@@ -12,48 +12,39 @@ import Divider from '@mui/material/Divider';
 import IconButton from '@mui/material/IconButton';
 import MenuIcon from '@mui/icons-material/Menu';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
-import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import ListItem from '@mui/material/ListItem';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
-import InboxIcon from '@mui/icons-material/MoveToInbox';
-import MailIcon from '@mui/icons-material/Mail';
-import AccountBoxIcon from '@mui/icons-material/AccountBox';
+import DashboardIcon from '@mui/icons-material/Dashboard';
+import PersonIcon from '@mui/icons-material/Person';
+import MenuBookIcon from '@mui/icons-material/MenuBook';
+import ClassIcon from '@mui/icons-material/Class';
+import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import LibraryBooksIcon from '@mui/icons-material/LibraryBooks';
+import AssessmentIcon from '@mui/icons-material/Assessment';
+import { useSession } from 'next-auth/react';
+import { useState, useEffect } from 'react';
+import { Chip, Collapse, Menu, MenuItem } from '@mui/material';
+import { signOut } from 'next-auth/react';
+import { useParams, usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { ExpandLess, ExpandMore } from '@mui/icons-material';
+import useGetAllUsers from '#/hooks/useGetAllUsers';
+import { ICurriculum, ISubjects } from '#/types/LTS/ILts';
+import useGetAllCurriculum from '#/hooks/useGetAllCurriculum';
+import { useUrlSafeBase64 } from '#/hooks/useUrlSafeBase64';
+import useGetAllSubjects from '#/hooks/useGetAllSubjects';
+import ArticleIcon from '@mui/icons-material/Article';
+import { IUser } from '#/types/IResponse/IResponse';
+import Footer from './Footer';
 
-interface Props {
-    children?: React.ReactNode
-}
-
-const drawerWidth = 240;
-
-const openedMixin = (theme: Theme): CSSObject => ({
-    width: drawerWidth,
-    transition: theme.transitions.create('width', {
-        easing: theme.transitions.easing.sharp,
-        duration: theme.transitions.duration.enteringScreen,
-    }),
-    overflowX: 'hidden',
-});
-
-const closedMixin = (theme: Theme): CSSObject => ({
-    transition: theme.transitions.create('width', {
-        easing: theme.transitions.easing.sharp,
-        duration: theme.transitions.duration.leavingScreen,
-    }),
-    overflowX: 'hidden',
-    width: `calc(${theme.spacing(7)} + 1px)`,
-    [theme.breakpoints.up('sm')]: {
-        width: `calc(${theme.spacing(8)} + 1px)`,
-    },
-});
+const drawerWidth = 280;
 
 const DrawerHeader = styled('div')(({ theme }) => ({
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'flex-end',
     padding: theme.spacing(0, 1),
-    // necessary for content to be below app bar
     ...theme.mixins.toolbar,
 }));
 
@@ -63,207 +54,793 @@ interface AppBarProps extends MuiAppBarProps {
 
 const AppBar = styled(MuiAppBar, {
     shouldForwardProp: (prop) => prop !== 'open',
-})<AppBarProps>(({ theme }) => ({
+})<AppBarProps>(({ theme, open }) => ({
     zIndex: theme.zIndex.drawer + 1,
     transition: theme.transitions.create(['width', 'margin'], {
         easing: theme.transitions.easing.sharp,
         duration: theme.transitions.duration.leavingScreen,
     }),
-    variants: [
-        {
-            props: ({ open }) => open,
-            style: {
-                marginLeft: drawerWidth,
-                width: `calc(100% - ${drawerWidth}px)`,
-                transition: theme.transitions.create(['width', 'margin'], {
-                    easing: theme.transitions.easing.sharp,
-                    duration: theme.transitions.duration.enteringScreen,
-                }),
-            },
-        },
-    ],
+    ...(open && {
+        marginLeft: drawerWidth,
+        width: `calc(100% - ${drawerWidth}px)`,
+        transition: theme.transitions.create(['width', 'margin'], {
+            easing: theme.transitions.easing.sharp,
+            duration: theme.transitions.duration.enteringScreen,
+        }),
+    }),
 }));
 
-const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 'open' })(
-    ({ theme }) => ({
+const Drawer = styled(MuiDrawer)(({ theme, open }) => ({
+    width: drawerWidth,
+    flexShrink: 0,
+    whiteSpace: 'nowrap',
+    boxSizing: 'border-box',
+    ...(open && {
         width: drawerWidth,
-        flexShrink: 0,
-        whiteSpace: 'nowrap',
-        boxSizing: 'border-box',
-        variants: [
-            {
-                props: ({ open }) => open,
-                style: {
-                    ...openedMixin(theme),
-                    '& .MuiDrawer-paper': openedMixin(theme),
-                },
-            },
-            {
-                props: ({ open }) => !open,
-                style: {
-                    ...closedMixin(theme),
-                    '& .MuiDrawer-paper': closedMixin(theme),
-                },
-            },
-        ],
+        transition: theme.transitions.create('width', {
+            easing: theme.transitions.easing.sharp,
+            duration: theme.transitions.duration.enteringScreen,
+        }),
+        overflowX: 'hidden',
+        '& .MuiDrawer-paper': {
+            width: drawerWidth,
+            transition: theme.transitions.create('width', {
+                easing: theme.transitions.easing.sharp,
+                duration: theme.transitions.duration.enteringScreen,
+            }),
+            overflowX: 'hidden',
+        },
     }),
-);
+    ...(!open && {
+        transition: theme.transitions.create('width', {
+            easing: theme.transitions.easing.sharp,
+            duration: theme.transitions.duration.leavingScreen,
+        }),
+        overflowX: 'hidden',
+        width: `calc(${theme.spacing(7)} + 1px)`,
+        [theme.breakpoints.up('sm')]: {
+            width: `calc(${theme.spacing(8)} + 1px)`,
+        },
+        '& .MuiDrawer-paper': {
+            transition: theme.transitions.create('width', {
+                easing: theme.transitions.easing.sharp,
+                duration: theme.transitions.duration.leavingScreen,
+            }),
+            overflowX: 'hidden',
+            width: `calc(${theme.spacing(7)} + 1px)`,
+            [theme.breakpoints.up('sm')]: {
+                width: `calc(${theme.spacing(8)} + 1px)`,
+            },
+        },
+    }),
+}));
 
-export default function MiniDrawer({ children }: Props) {
-    const theme = useTheme();
-    const [open, setOpen] = React.useState(false);
+// Style for main content area
+const MainContent = styled(Box)(({ theme }) => ({
+    flexGrow: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    minHeight: '100vh',  // Set minimum height to viewport height
+}));
 
-    const handleDrawerOpen = () => {
-        setOpen(true);
+// Style for the content area (between header and footer)
+const ContentArea = styled(Box)(({ theme }) => ({
+    flexGrow: 1,
+    padding: theme.spacing(3),
+}));
+
+interface Props {
+    children?: React.ReactNode;
+}
+
+const menuItems = [
+    { text: 'แดชบอร์ด', icon: <DashboardIcon />, path: 'dashboard' },
+    { text: 'บัญชีผู้ใช้', icon: <PersonIcon />, path: 'accounts' },
+    { text: 'หลักสูตรรายวิชา', icon: <LibraryBooksIcon />, path: 'curriculum' },
+    { text: 'รายวิชา', icon: <MenuBookIcon />, path: 'subjects' },
+    // { text: 'CLOs', icon: <ClassIcon />, path: 'clos' },
+    // { text: 'PLOs', icon: <ClassIcon />, path: 'plos' },
+];
+
+const menuItemsIsProfessor = [
+    { text: 'แดชบอร์ด', icon: <DashboardIcon />, path: 'dashboard' },
+]
+
+export default function SidebarLayout({ children }: Props) {
+    const [open, setOpen] = useState(false);
+    const [subjectOpen, setSubjectOpen] = useState(false);
+    const [trackingOpen, setTrackingOpen] = useState(false);
+    const [plosOpen, setPlosOpen] = useState(false);
+    const [closOpen, setClosOpen] = useState(false);
+    const { data: session } = useSession();
+    const user = session?.user
+    const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+    const router = useRouter();
+    const pathname = usePathname();
+    const searchParams = useSearchParams();
+    const pathId = searchParams.get('id');
+    const subId = searchParams.get("sub");
+    const sub1Id = searchParams.get("sub1");
+    const curId = searchParams.get("cur");
+    const basePath = process.env.NEXT_PUBLIC_BASE_PATH;
+    const { data: userData } = useGetAllUsers();
+    const { data: curriculumData, isLoading: isLoadingCurriculumData } = useGetAllCurriculum();
+    const { data: subjectsData, isLoading: isLoadingSubjectsData } = useGetAllSubjects();
+    const [userSubjects, setUserSubjects] = useState<ISubjects[]>([]);
+    const [curriculumList, setCurriculumList] = useState<ICurriculum[]>([]);
+    const [subjectList, setSubjectList] = useState<ISubjects[]>([]);
+    const [mounted, setMounted] = useState(false);
+    const { encode, decode } = useUrlSafeBase64();
+    const paramsSubId = Number(pathId ? decode(pathId) : null);
+    const paramsSUBId = Number(subId ? decode(subId) : null);
+    const paramsSubEditId = Number(sub1Id ? decode(sub1Id) : null);
+    const paramsCurId = Number(curId ? decode(curId) : null);
+    const [expandedCurriculums, setExpandedCurriculums] = useState<{ [key: string]: boolean }>({});
+    const [expandedSubjectEvals, setExpandedSubjectEvals] = useState<Record<string, boolean>>({});
+    const [expandedTrackingEvals, setExpandedTrackingEvals] = useState<Record<string, boolean>>({});
+
+    const status = {
+        isActive: "Active",
+        isInactive: "Inactive"
+    }
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    useEffect(() => {
+        if (!curriculumData?.data) return;
+        setCurriculumList(curriculumData.data);
+
+        if (!subjectsData?.data) return;
+        setSubjectList(subjectsData.data);
+
+        if (!userData?.data || !session?.user?.email) return;
+
+        const currentUser = userData.data.find((u: IUser) => u.email === session.user.email);
+
+        if (!currentUser?.subjects) {
+            setUserSubjects([]);
+            return;
+        }
+
+        const flattenedSubjects = currentUser.subjects.flatMap((s: any) =>
+            s.subjects?.map((sub: ISubjects) => ({
+                id: sub.id,
+                ...sub
+            })) ?? []
+        );
+        setUserSubjects(flattenedSubjects);
+
+
+    }, [userData, session?.user.email, curriculumData, subjectsData?.data, userData?.data]);
+
+    const handleDrawerOpen = () => setOpen(true);
+    const handleDrawerClose = () => setOpen(false);
+    const handleSubjectClick = () => setSubjectOpen(!subjectOpen);
+    const handleTrackingClick = () => setTrackingOpen(!trackingOpen);
+    const handlePlosClick = () => setPlosOpen(!plosOpen);
+    const handleClosClick = () => setClosOpen(!closOpen);
+
+    const handleNavigate = (path: string, data?: ISubjects | ICurriculum) => {
+        // console.log("data", data);
+        // console.log("path", path);
+
+        let currentPath = "/instructor";
+        if (pathname.startsWith("/admin")) {
+            currentPath = "/admin";
+        } else if (pathname.startsWith("/coordinator")) {
+            currentPath = "/coordinator";
+        }
+
+        if (!currentPath) return;
+
+        let targetPath = `${currentPath}/${path.toLowerCase()}`;
+
+        if (data) {
+            if ("subNameEn" in data && data.subNameEn) {
+                const encodedId = encode((data?.id ?? '').toString());
+                const subId = encode((data?.id ?? '').toString());
+                const curriculumId = encode((data?.curriculum?.id ?? '').toString());
+                if (path === 'teaching') {
+                    targetPath = `${currentPath}/teaching?sub=${subId}&cur=${curriculumId}`;
+                } else {
+                    targetPath = `${currentPath}/${path}?id=${encodedId}&cur=${curriculumId}`;
+                }
+                if (path === 'evaluation') {
+                    targetPath = `${currentPath}/teaching/evaluation?sub=${subId}&cur=${curriculumId}`;
+                }
+                if (path === 'tracking') {
+                    targetPath = `${currentPath}/${path}?sub=${subId}&cur=${curriculumId}`;
+                }
+                if (path === 'eval') {
+                    targetPath = `${currentPath}/tracking/eval?sub=${subId}&cur=${curriculumId}`;
+                }
+            } else if ("degreeShortEn" in data && data.degreeShortEn) {
+                if (path === 'clos') {
+                    const encodedId = encode((data?.id ?? '').toString());
+                    targetPath = `${currentPath}/${path}?cur=${encodedId}`;
+                }
+                if (path === 'plos') {
+                    const encodedId = encode((data?.id ?? '').toString());
+                    targetPath = `${currentPath}/${path}?cur=${encodedId}`;
+                }
+            }
+        }
+
+        router.push(targetPath);
     };
 
-    const handleDrawerClose = () => {
-        setOpen(false);
-    };
+    if (!mounted || !session) {
+        return <>{children}</>;
+    }
+
+    const Role = {
+        isAdmin: "admin",
+        isCoordinator: "program_coordinator",
+        isInstructor: "instructor"
+    }
 
     return (
         <Box sx={{ display: 'flex' }}>
             <CssBaseline />
-            <AppBar position="fixed" open={open}>
+            <AppBar position="fixed" open={open} sx={{ /* backgroundColor: '#1a3f61' */ }}>
                 <Toolbar>
                     <IconButton
                         color="inherit"
-                        aria-label="open drawer"
+                        aria-label="เปิดเมนู"
                         onClick={handleDrawerOpen}
                         edge="start"
-                        sx={[
-                            {
-                                marginRight: 5,
-                                color: '#fff',
-                            },
-                            open && { display: 'none' },
-                        ]}
+                        sx={{ marginRight: 5, ...(open && { display: 'none' }) }}
                     >
                         <MenuIcon />
                     </IconButton>
-                    <Typography variant="h6" noWrap component="div">
-                        CRUD APP
-                    </Typography>
+
+                    <Box sx={{ flexGrow: 1 }} />
+
+                    <Box
+                        sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            cursor: 'pointer'
+                        }}
+                        onClick={(e) => setAnchorEl(e.currentTarget)}
+                    >
+                        <AccountCircleIcon sx={{ mr: 1 }} />
+                        <Typography variant="subtitle1">
+                            {session?.user?.name}
+                        </Typography>
+                    </Box>
+
+                    <Menu
+                        anchorEl={anchorEl}
+                        open={Boolean(anchorEl)}
+                        onClose={() => setAnchorEl(null)}
+                    >
+                        <MenuItem onClick={() => signOut({ callbackUrl: `${basePath}/api/auth/signIn` })}>
+                            ออกจากระบบ
+                        </MenuItem>
+                    </Menu>
                 </Toolbar>
             </AppBar>
+
             <Drawer variant="permanent" open={open}>
                 <DrawerHeader>
-                    <IconButton onClick={handleDrawerClose} sx={{ color: '#707070' }}>
-                        {theme.direction === 'rtl' ? <ChevronRightIcon /> : <ChevronLeftIcon />}
+                    <IconButton onClick={handleDrawerClose}>
+                        <ChevronLeftIcon />
                     </IconButton>
                 </DrawerHeader>
+
                 <Divider />
-                <List>
-                    {['Inbox', 'Starred', 'Send email', 'Drafts'].map((text, index) => (
-                        <ListItem key={text} disablePadding sx={{ display: 'block' }}>
-                            <ListItemButton
-                                sx={[
-                                    {
+
+                {(session?.user?.role === Role.isAdmin) && (
+                    <List>
+                        {menuItems.map((item) => (
+                            <ListItem key={item.text} disablePadding>
+                                <ListItemButton
+                                    onClick={() => handleNavigate(item.path)}
+                                    sx={{
                                         minHeight: 48,
+                                        justifyContent: open ? 'initial' : 'center',
                                         px: 2.5,
-                                    },
-                                    open
-                                        ? {
-                                            justifyContent: 'initial',
-                                        }
-                                        : {
+                                        ...(pathname.includes(`/${item.path.toLowerCase()}`) && {
+                                            backgroundColor: 'rgba(0, 0, 0, 0.08)',
+                                        })
+                                    }}
+                                >
+                                    <ListItemIcon
+                                        sx={{
+                                            minWidth: 0,
+                                            mr: open ? 3 : 'auto',
                                             justifyContent: 'center',
-                                        },
-                                ]}
+                                        }}
+                                    >
+                                        {item.icon}
+                                    </ListItemIcon>
+                                    <ListItemText
+                                        primary={item.text}
+                                        sx={{ opacity: open ? 1 : 0 }}
+                                    />
+                                </ListItemButton>
+                            </ListItem>
+                        ))}
+
+                        <ListItem disablePadding>
+                            <ListItemButton
+                                onClick={handleClosClick}
+                                sx={{
+                                    minHeight: 48,
+                                    justifyContent: open ? 'initial' : 'center',
+                                    px: 2.5,
+                                    ...(pathname.includes(`/clos`) && {
+                                        backgroundColor: 'rgba(0, 0, 0, 0.08)',
+                                    })
+                                }}
                             >
                                 <ListItemIcon
-                                    sx={[
-                                        {
-                                            minWidth: 0,
-                                            justifyContent: 'center',
-                                        },
-                                        open
-                                            ? {
-                                                mr: 3,
-                                            }
-                                            : {
-                                                mr: 'auto',
-                                            },
-                                    ]}
+                                    sx={{
+                                        minWidth: 0,
+                                        mr: open ? 3 : 'auto',
+                                        justifyContent: 'center',
+                                    }}
                                 >
-                                    {text === 'Inbox' && <InboxIcon />}
-                                    {text === 'Starred' && <MailIcon />}
-                                    {text === 'Send email' && <AccountBoxIcon />}
-                                    {text === 'Drafts' && <MailIcon />}
+                                    <ClassIcon />
                                 </ListItemIcon>
                                 <ListItemText
-                                    primary={text}
-                                    sx={[
-                                        open
-                                            ? {
-                                                opacity: 1,
-                                            }
-                                            : {
-                                                opacity: 0,
-                                            },
-                                    ]}
+                                    primary="CLOs"
+                                    sx={{ opacity: open ? 1 : 0 }}
                                 />
+                                {open && curriculumList && curriculumList.length > 0 && (closOpen ? <ExpandLess /> : <ExpandMore />)}
                             </ListItemButton>
                         </ListItem>
-                    ))}
-                </List>
-                <Divider />
-                <List>
-                    {['All mail', 'Trash', 'Spam'].map((text, index) => (
-                        <ListItem key={text} disablePadding sx={{ display: 'block' }}>
+
+                        <Collapse in={open && closOpen} timeout="auto" unmountOnExit>
+                            <List component="div" disablePadding>
+                                {curriculumList.map((curriculum: ICurriculum) => {
+                                    const isCurriculumActive = pathname.includes("/clos") && paramsCurId === curriculum?.id;
+
+                                    return (
+                                        <React.Fragment key={curriculum?.id}>
+                                            <ListItemButton
+                                                sx={{
+                                                    pl: 4,
+                                                    minHeight: 40,
+                                                    backgroundColor: isCurriculumActive ? "rgba(0, 0, 0, 0.08)" : "transparent",
+                                                    '&:hover': {
+                                                        backgroundColor: 'rgba(0, 0, 0, 0.08)',
+                                                    },
+                                                }}
+                                                onClick={() => handleNavigate('clos', curriculum)}
+                                            >
+                                                <ListItemIcon sx={{ minWidth: 40 }}>
+                                                    <MenuBookIcon fontSize="small" />
+                                                </ListItemIcon>
+                                                <ListItemText
+                                                    primary={curriculum?.degreeShortTh}
+                                                    secondary={curriculum?.degreeShortEn}
+                                                    primaryTypographyProps={{
+                                                        fontSize: '0.9rem',
+                                                        sx: {
+                                                            whiteSpace: 'nowrap',
+                                                            overflow: 'hidden',
+                                                            textOverflow: 'ellipsis',
+                                                            maxWidth: '150px',
+                                                        },
+                                                    }}
+                                                    secondaryTypographyProps={{
+                                                        fontSize: '0.8rem',
+                                                        sx: {
+                                                            whiteSpace: 'nowrap',
+                                                            overflow: 'hidden',
+                                                            textOverflow: 'ellipsis',
+                                                            maxWidth: '150px',
+                                                        },
+                                                    }}
+                                                />
+                                            </ListItemButton>
+                                        </React.Fragment>
+                                    );
+                                })}
+                            </List>
+                        </Collapse>
+
+                        {/* PLOs */}
+                        <ListItem disablePadding>
                             <ListItemButton
-                                sx={[
-                                    {
-                                        minHeight: 48,
-                                        px: 2.5,
-                                    },
-                                    open
-                                        ? {
-                                            justifyContent: 'initial',
-                                        }
-                                        : {
-                                            justifyContent: 'center',
-                                        },
-                                ]}
+                                onClick={handlePlosClick}
+                                sx={{
+                                    minHeight: 48,
+                                    justifyContent: open ? 'initial' : 'center',
+                                    px: 2.5,
+                                    ...(pathname.includes(`/plos`) && {
+                                        backgroundColor: 'rgba(0, 0, 0, 0.08)',
+                                    })
+                                }}
                             >
                                 <ListItemIcon
-                                    sx={[
-                                        {
-                                            minWidth: 0,
-                                            justifyContent: 'center',
-                                        },
-                                        open
-                                            ? {
-                                                mr: 3,
-                                            }
-                                            : {
-                                                mr: 'auto',
-                                            },
-                                    ]}
+                                    sx={{
+                                        minWidth: 0,
+                                        mr: open ? 3 : 'auto',
+                                        justifyContent: 'center',
+                                    }}
                                 >
-                                    {index % 2 === 0 ? <InboxIcon /> : <MailIcon />}
+                                    <ClassIcon />
                                 </ListItemIcon>
                                 <ListItemText
-                                    primary={text}
-                                    sx={[
-                                        open
-                                            ? {
-                                                opacity: 1,
-                                            }
-                                            : {
-                                                opacity: 0,
-                                            },
-                                    ]}
+                                    primary="PLOs"
+                                    sx={{ opacity: open ? 1 : 0 }}
                                 />
+                                {open && curriculumList && curriculumList.length > 0 && (plosOpen ? <ExpandLess /> : <ExpandMore />)}
                             </ListItemButton>
                         </ListItem>
-                    ))}
-                </List>
-            </Drawer>
-            <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
-                <DrawerHeader />
-                {children}
-            </Box>
-        </Box>
+
+                        <Collapse in={open && plosOpen} timeout="auto" unmountOnExit>
+                            <List component="div" disablePadding>
+                                {curriculumList.map((curriculum: ICurriculum) => {
+                                    const isActive = pathname.includes("/plos") && paramsCurId === curriculum.id;
+
+                                    return (
+                                        <ListItemButton
+                                            key={curriculum?.id}
+                                            sx={{
+                                                pl: 4,
+                                                minHeight: 40,
+                                                backgroundColor: isActive ? "rgba(0, 0, 0, 0.08)" : "transparent",
+                                                '&:hover': {
+                                                    backgroundColor: 'rgba(0, 0, 0, 0.08)',
+                                                },
+                                            }}
+                                            onClick={() => handleNavigate('plos', curriculum)}
+                                        >
+                                            <ListItemIcon sx={{ minWidth: 40 }}>
+                                                <MenuBookIcon fontSize="small" />
+                                            </ListItemIcon>
+                                            <ListItemText
+                                                primary={curriculum?.degreeShortTh}
+                                                secondary={curriculum?.degreeShortEn}
+                                                primaryTypographyProps={{
+                                                    fontSize: '0.9rem',
+                                                    sx: {
+                                                        whiteSpace: 'nowrap',
+                                                        overflow: 'hidden',
+                                                        textOverflow: 'ellipsis',
+                                                        maxWidth: '150px',
+                                                    },
+                                                }}
+                                                secondaryTypographyProps={{
+                                                    fontSize: '0.8rem',
+                                                    sx: {
+                                                        whiteSpace: 'nowrap',
+                                                        overflow: 'hidden',
+                                                        textOverflow: 'ellipsis',
+                                                        maxWidth: '150px',
+                                                    },
+                                                }}
+                                            />
+                                        </ListItemButton>
+                                    )
+                                })}
+                            </List>
+                        </Collapse>
+                    </List>
+                )}
+
+                <Divider />
+
+                {(session?.user?.role === Role.isAdmin || session?.user?.role === Role.isInstructor || session?.user?.role === Role.isCoordinator) && (
+
+                    <List>
+                        {(session?.user?.role === Role.isInstructor || session?.user?.role === Role.isCoordinator) && (
+                            menuItemsIsProfessor.map((item) => (
+                                <ListItem key={item.text} disablePadding>
+                                    <ListItemButton
+                                        onClick={() => handleNavigate(item.path)}
+                                        sx={{
+                                            minHeight: 48,
+                                            justifyContent: open ? 'initial' : 'center',
+                                            px: 2.5,
+                                            ...(pathname.includes(`/${item.path.toLowerCase()}`) && {
+                                                backgroundColor: 'rgba(0, 0, 0, 0.08)',
+                                            })
+                                        }}
+                                    >
+                                        <ListItemIcon
+                                            sx={{
+                                                minWidth: 0,
+                                                mr: open ? 3 : 'auto',
+                                                justifyContent: 'center',
+                                            }}
+                                        >
+                                            {item.icon}
+                                        </ListItemIcon>
+                                        <ListItemText
+                                            primary={item.text}
+                                            sx={{ opacity: open ? 1 : 0 }}
+                                        />
+                                    </ListItemButton>
+                                </ListItem>
+                            ))
+                        )}
+
+                        {(session?.user?.role === Role.isCoordinator) && (
+                            <ListItem disablePadding>
+                                <ListItemButton
+                                    onClick={handleTrackingClick}
+                                    sx={{
+                                        minHeight: 48,
+                                        justifyContent: open ? 'initial' : 'center',
+                                        px: 2.5,
+                                        ...(pathname.includes(`/tracking`) && {
+                                            backgroundColor: 'rgba(0, 0, 0, 0.08)',
+                                        })
+                                    }}
+                                >
+                                    <ListItemIcon
+                                        sx={{
+                                            minWidth: 0,
+                                            mr: open ? 3 : 'auto',
+                                            justifyContent: 'center',
+                                        }}
+                                    >
+                                        <ClassIcon />
+                                    </ListItemIcon>
+                                    <ListItemText
+                                        primary="ติดตามดูผลลัพธ์รายวิชา"
+                                        sx={{ opacity: open ? 1 : 0 }}
+                                    />
+                                    {open && subjectList.length > 0 && (trackingOpen ? <ExpandLess /> : <ExpandMore />)}
+                                </ListItemButton>
+                            </ListItem>
+                        )}
+
+                        <Collapse in={open && trackingOpen} timeout="auto" unmountOnExit>
+                            <List component="div" disablePadding>
+                                {subjectList.filter((subject: ISubjects) => subject.curriculum?.id === user?.curriculumId).map((subject: ISubjects) => {
+                                    // Add a new state to track each subject's evaluation collapse state
+                                    const isTrackingEvalExpanded = expandedTrackingEvals[subject.id!];
+                                    const isActive = pathname.includes("/tracking") && paramsSUBId === subject.id;
+                                    const isActiveEval = pathname.includes("/eval") && paramsSUBId === subject.id;
+
+                                    return (
+                                        <React.Fragment key={subject.id}>
+                                            <ListItemButton
+                                                sx={{
+                                                    pl: 4,
+                                                    minHeight: 40,
+                                                    backgroundColor: isActive ? "rgba(0, 0, 0, 0.08)" : "transparent",
+                                                    '&:hover': {
+                                                        backgroundColor: 'rgba(0, 0, 0, 0.08)',
+                                                    },
+                                                }}
+                                                onClick={() => handleNavigate('tracking', subject)}
+                                            >
+                                                <ListItemIcon sx={{ minWidth: 40 }}>
+                                                    <MenuBookIcon fontSize="small" />
+                                                </ListItemIcon>
+                                                <ListItemText
+                                                    primary={subject.subNameTh}
+                                                    secondary={subject.subNameEn}
+                                                    primaryTypographyProps={{
+                                                        fontSize: '0.9rem',
+                                                        sx: {
+                                                            whiteSpace: 'nowrap',
+                                                            overflow: 'hidden',
+                                                            textOverflow: 'ellipsis',
+                                                            maxWidth: '150px',
+                                                        },
+                                                    }}
+                                                    secondaryTypographyProps={{
+                                                        fontSize: '0.8rem',
+                                                        sx: {
+                                                            whiteSpace: 'nowrap',
+                                                            overflow: 'hidden',
+                                                            textOverflow: 'ellipsis',
+                                                            maxWidth: '150px',
+                                                        },
+                                                    }}
+                                                />
+                                                {/* Add expand toggle button that stops propagation to prevent navigation */}
+                                                <IconButton
+                                                    size="small"
+                                                    onClick={(event) => {
+                                                        event.stopPropagation();
+                                                        setExpandedTrackingEvals(prev => ({
+                                                            ...prev,
+                                                            [subject.id!]: !prev[subject.id!]
+                                                        }));
+                                                    }}
+                                                >
+                                                    {isTrackingEvalExpanded ? <ExpandLess fontSize="small" /> : <ExpandMore fontSize="small" />}
+                                                </IconButton>
+                                            </ListItemButton>
+
+                                            {/* Nested Collapse for evaluations under this subject */}
+                                            <Collapse in={isTrackingEvalExpanded} timeout="auto" unmountOnExit>
+                                                <List component="div" disablePadding>
+                                                    <ListItemButton
+                                                        sx={{
+                                                            pl: 6,
+                                                            minHeight: 10,
+                                                            backgroundColor: isActiveEval ? "rgba(0, 0, 0, 0.08)" : "transparent",
+                                                            '&:hover': {
+                                                                backgroundColor: 'rgba(0, 0, 0, 0.08)',
+                                                            },
+                                                        }}
+                                                        onClick={() => handleNavigate('eval', subject)}
+                                                    >
+                                                        <ListItemIcon sx={{ minWidth: 40 }}>
+                                                            <AssessmentIcon fontSize="small" />
+                                                        </ListItemIcon>
+                                                        <ListItemText
+                                                            primary="ประเมินรายวิชา"
+                                                            secondary="Course Evaluation"
+                                                            primaryTypographyProps={{
+                                                                fontSize: '0.9rem',
+                                                                sx: {
+                                                                    whiteSpace: 'nowrap',
+                                                                    overflow: 'hidden',
+                                                                    textOverflow: 'ellipsis',
+                                                                    maxWidth: '150px',
+                                                                },
+                                                            }}
+                                                            secondaryTypographyProps={{
+                                                                fontSize: '0.8rem',
+                                                                sx: {
+                                                                    whiteSpace: 'nowrap',
+                                                                    overflow: 'hidden',
+                                                                    textOverflow: 'ellipsis',
+                                                                    maxWidth: '150px',
+                                                                },
+                                                            }}
+                                                        />
+                                                    </ListItemButton>
+                                                </List>
+                                            </Collapse>
+                                        </React.Fragment>
+                                    );
+                                })}
+                            </List>
+                        </Collapse>
+
+                        <ListItem disablePadding>
+                            <ListItemButton
+                                onClick={handleSubjectClick}
+                                sx={{
+                                    minHeight: 48,
+                                    justifyContent: open ? 'initial' : 'center',
+                                    px: 2.5,
+                                    ...(pathname.includes(`/teaching`) && {
+                                        backgroundColor: 'rgba(0, 0, 0, 0.08)',
+                                    })
+                                }}
+                            >
+                                <ListItemIcon
+                                    sx={{
+                                        minWidth: 0,
+                                        mr: open ? 3 : 'auto',
+                                        justifyContent: 'center',
+                                    }}
+                                >
+                                    <ClassIcon />
+                                </ListItemIcon>
+                                <ListItemText
+                                    primary="วิชาที่รับผิดชอบ"
+                                    sx={{ opacity: open ? 1 : 0 }}
+                                />
+                                {open && userSubjects.length > 0 && (subjectOpen ? <ExpandLess /> : <ExpandMore />)}
+                            </ListItemButton>
+                        </ListItem>
+
+                        <Collapse in={open && subjectOpen} timeout="auto" unmountOnExit>
+                            <List component="div" disablePadding>
+                                {userSubjects.map((subject: ISubjects) => {
+                                    const isSubjectEvalExpanded = expandedSubjectEvals[subject.id!];
+                                    const isActive = pathname.includes("/teaching") && paramsSUBId === subject.id;
+                                    const isActiveEval = pathname.includes("/evaluation") && paramsSUBId === subject.id;
+
+                                    return (
+                                        <React.Fragment key={subject.id}>
+                                            <ListItemButton
+                                                sx={{
+                                                    pl: 4,
+                                                    minHeight: 40,
+                                                    backgroundColor: isActive ? "rgba(0, 0, 0, 0.08)" : "transparent",
+                                                    '&:hover': {
+                                                        backgroundColor: 'rgba(0, 0, 0, 0.08)',
+                                                    },
+                                                }}
+                                                onClick={() => handleNavigate('teaching', subject)}
+                                            >
+                                                <ListItemIcon sx={{ minWidth: 40 }}>
+                                                    <MenuBookIcon fontSize="small" />
+                                                </ListItemIcon>
+                                                <ListItemText
+                                                    primary={subject.subNameTh}
+                                                    secondary={subject.subNameEn}
+                                                    primaryTypographyProps={{
+                                                        fontSize: '0.9rem',
+                                                        sx: {
+                                                            whiteSpace: 'nowrap',
+                                                            overflow: 'hidden',
+                                                            textOverflow: 'ellipsis',
+                                                            maxWidth: '150px',
+                                                        },
+                                                    }}
+                                                    secondaryTypographyProps={{
+                                                        fontSize: '0.8rem',
+                                                        sx: {
+                                                            whiteSpace: 'nowrap',
+                                                            overflow: 'hidden',
+                                                            textOverflow: 'ellipsis',
+                                                            maxWidth: '150px',
+                                                        },
+                                                    }}
+                                                />
+                                                <IconButton
+                                                    size="small"
+                                                    onClick={(event) => {
+                                                        event.stopPropagation();
+                                                        setExpandedSubjectEvals(prev => ({
+                                                            ...prev,
+                                                            [subject.id!]: !prev[subject.id!]
+                                                        }));
+                                                    }}
+                                                >
+                                                    {isSubjectEvalExpanded ? <ExpandLess fontSize="small" /> : <ExpandMore fontSize="small" />}
+                                                </IconButton>
+                                            </ListItemButton>
+
+                                            <Collapse in={isSubjectEvalExpanded} timeout="auto" unmountOnExit>
+                                                <List component="div" disablePadding>
+                                                    <ListItemButton
+                                                        sx={{
+                                                            pl: 6,
+                                                            minHeight: 10,
+                                                            backgroundColor: isActiveEval ? "rgba(0, 0, 0, 0.08)" : "transparent",
+                                                            '&:hover': {
+                                                                backgroundColor: 'rgba(0, 0, 0, 0.08)',
+                                                            },
+                                                        }}
+                                                        onClick={() => handleNavigate('evaluation', subject)}
+                                                    >
+                                                        <ListItemIcon sx={{ minWidth: 40 }}>
+                                                            <AssessmentIcon fontSize="small" />
+                                                        </ListItemIcon>
+                                                        <ListItemText
+                                                            primary="ประเมินรายวิชา"
+                                                            secondary="Course Evaluation"
+                                                            primaryTypographyProps={{
+                                                                fontSize: '0.9rem',
+                                                                sx: {
+                                                                    whiteSpace: 'nowrap',
+                                                                    overflow: 'hidden',
+                                                                    textOverflow: 'ellipsis',
+                                                                    maxWidth: '150px',
+                                                                },
+                                                            }}
+                                                            secondaryTypographyProps={{
+                                                                fontSize: '0.8rem',
+                                                                sx: {
+                                                                    whiteSpace: 'nowrap',
+                                                                    overflow: 'hidden',
+                                                                    textOverflow: 'ellipsis',
+                                                                    maxWidth: '150px',
+                                                                },
+                                                            }}
+                                                        />
+                                                    </ListItemButton>
+                                                </List>
+                                            </Collapse>
+                                        </React.Fragment>
+                                    );
+                                })}
+                            </List>
+                        </Collapse>
+                    </List>
+                )}
+
+                <Divider />
+            </Drawer >
+        </Box >
     );
 }

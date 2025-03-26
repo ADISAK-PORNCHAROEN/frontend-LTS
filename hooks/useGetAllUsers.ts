@@ -1,5 +1,5 @@
 import { useQuery, UseQueryOptions } from "@tanstack/react-query";
-import { IResponse, IUser } from "#/types/projectManagement/IResponse";
+import { IResponse, IUser } from "#/types/IResponse/IResponse";
 import { getAllUsers } from "./queries/QuriesKey";
 import { getAllUsersApi } from "#/app/api/userApi";
 

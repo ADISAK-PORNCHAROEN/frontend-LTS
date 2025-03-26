@@ -51,15 +51,15 @@ export const darkTheme = createTheme({
   },
 });
 
-/* export const customTheme = createTheme({
+export const customTheme = createTheme({
   palette: {
     mode: "light",
     primary: {
-      main: "#8286FF",
+      main: "#153448",
     },
     ats: createTheme().palette.augmentColor({
       color: {
-        main: "#8B5DF5",
+        main: "#181C14",
       },
       name: "ats",
     }),
@@ -95,20 +95,20 @@ export const darkTheme = createTheme({
     MuiSelect: {
       styleOverrides: {
         icon: {
-          fill: "#8286FF",
+          fill: "#181C14",
         },
       },
     },
     MuiIconButton: {
       styleOverrides: {
         sizeSmall: {
-          color: "#8286FF",
+          color: "#181C14",
         },
         sizeMedium: {
-          color: "#8286FF",
+          color: "#181C14",
         },
         sizeLarge: {
-          color: "#8286FF",
+          color: "#181C14",
         },
       },
     },
@@ -117,7 +117,7 @@ export const darkTheme = createTheme({
         root: {
           "& .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline":
           {
-            borderColor: "#8286FF",
+            borderColor: "#181C14",
           },
           "& .MuiOutlinedInput-root.Mui-disabled .MuiOutlinedInput-notchedOutline":
           {
@@ -130,11 +130,10 @@ export const darkTheme = createTheme({
       styleOverrides: {
         root: {
           "&:hover .MuiOutlinedInput-notchedOutline": {
-            borderColor: "#8286FF",
+            borderColor: "#181C14",
           },
         },
       },
     }
   },
 });
- */
